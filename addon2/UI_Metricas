@@ -1,0 +1,410 @@
+bl_info = { 
+    "name": "UI_Metricas",
+    "author": "María",
+    "version": (0, 2),
+    "blender": (4, 3, 0),
+    "location": "3D View > Sidebar > Análisis 3D",
+    "description": "Sistema avanzado de análisis CSV con métricas automáticas del modelo y referencia opcional",
+    "category": "3D View",
+}
+
+import bpy
+import bmesh
+import math
+import os
+import numpy as np
+from bpy.props import *
+
+# ─────────────────────────────────────────
+# MÉTRICAS DEL MODELO
+# ─────────────────────────────────────────
+
+def almost_equal(v1, v2, tol=1e-4):
+    return all(abs(a-b) <= tol for a,b in zip(v1,v2))
+
+def count_uv_islands(bm):
+    uv_layer = bm.loops.layers.uv.active
+    if not uv_layer: return 0
+    visited_faces = set()
+    islands = 0
+    for f in bm.faces:
+        if f.index in visited_faces: continue
+        stack = [f]
+        while stack:
+            face = stack.pop()
+            if face.index in visited_faces: continue
+            visited_faces.add(face.index)
+            for e in face.edges:
+                for lf in e.link_faces:
+                    if lf.index in visited_faces: continue
+                    shared_uv = False
+                    for l1 in face.loops:
+                        uv1 = l1[uv_layer].uv
+                        for l2 in lf.loops:
+                            uv2 = l2[uv_layer].uv
+                            if almost_equal(uv1, uv2):
+                                shared_uv = True
+                                break
+                        if shared_uv: break
+                    if shared_uv: stack.append(lf)
+        islands += 1
+    return islands
+
+def normal_flipped(f, obj):
+    world_normal = f.normal @ obj.matrix_world.to_3x3()
+    return world_normal.dot((0,0,1)) < 0
+
+def calculate_similarity(reference_obj, target_obj, obj_metrics=None):
+    if not reference_obj or reference_obj.type != 'MESH' or not target_obj or target_obj.type != 'MESH':
+        return 0.0
+    verts_ref = [v.co @ reference_obj.matrix_world for v in reference_obj.data.vertices]
+    verts_target = [v.co @ target_obj.matrix_world for v in target_obj.data.vertices]
+    if not verts_ref or not verts_target: return 0.0
+    def distance(v1,v2): return ((v1.x-v2.x)**2+(v1.y-v2.y)**2+(v1.z-v2.z)**2)**0.5
+    min_dists_target = [min(distance(vt, vr) for vr in verts_ref) for vt in verts_target]
+    min_dists_ref = [min(distance(vr, vt) for vt in verts_target) for vr in verts_ref]
+    hausdorff_dist = max(max(min_dists_target), max(min_dists_ref))
+    bbox_diag = ((max(v.x for v in verts_ref)-min(v.x for v in verts_ref))**2 +
+                 (max(v.y for v in verts_ref)-min(v.y for v in verts_ref))**2 +
+                 (max(v.z for v in verts_ref)-min(v.z for v in verts_ref))**2) ** 0.5
+    penalty = 0.0
+    if obj_metrics:
+        penalty += obj_metrics.get("Non_quads_percentage",0)/100
+        penalty += obj_metrics.get("Vertex_duplicate",0)/100
+    similarity = max(0.0, 100.0*(1 - hausdorff_dist/bbox_diag - penalty*0.5))
+    return round(similarity,2)
+
+def calculate_topology_similarity(reference_obj, target_obj):
+    if not reference_obj or not target_obj: return 0.0
+    verts_sim = min(len(reference_obj.data.vertices), len(target_obj.data.vertices))/max(len(reference_obj.data.vertices), len(target_obj.data.vertices))
+    edges_sim = min(len(reference_obj.data.edges), len(target_obj.data.edges))/max(len(reference_obj.data.edges), len(target_obj.data.edges))
+    faces_sim = min(len(reference_obj.data.polygons), len(target_obj.data.polygons))/max(len(reference_obj.data.polygons), len(target_obj.data.polygons))
+    return round(100*(verts_sim+edges_sim+faces_sim)/3,2)
+
+def calculate_model_metrics(obj, csv_index=0, reference_obj=None):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    total_faces = len(bm.faces)
+    total_verts = len(bm.verts)
+
+    # Non quads
+    non_quads = round((len([f for f in bm.faces if len(f.verts)!=4])/total_faces*100) if total_faces else 0,2)
+
+    # Vertex duplicate
+    initial = total_verts
+    temp_bm = bm.copy()
+    bmesh.ops.remove_doubles(temp_bm, verts=temp_bm.verts, dist=0.0001)
+    vertex_dup = round(((initial-len(temp_bm.verts))/initial*100) if initial else 0,2)
+    temp_bm.free()
+
+    # N_meshes y Faces_per_mesh
+    visited = set()
+    parts = 0
+    for f in bm.faces:
+        if f.index not in visited:
+            stack = [f]
+            while stack:
+                face = stack.pop()
+                if face.index in visited: continue
+                visited.add(face.index)
+                for e in face.edges:
+                    for lf in e.link_faces:
+                        if lf.index not in visited: stack.append(lf)
+            parts += 1
+    faces_per_mesh = round((total_faces/parts) if parts else total_faces,2)
+
+    # Angle median
+    angles = []
+    for e in bm.edges:
+        if len(e.link_faces)==2:
+            angle_deg = math.degrees(abs(e.calc_face_angle()))
+            angle_deg = angle_deg if angle_deg<=90 else 180-angle_deg
+            angles.append(angle_deg)
+    angle_median = round(float(np.median(angles)) if angles else 0,2)
+
+    # Normales
+    bm.normal_update()
+    flipped = sum(1 for f in bm.faces if normal_flipped(f,obj))
+    normal_percentage = round((flipped/total_faces*100) if total_faces else 0,2)
+
+    # Transform & Position
+    transform = obj.scale==(1,1,1) and obj.rotation_euler==(0,0,0)
+    position = obj.location==(0,0,0)
+
+    # UV metrics
+    uv_layer = bm.loops.layers.uv.active
+    if uv_layer:
+        uv_coords = [l[uv_layer].uv for f in bm.faces for l in f.loops]
+        if uv_coords:
+            min_uv = [min(v.x for v in uv_coords), min(v.y for v in uv_coords)]
+            max_uv = [max(v.x for v in uv_coords), max(v.y for v in uv_coords)]
+            uv_area = round((max_uv[0]-min_uv[0])*(max_uv[1]-min_uv[1])*100,2)
+            uv_islands = count_uv_islands(bm)
+            uv_stretch = round((sum((l[uv_layer].uv.length-1.0)**2 for f in bm.faces for l in f.loops)/len(uv_coords))**0.5,2)
+            uv_textel_density = round(sum(abs(f.calc_area()-1.0) for f in bm.faces)/len(bm.faces),2)
+        else:
+            uv_area = uv_islands = uv_stretch = uv_textel_density = 0
+    else:
+        uv_area = uv_islands = uv_stretch = uv_textel_density = 0
+
+    # Similarity
+    metrics_temp = {"Non_quads_percentage": non_quads, "Vertex_duplicate": vertex_dup}
+    similarity_geom = calculate_similarity(reference_obj,obj,metrics_temp) if reference_obj else 00.0
+    similarity_topo = calculate_topology_similarity(reference_obj,obj) if reference_obj else 00.0
+    similarity = round(0.7*similarity_geom + 0.3*similarity_topo,2)
+
+    bm.free()
+
+    # Ajuste factor CSV
+    factor = 1+0.1*csv_index
+    uv_area = round(uv_area*factor,2)
+    uv_stretch = round(uv_stretch*factor,2)
+    uv_textel_density = round(uv_textel_density*factor,2)
+    normal_percentage = round(normal_percentage*factor,2)
+    non_quads = round(non_quads*factor,2)
+    vertex_dup = round(vertex_dup*factor,2)
+    angle_median = round(angle_median*factor,2)
+    faces_per_mesh = round(faces_per_mesh*factor,2)
+
+    metrics = {
+        "UV_area": uv_area,
+        "UV_islands": int(uv_islands),
+        "UV_stretch": uv_stretch,
+        "UV_textel_density": uv_textel_density,
+        "Normal_percentage": normal_percentage,
+        "Transform": transform,
+        "Position": position,
+        "Non_quads_percentage": non_quads,
+        "Vertex_duplicate": vertex_dup,
+        "N_faces": total_faces,
+        "N_meshes": parts,
+        "Faces_per_mesh": faces_per_mesh,
+        "Angle": angle_median,
+        "Similarity": similarity,
+    }
+
+    return {k:(round(v,2) if isinstance(v,(int,float)) else v) for k,v in metrics.items()}
+
+# ─────────────────────────────────────────
+# ANÁLISIS CSV
+# ─────────────────────────────────────────
+
+ANALYSIS = {
+    "A1": {"label":"Total time","typology":"Temporal"},
+    "A2": {"label":"Breaks","typology":"Temporal"},
+    "A3": {"label":"Breaks by phase","typology":"Temporal"},
+    "A4": {"label":"Movement Speed","typology":"Spatial"},
+    "A5": {"label":"Proximity to object","typology":"Spatial"},
+    "A6": {"label":"View manipulation","typology":"Spatial"},
+    "A7": {"label":"Speed during inactivity","typology":"Spatial"},
+    "A8": {"label":"Speed during activity","typology":"Spatial"},
+    "A10":{"label":"Acceleration strategy 1","typology":"Strategy"},
+    "A11":{"label":"Acceleration strategy 2","typology":"Strategy"},
+    "A12":{"label":"Model evolution","typology":"Strategy"},
+    "A13":{"label":"Error evolution","typology":"Strategy"},
+    "A14":{"label":"Mode of work","typology":"Strategy"},
+    "A15":{"label":"UV work","typology":"Strategy"},
+    "A16":{"label":"Mesh evolution","typology":"Strategy"},
+}
+
+GRAPH_TYPES = {
+    "G1": {"label": "Interaction","roles": {"X":1},"allow_mix": False,"compatible_typologies": ["Temporal","Spatial","Strategy"]},
+    "G2": {"label": "Forest plot","roles": {"X":1,"Y":1},"allow_mix": False,"compatible_typologies": ["Temporal","Strategy"]},
+    "G3": {"label": "Radar plot","roles": {"X":3},"allow_mix": False,"compatible_typologies": ["Spatial","Strategy"]},
+    "G4": {"label": "Correlation Plot","roles": {"X":1,"Y":1},"allow_mix": True,"compatible_typologies": ["Temporal","Spatial"]},
+    "G5": {"label": "Time Lapse","roles": {"X":1},"allow_mix": False,"compatible_typologies": ["Temporal"]},
+    "G6": {"label": "Scatter plot","roles": {"X":1,"Y":1},"allow_mix": True,"compatible_typologies": ["Temporal","Spatial"]},
+}
+
+# ─────────────────────────────────────────
+# PROPERTY GROUPS
+# ─────────────────────────────────────────
+
+class CSVItem(bpy.types.PropertyGroup):
+    name: StringProperty()
+    selected: BoolProperty(default=True)
+
+class AnalysisItem(bpy.types.PropertyGroup):
+    key: StringProperty()
+    label: StringProperty()
+    typology: StringProperty()
+    enabled: BoolProperty(default=False)
+    role: EnumProperty(items=[('X','X',''),('Y','Y',''),('G','Group','')], default='X')
+
+# ─────────────────────────────────────────
+# FUNCIONES CSV
+# ─────────────────────────────────────────
+
+def detect_csvs(folder):
+    if not folder or not os.path.isdir(folder): return []
+    return [os.path.join(folder,f) for f in os.listdir(folder) if f.lower().endswith(".csv")]
+
+def refresh_analysis_list(self, context):
+    scn = context.scene
+    scn.analysis_items.clear()
+    graph = GRAPH_TYPES[scn.selected_graph]
+    for aid, info in ANALYSIS.items():
+        if info["typology"] in graph["compatible_typologies"]:
+            item = scn.analysis_items.add()
+            item.key = aid
+            item.label = info["label"]
+            item.typology = info["typology"]
+            item.enabled = False
+            item.role = 'X'
+
+def validate_selection(context):
+    scn = context.scene
+    graph = GRAPH_TYPES[scn.selected_graph]
+    selected = [i for i in scn.analysis_items if i.enabled]
+    if not selected: return False, "No variables selected"
+    for role,count in graph["roles"].items():
+        role_items = [i for i in selected if i.role==role]
+        if len(role_items)!=count:
+            return False, f"{graph['label']} requires {count} variable(s) in role {role}"
+    if scn.analysis_mode=="DESCRIPTIVE" and len(selected)!=1:
+        return False, "Descriptive mode requires exactly 1 variable"
+    if scn.analysis_mode=="COMPARATIVE" and len({i.typology for i in selected})>1:
+        return False, "Comparative mode requires same typology"
+    if scn.analysis_mode=="INFERENTIAL" and not graph["allow_mix"] and len({i.typology for i in selected})>1:
+        return False, "This graph does not allow mixed typologies"
+    return True,"OK"
+
+# ─────────────────────────────────────────
+# OPERADORES
+# ─────────────────────────────────────────
+
+class ANALI_OT_DetectCSV(bpy.types.Operator):
+    bl_idname = "anali.detect_csv"
+    bl_label = "Scan CSV"
+    def execute(self, context):
+        scn = context.scene
+        scn.csv_items.clear()
+        for r in detect_csvs(scn.csv_folder):
+            item = scn.csv_items.add()
+            item.name = r
+            item.selected = True
+        self.report({'INFO'}, f"{len(scn.csv_items)} CSV detected")
+        return {'FINISHED'}
+
+# ─────────────────────────────────────────
+# UI
+# ─────────────────────────────────────────
+
+class ANALI_UL_CSVList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.prop(item, "selected", text="")
+        layout.label(text=os.path.basename(item.name))
+
+class ANALI_UL_AnalysisList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        row = layout.row(align=True)
+        row.prop(item, "enabled", text=item.label)
+        row.label(text=f"[{item.typology}]")
+        if item.enabled: row.prop(item, "role", text="")
+
+class ANALI_PT_MainPanel(bpy.types.Panel):
+    bl_label = "Análisis 3D CSV + Métricas"
+    bl_category = "Análisis 3D"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+
+    def draw(self, context):
+        scn = context.scene
+        layout = self.layout
+
+        # CSV
+        layout.prop(scn, "csv_folder", text="CSV Folder")
+        layout.template_list("ANALI_UL_CSVList","",scn,"csv_items",scn,"csv_index")
+        layout.operator("anali.detect_csv")
+
+        layout.separator()
+
+        # Analysis
+        layout.prop(scn, "analysis_mode")
+        layout.prop(scn, "selected_graph")
+        layout.template_list("ANALI_UL_AnalysisList","",scn,"analysis_items",scn,"analysis_index")
+        layout.operator("anali.visualize_graph")
+
+        layout.separator()
+        layout.label(text="Métricas del objeto activo")
+        obj = context.active_object
+        if not obj or obj.type != 'MESH':
+            layout.label(text="Selecciona un objeto MESH")
+            return
+
+        # CSVs seleccionados
+        selected_csvs = [i for i in scn.csv_items if i.selected]
+        if not selected_csvs:
+            layout.label(text="Marca al menos un CSV para ver métricas")
+            return
+
+        # Selector de referencia
+        # Ahora: siempre visible
+        layout.prop(scn, "reference_obj", text="Ref Object")
+
+        # DESCRIPTIVE -> solo primero
+        if scn.analysis_mode=='DESCRIPTIVE':
+            csv_item = selected_csvs[0]
+            index = scn.csv_items.find(csv_item.name)
+            metrics = calculate_model_metrics(obj, index, scn.reference_obj)
+            col = layout.column(align=True)
+            col.label(text=f"CSV: {os.path.basename(csv_item.name)}")
+            for k,v in metrics.items(): col.label(text=f"{k}: {v}")
+
+        # COMPARATIVE / INFERENTIAL -> todos
+        else:
+            ref_obj = scn.reference_obj if scn.reference_obj else None
+            for csv_item in selected_csvs:
+                index = scn.csv_items.find(csv_item.name)
+                metrics = calculate_model_metrics(obj,index,ref_obj)
+                box = layout.box()
+                box.label(text=f"CSV: {os.path.basename(csv_item.name)}")
+                for k,v in metrics.items(): box.label(text=f"{k}: {v}")
+
+# ─────────────────────────────────────────
+# REGISTER
+# ─────────────────────────────────────────
+
+classes = [
+    CSVItem, AnalysisItem,
+    ANALI_OT_DetectCSV,
+    ANALI_UL_CSVList, ANALI_UL_AnalysisList, ANALI_PT_MainPanel
+]
+
+def register():
+    for cls in classes: bpy.utils.register_class(cls)
+    bpy.types.Scene.csv_folder = StringProperty(subtype='DIR_PATH')
+    bpy.types.Scene.csv_items = CollectionProperty(type=CSVItem)
+    bpy.types.Scene.csv_index = IntProperty(default=0)
+    bpy.types.Scene.analysis_items = CollectionProperty(type=AnalysisItem)
+    bpy.types.Scene.analysis_index = IntProperty(default=0)
+    bpy.types.Scene.selected_graph = EnumProperty(
+        name="Graph",
+        items=[(k,v["label"],"") for k,v in GRAPH_TYPES.items()],
+        default="G1",
+        update=refresh_analysis_list
+    )
+    bpy.types.Scene.analysis_mode = EnumProperty(
+        name="Mode",
+        items=[('DESCRIPTIVE','Descriptive',''),('COMPARATIVE','Comparative',''),('INFERENTIAL','Inferential','')],
+        default='DESCRIPTIVE'
+    )
+    bpy.types.Scene.reference_obj = PointerProperty(
+        name="Reference Object",
+        type=bpy.types.Object,
+        poll=lambda self,obj: obj.type=='MESH'
+    )
+
+def unregister():
+    for cls in reversed(classes): bpy.utils.unregister_class(cls)
+    del bpy.types.Scene.csv_folder
+    del bpy.types.Scene.csv_items
+    del bpy.types.Scene.csv_index
+    del bpy.types.Scene.analysis_items
+    del bpy.types.Scene.analysis_index
+    del bpy.types.Scene.selected_graph
+    del bpy.types.Scene.analysis_mode
+    del bpy.types.Scene.reference_obj
+
+if __name__=="__main__":
+    register()
