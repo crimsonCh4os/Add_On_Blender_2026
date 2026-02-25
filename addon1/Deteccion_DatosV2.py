@@ -2,7 +2,7 @@ bl_info = {
     "name": "Data Logger 3D - Research Safe",
     "author": "Maria",
     "version": (0, 2),
-    "blender": (3, 0, 0),
+    "blender": (4, 3, 0),
     "location": "View3D > N Panel > Data Logger",
     "category": "3D View",
 }
