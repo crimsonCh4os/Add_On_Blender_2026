@@ -1,63 +1,72 @@
 bl_info = {
-    "name": "Data Logger 3D",
+    "name": "Data Logger 3D - Research Safe",
     "author": "Maria",
     "version": (0, 2),
-    "blender": (4, 0, 0),
-    "location": "View3D > Sidebar",
+    "blender": (3, 0, 0),
+    "location": "View3D > N Panel > Data Logger",
     "category": "3D View",
 }
 
 import bpy
+import time
 import os
 import tempfile
 import hashlib
 import mathutils
-import time
 from bpy.app.handlers import persistent
 
-# =========================================================
+# -------------------------------------------------------
+# VERSION
+# -------------------------------------------------------
+
+SCRIPT_VERSION = "2.2"
+
+# -------------------------------------------------------
 # USER ID
-# =========================================================
+# -------------------------------------------------------
 
 USER_ID = hashlib.md5(os.path.expanduser("~").encode()).hexdigest()[:8]
 
-# =========================================================
+# -------------------------------------------------------
 # GLOBAL STATE
-# =========================================================
+# -------------------------------------------------------
 
+timer_running = False
 start_time = None
-prev_state = {}
+_last_timestamp = -1
+
+prev_vert_count = 0
+prev_ngon_count = 0
+prev_tri_count = 0
+prev_object_count = 0
+prev_inverted_normals = 0
+prev_total_mods = 0
+prev_mode = None
+
 undo_flag = 0
 uv_menu_flag = 0
 
-operator_flags = {
-    "shift_d": 0,
-    "alt_d": 0,
-    "ctrl_v": 0,
-    "merge": 0
-}
+handlers_registered = False
 
-# =========================================================
-# CSV CONFIG
-# =========================================================
+# -------------------------------------------------------
+# CSV
+# -------------------------------------------------------
 
 TEMP_CSV_PATH = os.path.join(tempfile.gettempdir(), "blender_data_log.csv")
 
 CSV_HEADER = [
-    "USER_ID","Timestamp","Minute","Second",
+    "ScriptVersion","USER_ID","TimeStamp","Minute","Second",
     "UserX","UserY","UserZ",
     "SceneRadius",
     "ObjX","ObjY","ObjZ","ObjRadius",
     "VertexDelta","NgonDelta","TriDelta","NormalDelta",
-    "ObjMode","EditMode","UV",
+    "ObjModeState","EditModeState","ModeChanged","UV",
     "ObjectDelta","ModifierDelta",
     "CtrlV","ShiftD","AltD","Merge",
     "UndoAction"
 ]
 
 def init_csv():
-    if os.path.exists(TEMP_CSV_PATH):
-        return
     with open(TEMP_CSV_PATH,"w",encoding="utf-8") as f:
         f.write(",".join(CSV_HEADER)+"\n")
 
@@ -78,297 +87,286 @@ def import_csv_to_blend():
         txt.write(f.read())
     txt.use_fake_user = True
 
-def restore_csv_from_blend():
-    if "data_log_internal.csv" not in bpy.data.texts:
-        return False
-    content = bpy.data.texts["data_log_internal.csv"].as_string()
-    if not content.strip():
-        return False
-    with open(TEMP_CSV_PATH,"w",encoding="utf-8") as f:
-        f.write(content)
-    return True
+# -------------------------------------------------------
+# UTILITIES
+# -------------------------------------------------------
 
-# =========================================================
-# METRICS
-# =========================================================
+def round_all(vals):
+    return [round(v,4) if isinstance(v,float) else v for v in vals]
+
+def count_inverted_normals(mesh_obj):
+    if mesh_obj.type != "MESH":
+        return 0
+    return sum(1 for p in mesh_obj.data.polygons if p.normal.dot(p.center) < 0)
+
+# -------------------------------------------------------
+# SCENE METRICS
+# -------------------------------------------------------
 
 def get_camera_pos():
-    if not bpy.context.screen:
-        return mathutils.Vector((0,0,0))
-    for area in bpy.context.screen.areas:
-        if area.type == "VIEW_3D":
-            r3d = area.spaces.active.region_3d
-            return r3d.view_matrix.inverted().translation
-    return mathutils.Vector((0,0,0))
+    for a in bpy.context.screen.areas:
+        if a.type == "VIEW_3D":
+            r3d = a.spaces.active.region_3d
+            pos = r3d.view_matrix.inverted().translation
+            return tuple(pos)
+    return (0,0,0)
 
-def get_object_center_radius(obj):
+def get_active_object_data():
+    obj = bpy.context.object
+    if not obj:
+        return (0,0,0,0)
     bbox = [obj.matrix_world @ mathutils.Vector(c) for c in obj.bound_box]
-    center = sum(bbox, mathutils.Vector()) / 8
+    center = sum(bbox, mathutils.Vector())/8
     radius = max((v-center).length for v in bbox)
-    return center, radius
+    return center.x,center.y,center.z,radius
 
-def get_scene_metrics():
-    scene = bpy.context.scene
-    meshes = [o for o in scene.objects if o.type == "MESH"]
+def get_scene_radius():
+    objs = [o for o in bpy.context.scene.objects if o.type=="MESH"]
+    if not objs:
+        return 0.0
+    centers=[]
+    radii=[]
+    for o in objs:
+        bbox=[o.matrix_world @ mathutils.Vector(c) for c in o.bound_box]
+        center=sum(bbox,mathutils.Vector())/8
+        radius=max((v-center).length for v in bbox)
+        centers.append(center)
+        radii.append(radius)
+    global_center=sum(centers,mathutils.Vector())/len(centers)
+    return max((c-global_center).length+r for c,r in zip(centers,radii))
 
-    verts = sum(len(o.data.vertices) for o in meshes)
-    ngons = sum(1 for o in meshes for p in o.data.polygons if len(p.vertices) > 4)
-    tris = sum(1 for o in meshes for p in o.data.polygons if len(p.vertices) == 3)
-    normals = sum(1 for o in meshes for p in o.data.polygons if p.normal.dot(p.center) < 0)
-    modifiers = sum(len(o.modifiers) for o in scene.objects)
-    obj_count = len(scene.objects)
+# -------------------------------------------------------
+# OPERATOR TRACKING
+# -------------------------------------------------------
 
-    if meshes:
-        centers = []
-        radii = []
-        for o in meshes:
-            c, r = get_object_center_radius(o)
-            centers.append(c)
-            radii.append(r)
-        global_center = sum(centers, mathutils.Vector()) / len(centers)
-        scene_radius = max((c - global_center).length + r for c, r in zip(centers, radii))
-    else:
-        scene_radius = 0
+last_operator=None
+operator_flags={"shift_d":0,"alt_d":0,"ctrl_v":0,"merge":0}
 
-    return {
-        "verts": verts,
-        "ngons": ngons,
-        "tris": tris,
-        "normals": normals,
-        "modifiers": modifiers,
-        "obj_count": obj_count,
-        "scene_radius": scene_radius
-    }
-
-# =========================================================
-# EVENT LOGGER
-# =========================================================
-
-def log_event():
-    global prev_state, undo_flag, uv_menu_flag
-
-    current = get_scene_metrics()
-
-    if not prev_state:
-        prev_state = current.copy()
+@persistent
+def operator_tracker(scene,depsgraph):
+    global last_operator,operator_flags,uv_menu_flag
+    wm=bpy.context.window_manager
+    if not wm.operators:
         return
-
-    deltas = {k: current[k] - prev_state.get(k, 0) for k in current}
-
-    if all(v == 0 for v in deltas.values()) and undo_flag == 0 and uv_menu_flag == 0:
+    op=wm.operators[-1].bl_idname
+    if op==last_operator:
         return
+    last_operator=op
+    if op=="OBJECT_OT_duplicate":
+        operator_flags["shift_d"]=1
+    elif op=="OBJECT_OT_duplicate_linked":
+        operator_flags["alt_d"]=1
+    elif op=="VIEW3D_OT_pastebuffer":
+        operator_flags["ctrl_v"]=1
+    elif "merge" in op.lower():
+        operator_flags["merge"]=1
+    elif op=="UV_OT_unwrap":
+        uv_menu_flag=1
 
-    timestamp = time.time()
-    elapsed = timestamp - start_time
-    minute = int(elapsed // 60)
-    second = elapsed % 60
+@persistent
+def handle_undo(dummy):
+    global undo_flag
+    undo_flag=1
 
-    user = get_camera_pos()
-    ao = bpy.context.object
+# -------------------------------------------------------
+# DATA COLLECTION
+# -------------------------------------------------------
 
-    if ao:
-        center, radius = get_object_center_radius(ao)
-        ox, oy, oz = center
-        orad = radius
-    else:
-        ox = oy = oz = orad = 0
+def collect_data():
+    global _last_timestamp
+    global prev_vert_count,prev_ngon_count,prev_tri_count
+    global prev_object_count,prev_inverted_normals
+    global prev_total_mods,prev_mode
+    global undo_flag,uv_menu_flag,operator_flags
 
-    mode = bpy.context.mode
-    obj_mode = int(mode == "OBJECT")
-    edit_mode = int(mode == "EDIT_MESH")
+    timestamp=round(time.time(),2)
+    if timestamp==_last_timestamp:
+        return None
+    _last_timestamp=timestamp
 
-    row = [
-        USER_ID, timestamp, minute, second,
-        user.x, user.y, user.z,
-        current["scene_radius"],
-        ox, oy, oz, orad,
-        deltas["verts"],
-        deltas["ngons"],
-        deltas["tris"],
-        deltas["normals"],
-        obj_mode, edit_mode,
-        uv_menu_flag,
-        deltas["obj_count"],
-        deltas["modifiers"],
+    scene=bpy.context.scene
+    minute=int((timestamp-start_time)//60)
+    second=(timestamp-start_time)%60
+
+    user=get_camera_pos()
+    scene_radius=get_scene_radius()
+    ox,oy,oz,orad=get_active_object_data()
+
+    meshes=[o for o in scene.objects if o.type=="MESH"]
+
+    total_verts=sum(len(o.data.vertices) for o in meshes)
+    ngons=sum(1 for o in meshes for p in o.data.polygons if len(p.vertices)>4)
+    tris=sum(1 for o in meshes for p in o.data.polygons if len(p.vertices)==3)
+    total_inverted=sum(count_inverted_normals(o) for o in meshes)
+    total_mods=sum(len(o.modifiers) for o in scene.objects)
+
+    v_delta=total_verts-prev_vert_count
+    n_delta=ngons-prev_ngon_count
+    t_delta=tris-prev_tri_count
+    normal_delta=total_inverted-prev_inverted_normals
+    obj_delta=len(scene.objects)-prev_object_count
+    mod_delta=total_mods-prev_total_mods
+
+    prev_vert_count=total_verts
+    prev_ngon_count=ngons
+    prev_tri_count=tris
+    prev_inverted_normals=total_inverted
+    prev_object_count=len(scene.objects)
+    prev_total_mods=total_mods
+
+    mode=bpy.context.mode
+    obj_mode_state=int(mode=="OBJECT")
+    edit_mode_state=int(mode=="EDIT_MESH")
+    mode_changed=int(prev_mode!=mode)
+    prev_mode=mode
+
+    record=round_all([
+        SCRIPT_VERSION,USER_ID,timestamp,minute,second,
+        user[0],user[1],user[2],
+        scene_radius,
+        ox,oy,oz,orad,
+        v_delta,n_delta,t_delta,normal_delta,
+        obj_mode_state,edit_mode_state,mode_changed,uv_menu_flag,
+        obj_delta,mod_delta,
         operator_flags["ctrl_v"],
         operator_flags["shift_d"],
         operator_flags["alt_d"],
         operator_flags["merge"],
         undo_flag
-    ]
+    ])
 
-    formatted = ",".join(str(round(v,4)) if isinstance(v,float) else str(v) for v in row)
-    append_csv(formatted)
-    import_csv_to_blend()
+    operator_flags={"shift_d":0,"alt_d":0,"ctrl_v":0,"merge":0}
+    undo_flag=0
+    uv_menu_flag=0
 
-    prev_state = current.copy()
-    undo_flag = 0
-    uv_menu_flag = 0
-    for k in operator_flags:
-        operator_flags[k] = 0
+    return ",".join(str(v) for v in record)
 
-# =========================================================
-# HANDLERS
-# =========================================================
+# -------------------------------------------------------
+# TIMER
+# -------------------------------------------------------
 
-@persistent
-def depsgraph_handler(scene, depsgraph):
-    log_event()
+def logger_timer():
+    if not timer_running:
+        return None
+    row=collect_data()
+    if row:
+        append_csv(row)
+    return 1.0
 
-@persistent
-def undo_handler(dummy):
-    global undo_flag
-    undo_flag = 1
+# -------------------------------------------------------
+# OPERATORS START / STOP
+# -------------------------------------------------------
 
-@persistent
-def operator_tracker(scene, depsgraph):
-    global uv_menu_flag
-    wm = bpy.context.window_manager
-    if not wm.operators:
-        return
-    op = wm.operators[-1].bl_idname
+class DATA_LOGGER_OT_Start(bpy.types.Operator):
+    bl_idname="data_logger.start"
+    bl_label="Start Logging"
 
-    if op == "OBJECT_OT_duplicate":
-        operator_flags["shift_d"] = 1
-    elif op == "OBJECT_OT_duplicate_linked":
-        operator_flags["alt_d"] = 1
-    elif op == "VIEW3D_OT_pastebuffer":
-        operator_flags["ctrl_v"] = 1
-    elif "merge" in op.lower():
-        operator_flags["merge"] = 1
-    elif op == "UV_OT_unwrap":
-        uv_menu_flag = 1
+    def execute(self,context):
+        global timer_running,start_time
+        global prev_vert_count,prev_ngon_count,prev_tri_count
+        global prev_object_count,prev_inverted_normals
+        global prev_total_mods
 
-@persistent
-def save_handler(dummy):
-    import_csv_to_blend()
+        if timer_running:
+            return {'CANCELLED'}
 
-# =========================================================
-# CONSENT SYSTEM
-# =========================================================
+        start_time=time.time()
+        scene=bpy.context.scene
+        meshes=[o for o in scene.objects if o.type=="MESH"]
 
-def get_consent_textblock():
-    if "consent_flag" not in bpy.data.texts:
-        bpy.data.texts.new("consent_flag")
-    return bpy.data.texts["consent_flag"]
+        prev_vert_count=sum(len(o.data.vertices) for o in meshes)
+        prev_ngon_count=sum(1 for o in meshes for p in o.data.polygons if len(p.vertices)>4)
+        prev_tri_count=sum(1 for o in meshes for p in o.data.polygons if len(p.vertices)==3)
+        prev_inverted_normals=sum(count_inverted_normals(o) for o in meshes)
+        prev_object_count=len(scene.objects)
+        prev_total_mods=sum(len(o.modifiers) for o in scene.objects)
 
-class DATA_LOGGER_OT_ConsentPopup(bpy.types.Operator):
-    bl_idname = "wm.data_logger_consent"
-    bl_label = "Consentimiento de recopilación de datos"
+        init_csv()
 
-    def execute(self, context):
-        txt = get_consent_textblock()
-        txt.clear()
-        txt.write("ACCEPTED")
-        self.report({'INFO'}, "Consentimiento aceptado.")
+        timer_running=True
+        bpy.app.timers.register(logger_timer)
+
+        self.report({'INFO'}, "Data Logger Started")
         return {'FINISHED'}
 
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
+class DATA_LOGGER_OT_Stop(bpy.types.Operator):
+    bl_idname="data_logger.stop"
+    bl_label="Stop Logging"
 
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="¿Aceptas la recopilación de datos técnicos?")
-        layout.label(text="(Transformaciones, geometría, acciones, etc.)")
-
-class DATA_LOGGER_OT_AutoRunWarning(bpy.types.Operator):
-    bl_idname = "wm.data_logger_autorun_warning"
-    bl_label = "Auto Run desactivado"
-
-    def execute(self, context):
-        bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
-        bpy.context.preferences.active_section = 'SAVE_LOAD'
+    def execute(self,context):
+        global timer_running
+        timer_running=False
+        import_csv_to_blend()
+        self.report({'INFO'}, "Data Logger Stopped")
         return {'FINISHED'}
 
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="Activa Auto Run Python Scripts en:")
-        layout.label(text="Edit → Preferences → Save & Load")
-
-@persistent
-def check_consent_on_load(dummy):
-    prefs = bpy.context.preferences.filepaths
-    if not prefs.use_scripts_auto_execute:
-        bpy.app.timers.register(lambda: bpy.ops.wm.data_logger_autorun_warning('INVOKE_DEFAULT'), first_interval=0.5)
-        return
-
-    consent = get_consent_textblock()
-    if "ACCEPTED" not in consent.as_string():
-        bpy.app.timers.register(lambda: bpy.ops.wm.data_logger_consent('INVOKE_DEFAULT'), first_interval=0.5)
-
-# =========================================================
-# PANEL EXPORT
-# =========================================================
+# -------------------------------------------------------
+# PANEL UI
+# -------------------------------------------------------
 
 class DATA_LOGGER_PT_Panel(bpy.types.Panel):
-    bl_label = "Data Logger"
-    bl_idname = "DATA_LOGGER_PT_panel"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "Data Logger"
+    bl_label="Data Logger"
+    bl_space_type='VIEW_3D'
+    bl_region_type='UI'
+    bl_category='Data Logger'
 
-    def draw(self, context):
-        layout = self.layout
-        layout.operator("wm.data_logger_export_csv", icon="EXPORT")
+    def draw(self,context):
+        layout=self.layout
+        if timer_running:
+            layout.label(text="● Recording...",icon='REC')
+            layout.operator("data_logger.stop",icon='CANCEL')
+        else:
+            layout.operator("data_logger.start",icon='PLAY')
 
-class DATA_LOGGER_OT_ExportCSV(bpy.types.Operator):
-    bl_idname = "wm.data_logger_export_csv"
-    bl_label = "Exportar a CSV"
+# -------------------------------------------------------
+# AUTORUN WARNING
+# -------------------------------------------------------
 
-    def execute(self, context):
-        blend_path = bpy.data.filepath
-        if not blend_path:
-            self.report({'ERROR'}, "Guarda el archivo .blend primero.")
-            return {'CANCELLED'}
+class DATA_LOGGER_OT_AutoRunWarning(bpy.types.Operator):
+    bl_idname="wm.data_logger_autorun_warning"
+    bl_label="Auto Run Required"
 
-        if "data_log_internal.csv" not in bpy.data.texts:
-            self.report({'ERROR'}, "No hay CSV incrustado.")
-            return {'CANCELLED'}
-
-        content = bpy.data.texts["data_log_internal.csv"].as_string()
-        directory = os.path.dirname(blend_path)
-        filename = os.path.splitext(os.path.basename(blend_path))[0] + "_data.csv"
-        path = os.path.join(directory, filename)
-
-        with open(path,"w",encoding="utf-8") as f:
-            f.write(content)
-
-        self.report({'INFO'}, f"Exportado: {path}")
+    def execute(self,context):
+        bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
+        bpy.context.preferences.active_section='SAVE_LOAD'
         return {'FINISHED'}
 
-# =========================================================
-# REGISTER
-# =========================================================
+    def invoke(self,context,event):
+        return context.window_manager.invoke_props_dialog(self,width=420)
 
-classes = [
-    DATA_LOGGER_OT_ConsentPopup,
-    DATA_LOGGER_OT_AutoRunWarning,
+    def draw(self,context):
+        layout=self.layout
+        layout.label(text="Auto Run Python Scripts is disabled.",icon='ERROR')
+        layout.label(text="Enable it in:")
+        layout.label(text="Edit → Preferences → Save & Load")
+
+# -------------------------------------------------------
+# REGISTER
+# -------------------------------------------------------
+
+classes=[
+    DATA_LOGGER_OT_Start,
+    DATA_LOGGER_OT_Stop,
     DATA_LOGGER_PT_Panel,
-    DATA_LOGGER_OT_ExportCSV
+    DATA_LOGGER_OT_AutoRunWarning
 ]
 
 def register():
-    global start_time
-    for c in classes:
-        bpy.utils.register_class(c)
+    global handlers_registered
+    for cls in classes:
+        bpy.utils.register_class(cls)
 
-    restore_csv_from_blend()
-    init_csv()
+    if not handlers_registered:
+        bpy.app.handlers.undo_post.append(handle_undo)
+        bpy.app.handlers.depsgraph_update_post.append(operator_tracker)
+        handlers_registered=True
 
-    start_time = time.time()
-
-    bpy.app.handlers.load_post.append(check_consent_on_load)
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_handler)
-    bpy.app.handlers.depsgraph_update_post.append(operator_tracker)
-    bpy.app.handlers.undo_post.append(undo_handler)
-    bpy.app.handlers.save_post.append(save_handler)
+    if not bpy.context.preferences.filepaths.use_scripts_auto_execute:
+        bpy.ops.wm.data_logger_autorun_warning('INVOKE_DEFAULT')
 
 def unregister():
-    for c in classes:
-        bpy.utils.unregister_class(c)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
 
-if __name__ == "__main__":
+if __name__=="__main__":
     register()
