@@ -1,0 +1,45 @@
+\documentclass[12pt]{report}
+
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+% ==============================
+% Portada
+% ==============================
+\begin{titlepage}
+    \centering
+    {\LARGE Trabajo de Fin de Grado \par}
+    \vspace{2cm}
+    {\Huge \textbf{Sistema de Registro y Análisis de Interacción en Modelado 3D}\par}
+    \vspace{2cm}
+    {\Large María Molina Goyena\par}
+    \vfill
+    {\large Universidad de Burgos\par}
+    {\large 2026\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ==============================
+% Capítulos
+% ==============================
+
+\include{introduccion}
+\include{objetivos}
+\include{marco_teorico}
+\include{tecnicas_y_herramientas}
+\include{diseno}
+\include{implementacion}
+\include{validacion_experimental}
+\include{analisis_datos}
+\include{resultados}
+\include{conclusiones}
+
+\end{document}

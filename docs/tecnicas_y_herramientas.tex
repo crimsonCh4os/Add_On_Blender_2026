@@ -1,0 +1,59 @@
+\chapter{Técnicas y herramientas empleadas}
+
+\section{Entorno de desarrollo}
+
+El sistema ha sido desarrollado utilizando \textbf{Blender} como plataforma principal de experimentación y validación. Blender es un software libre y de código abierto orientado a la creación de contenido tridimensional, que permite la extensión de sus funcionalidades mediante el desarrollo de addons en Python.
+
+Para la implementación del sistema se ha utilizado el lenguaje \textbf{Python}, ya que constituye el lenguaje oficial de scripting de Blender y permite acceder de forma directa a su API interna (\texttt{bpy}).
+
+\section{Arquitectura del addon}
+
+El addon ha sido diseñado siguiendo una arquitectura modular compuesta por los siguientes componentes:
+
+\begin{itemize}
+    \item \textbf{Módulo de captura de eventos}: Encargado de interceptar y registrar eventos relevantes del proceso de modelado, tales como cambios de modo (Object/Edit), creación o eliminación de objetos, duplicados, fusiones de geometría y modificaciones UV.
+    
+    \item \textbf{Módulo de extracción de variables internas}: Responsable de acceder a las estructuras internas de Blender (escena, objetos, modificadores, mallas, transformaciones, etc.) y extraer variables estructurales y espaciales para su análisis posterior.
+    
+    \item \textbf{Módulo de análisis}: Permite procesar los datos recopilados para generar métricas temporales, espaciales y estadísticas que faciliten el diagnóstico del proceso de modelado.
+    
+    \item \textbf{Interfaz de usuario}: Implementada mediante paneles personalizados en la interfaz de Blender, permite gestionar el consentimiento del usuario, activar o desactivar la recopilación de datos y visualizar métricas básicas.
+\end{itemize}
+
+\section{Técnicas de extracción y análisis de datos}
+
+Para la obtención de información estructurada se han empleado las siguientes técnicas:
+
+\begin{itemize}
+    \item \textbf{Acceso a la API interna (\texttt{bpy})}: Permite consultar propiedades de la escena, objetos, modificadores, materiales y datos de malla.
+    
+    \item \textbf{Uso de handlers}: Se emplean manejadores de eventos (\texttt{depsgraph\_update\_post}, \texttt{load\_post}, etc.) para detectar cambios en tiempo real dentro del entorno de modelado.
+    
+    \item \textbf{Serialización en formato JSON}: Empleada para estructurar los datos recogidos y facilitar su análisis posterior.
+    
+    \item \textbf{Análisis estadístico básico}: Cálculo de métricas como número de operaciones por sesión, frecuencia de cambios de modo, complejidad geométrica (vértices, aristas, caras), uso de modificadores y evolución temporal del modelo.
+\end{itemize}
+
+\section{Herramientas complementarias}
+
+Además de Blender y Python, se han empleado las siguientes herramientas:
+
+\begin{itemize}
+    \item Entorno de desarrollo integrado (IDE) para la escritura y depuración del código.
+    \item Sistema de control de versiones para el seguimiento del desarrollo.
+    \item Librerías estándar de Python para el procesamiento de datos.
+    \item Herramientas de análisis externo para el tratamiento estadístico de los datos exportados.
+\end{itemize}
+
+\section{Metodología de validación}
+
+Para validar el correcto funcionamiento del sistema se ha seguido una metodología iterativa:
+
+\begin{itemize}
+    \item Desarrollo de una versión experimental del addon.
+    \item Pruebas controladas con usuarios de prueba.
+    \item Ajuste del sistema en función de los resultados obtenidos.
+    \item Despliegue de una versión estable para la recopilación de datos reales.
+\end{itemize}
+
+Este conjunto de técnicas y herramientas permite la recopilación eficiente de datos del entorno de modelado y su posterior análisis estructurado para la extracción de conclusiones sobre el proceso de modelado tridimensional.
