@@ -1,0 +1,16 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {chapter}{\numberline {1}Introducción}{2}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Objetivos}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Objetivos específicos}{4}{section.2.1}%
+\contentsline {chapter}{\numberline {3}Contexto y marco teórico}{5}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Modelado tridimensional y entornos interactivos}{5}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Blender como plataforma de desarrollo}{5}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Registro de interacción y sistemas de logging}{5}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Análisis del proceso de creación en entornos 3D}{5}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Persistencia de datos y consideraciones éticas}{6}{section.3.5}%
+\contentsline {chapter}{\numberline {4}Técnicas y herramientas empleadas}{7}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Entorno de desarrollo}{7}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Arquitectura del addon}{7}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Técnicas de extracción y análisis de datos}{8}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Herramientas complementarias}{8}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Metodología de validación}{8}{section.4.5}%

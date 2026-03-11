@@ -1,0 +1,1 @@
+C:\texlive\2026\bin\windows\pdflatex.exe memoria.tex
