@@ -40,6 +40,10 @@ operator_flags = {
 # ESTADO GLOBAL
 # -------------------------------------------------------
 
+
+global uv_menu_flag
+uv_menu_flag = 1
+_last_timestamp = -1
 timer_running = False
 start_time = None
 frame_counter = 0
@@ -51,6 +55,7 @@ _last_obj_data_ref = {}
 _last_uv_hash = {}
 _last_mod_state = {}
 
+prev_total_mods = 0
 prev_vert_count = 0
 prev_ngon_count = 0
 prev_tri_count = 0
@@ -211,7 +216,6 @@ def init_hashes():
 
 @persistent
 def uv_transform_tracker(scene, depsgraph):
-    global uv_menu_flag
 
     # Verificar si estamos en el modo de edición de UV
     if bpy.context.object.mode != 'EDIT' or bpy.context.active_object.type != 'MESH':
@@ -257,11 +261,6 @@ def operator_tracker(scene, depsgraph):
     if "transform" in op.lower():
         uv_menu_flag = 1
         
-        
-@persistent
-def handle_undo(dummy):
-    global undo_flag
-    undo_flag=1
 
 # -------------------------------------------------------
 # UV MAPING

@@ -1,0 +1,116 @@
+\capitulo{3}{Conceptos teóricos}
+
+Para el desarrollo del addon \textit{Análisis 3D CSV} es necesario comprender diversos conceptos relacionados con el análisis de datos, el formato CSV y el funcionamiento de los complementos en Blender. En este capítulo se presentan los fundamentos teóricos que permiten entender el contexto tecnológico del proyecto y las bases sobre las que se ha desarrollado la aplicación.
+
+El objetivo principal del proyecto es permitir el análisis y la visualización de datos almacenados en archivos CSV dentro del entorno tridimensional de Blender. Para ello se utilizan diferentes herramientas de procesamiento de datos y mecanismos de extensión del propio software mediante addons.
+
+\section{Secciones}
+
+Las secciones permiten estructurar la información dentro de un documento. En el contexto de una memoria técnica, las secciones ayudan a organizar los conceptos teóricos necesarios para comprender el desarrollo del proyecto.
+
+En este capítulo se presentan distintos conceptos relacionados con:
+
+\begin{itemize}
+	\item El formato de archivos CSV.
+	\item El análisis y procesamiento de datos.
+	\item La visualización de datos en entornos tridimensionales.
+	\item El desarrollo de addons para Blender mediante Python.
+\end{itemize}
+
+Cada uno de estos aspectos constituye una parte fundamental para el funcionamiento del addon desarrollado.
+
+\subsection{Subsecciones}
+
+Además de secciones, es posible organizar la información mediante subsecciones. Estas permiten profundizar en determinados conceptos concretos dentro de un mismo apartado.
+
+En el desarrollo del proyecto se han tenido en cuenta distintos tipos de datos que pueden encontrarse en los archivos CSV, como por ejemplo:
+
+\begin{itemize}
+	\item Datos temporales, que permiten analizar la evolución de un fenómeno a lo largo del tiempo.
+	\item Datos espaciales, que pueden representarse mediante coordenadas dentro de un espacio tridimensional.
+	\item Datos numéricos, que pueden utilizarse para realizar cálculos estadísticos o generar representaciones visuales.
+\end{itemize}
+
+El tratamiento adecuado de estos datos es fundamental para garantizar la correcta interpretación de la información.
+
+\subsubsection{Subsubsecciones}
+
+Las subsubsecciones permiten desglosar todavía más la información dentro de una subsección. En este caso se pueden utilizar para describir aspectos específicos relacionados con el tratamiento de datos.
+
+Uno de los procesos más importantes en el análisis de datos es la normalización. La normalización consiste en preparar los datos antes de su análisis para asegurar que todos los valores siguen una estructura coherente.
+
+Entre las tareas más habituales dentro de este proceso se encuentran:
+
+\begin{itemize}
+	\item Eliminación de registros incompletos o inconsistentes.
+	\item Conversión de cadenas de texto a valores numéricos cuando sea necesario.
+	\item Homogeneización de formatos de fecha y hora.
+	\item Verificación de la estructura de las columnas del archivo CSV.
+\end{itemize}
+
+Este proceso facilita posteriormente el análisis automático de los datos dentro del addon.
+
+\section{Referencias}
+
+En el desarrollo del proyecto se han consultado diferentes fuentes relacionadas con el análisis de datos, el desarrollo de software y el funcionamiento del software Blender.
+
+Las referencias se incluyen en el texto usando cite~\cite{wiki:latex}. Para citar webs, artículos o libros~\cite{koza92}, si se desean citar más de uno en el mismo lugar~\cite{bortolot2005, koza92}.
+
+El uso de referencias bibliográficas permite fundamentar teóricamente las decisiones tomadas durante el desarrollo del proyecto, así como situar el trabajo dentro del contexto de las tecnologías actuales.
+
+\section{Imágenes}
+
+La documentación técnica suele incluir imágenes que facilitan la comprensión de determinados procesos o interfaces. En el caso de este proyecto, las imágenes pueden utilizarse para mostrar el funcionamiento del addon dentro de Blender o ejemplos de visualización de datos generados a partir de archivos CSV.
+
+Se pueden incluir imágenes con los comandos estándar de \LaTeX, pero esta plantilla dispone de comandos propios como por ejemplo el siguiente:
+
+\imagen{escudoInfor}{Ejemplo de representación visual de datos en el entorno 3D de Blender}{.5}
+
+Estas representaciones permiten observar cómo los datos almacenados en archivos CSV pueden transformarse en objetos o elementos visuales dentro de una escena tridimensional.
+
+\section{Listas de items}
+
+Las listas permiten organizar información de forma clara y estructurada. Existen tres tipos principales de listas en \LaTeX.
+
+\begin{itemize}
+	\item Importación de archivos CSV desde el sistema.
+	\item Procesamiento y normalización de los datos.
+\end{itemize}
+
+Estas funcionalidades forman parte del flujo básico de funcionamiento del addon.
+
+\begin{enumerate}
+	\item Lectura del archivo CSV.
+	\item Procesamiento de la información contenida en el archivo.
+\end{enumerate}
+
+Estos pasos constituyen las fases principales del tratamiento de datos dentro del proyecto.
+
+\begin{description}
+	\item[Archivo CSV] Formato de archivo utilizado para almacenar datos estructurados en forma de tabla.
+	\item[Addon] Extensión que permite ampliar las funcionalidades de Blender mediante código Python.
+\end{description}
+	
+\begin{itemize}
+\item Representación visual de datos dentro del espacio tridimensional.
+\end{itemize}
+
+\section{Tablas}
+
+Las tablas permiten mostrar información de forma organizada y comparativa. En el desarrollo del proyecto se han utilizado diferentes herramientas y tecnologías que intervienen en distintas partes del sistema.
+
+Igualmente se pueden usar los comandos específicos de \LaTeX o bien usar alguno de los comandos de la plantilla.
+
+\tablaSmall{Herramientas y tecnologías utilizadas en cada parte del proyecto}{l c c c c}{herramientasportipodeuso}
+{ \multicolumn{1}{l}{Herramientas} & Desarrollo & Procesamiento de datos & Visualización 3D & Memoria \\}{ 
+Python & X & X & X &\\
+Blender API & X & & X &\\
+CSV & & X & &\\
+NumPy & & X & &\\
+Pandas & & X & &\\
+Visual Studio Code & X & & &\\
+Git & X & X & X & X\\
+GitHub & X & X & X & X\\
+Blender & X & & X &\\
+\LaTeX{} & & & & X\\
+}
