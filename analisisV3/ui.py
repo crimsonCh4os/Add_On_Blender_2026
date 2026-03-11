@@ -789,10 +789,10 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         row.prop(scn,"axis_scale_y")
         row.prop(scn,"axis_scale_z")
         
-        layout.operator("anali.draw_axes", text="Dibujar Ejes 3D")
+        layout.operator("anali.draw_axes", text="Draw 3D axes")
 
         # ------------------- Visualización 3D -------------------
-        layout.operator("anali.visualize_graph", text="Visualizar Gráfico 3D")
+        layout.operator("anali.visualize_graph", text="Visualize 3D Graph")
 
         layout.separator()
         
@@ -801,7 +801,7 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         
         row = layout.row()
         row.scale_y = 1.0
-        row.operator("object.calculate_metrics", text="Calcular Métricas")
+        row.operator("object.calculate_metrics", text="Calculate Metrics")
 
         # Mostrar métricas del objeto activo
         obj = context.active_object
