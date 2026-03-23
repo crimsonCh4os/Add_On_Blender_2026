@@ -1,75 +1,134 @@
 \capitulo{4}{Técnicas y herramientas}
 
-\section{Entorno de desarrollo}
+En este capítulo se describen las técnicas y herramientas utilizadas para el desarrollo del sistema, centrándose en los recursos tecnológicos empleados y su justificación dentro del proyecto.
 
-El sistema desarrollado en este proyecto se ha implementado utilizando \textbf{Blender} como plataforma principal de experimentación y validación. Blender es un software libre y de código abierto ampliamente utilizado en la creación de contenido tridimensional, que ofrece herramientas para modelado, animación, simulación y renderizado. Una de sus características más relevantes es la posibilidad de ampliar sus funcionalidades mediante addons desarrollados por terceros.
+\section{Herramienta principal: Blender}
 
-Para la implementación del sistema se ha utilizado el lenguaje de programación \textbf{Python}, que constituye el lenguaje oficial de scripting de Blender. Python permite interactuar directamente con las estructuras internas del programa a través de su API, lo que facilita la automatización de tareas, la creación de nuevas herramientas y la modificación del comportamiento del entorno de modelado.
+Blender es un software libre y de código abierto ampliamente utilizado en la creación de contenido tridimensional, que incluye funcionalidades de modelado, animación, simulación y renderizado. Su arquitectura extensible permite incorporar nuevas funcionalidades mediante addons desarrollados por terceros.
 
-El acceso a estas funcionalidades se realiza mediante el módulo \texttt{bpy}, que proporciona una interfaz programática para consultar y modificar los distintos elementos de la escena, como objetos, materiales, modificadores o datos de malla. Gracias a esta API es posible desarrollar herramientas personalizadas capaces de interactuar con el flujo de trabajo del usuario dentro del entorno de Blender.
+Una de las principales ventajas de Blender es su flexibilidad y su capacidad de personalización, lo que lo convierte en una plataforma adecuada para el desarrollo de herramientas experimentales y sistemas de análisis dentro del entorno 3D \cite{jankowski2014}.
 
-\section{Arquitectura del addon}
-
-El addon desarrollado ha sido diseñado siguiendo una arquitectura modular con el objetivo de mejorar la organización del código, facilitar su mantenimiento y permitir futuras ampliaciones del sistema. Esta arquitectura se compone de varios módulos funcionales encargados de gestionar diferentes aspectos del proceso de recopilación y análisis de datos.
-
-Los principales componentes del sistema son los siguientes:
-
+\textbf{Ventajas:}
 \begin{itemize}
-    \item \textbf{Módulo de captura de eventos}: encargado de interceptar y registrar eventos relevantes que ocurren durante el proceso de modelado. Entre estos eventos se incluyen cambios de modo de edición (Object/Edit), creación y eliminación de objetos, duplicados, operaciones de fusión de geometría y modificaciones en las coordenadas UV.
-
-    \item \textbf{Módulo de extracción de variables internas}: responsable de acceder a las estructuras internas de Blender y extraer información relevante de la escena. Entre los datos recopilados se encuentran propiedades espaciales de los objetos, características geométricas de las mallas y configuraciones de modificadores.
-
-    \item \textbf{Módulo de análisis}: encargado de procesar los datos recopilados con el objetivo de generar métricas que permitan estudiar el proceso de modelado desde diferentes perspectivas, incluyendo análisis temporal, espacial y estadístico.
-
-    \item \textbf{Interfaz de usuario}: implementada mediante paneles personalizados integrados en la interfaz de Blender. Esta interfaz permite gestionar el consentimiento del usuario para la recopilación de datos, activar o desactivar el sistema de registro y visualizar información básica sobre las métricas obtenidas.
+    \item Software libre y multiplataforma.
+    \item Amplia comunidad y documentación.
+    \item API completa para acceder a datos internos.
 \end{itemize}
 
-La separación en módulos permite que cada componente del sistema se encargue de una funcionalidad específica, lo que facilita tanto la comprensión de la arquitectura como la evolución futura del proyecto.
-
-\section{Técnicas de extracción y análisis de datos}
-
-Para la obtención de información estructurada sobre el proceso de modelado se han empleado diversas técnicas de extracción y procesamiento de datos.
-
+\textbf{Limitaciones:}
 \begin{itemize}
-
-    \item \textbf{Acceso a la API interna (\texttt{bpy})}: se utiliza para consultar las propiedades de los diferentes elementos de la escena, incluyendo objetos, mallas, modificadores, materiales y transformaciones espaciales. Este acceso permite recopilar información detallada sobre el estado de la escena en cada momento.
-
-    \item \textbf{Uso de handlers}: Blender proporciona mecanismos de gestión de eventos conocidos como \textit{handlers}, que permiten ejecutar código en respuesta a determinados cambios dentro del entorno. En este proyecto se han utilizado manejadores como \texttt{depsgraph\_update\_post} o \texttt{load\_post} para detectar modificaciones en la escena y registrar los eventos relevantes en tiempo real.
-
-    \item \textbf{Serialización en formato JSON}: los datos recopilados se estructuran mediante serialización en formato JSON. Este formato facilita el almacenamiento y la posterior exportación de la información, permitiendo su análisis mediante herramientas externas.
-
-    \item \textbf{Análisis estadístico básico}: una vez recopilados los datos, se calculan diferentes métricas que permiten caracterizar el proceso de modelado. Entre ellas se incluyen el número de operaciones realizadas por sesión, la frecuencia de cambios de modo, la evolución temporal del modelo y la complejidad geométrica de los objetos, medida mediante el número de vértices, aristas y caras.
-    
+    \item Curva de aprendizaje elevada.
+    \item API compleja y en constante evolución.
 \end{itemize}
 
-Estas técnicas permiten transformar la información generada durante el proceso de modelado en un conjunto de datos estructurados susceptibles de ser analizados posteriormente.
+\section{Lenguaje de programación: Python}
 
-\section{Herramientas complementarias}
+El desarrollo del sistema se ha realizado utilizando Python, lenguaje oficial de scripting de Blender. Python permite interactuar con el entorno de Blender mediante su API, facilitando la automatización de tareas y la creación de herramientas personalizadas.
 
-Además de Blender y Python, se han utilizado diversas herramientas complementarias durante el desarrollo del proyecto.
+El uso de Python es habitual en entornos de análisis de datos y desarrollo de software debido a su simplicidad y versatilidad \cite{data_analysis}.
 
+\textbf{Ventajas:}
 \begin{itemize}
-
-    \item \textbf{Entorno de desarrollo integrado (IDE)} para la escritura, organización y depuración del código fuente.
-
-    \item \textbf{Sistema de control de versiones}, utilizado para gestionar las diferentes versiones del código y facilitar el seguimiento del desarrollo del proyecto.
-
-    \item \textbf{Librerías estándar de Python} empleadas para el procesamiento de datos y la gestión de estructuras de información.
-
-    \item \textbf{Herramientas de análisis externo}, utilizadas para explorar y analizar los datos exportados por el sistema una vez finalizadas las sesiones de modelado.
-
+    \item Lenguaje sencillo y legible.
+    \item Gran cantidad de librerías disponibles.
+    \item Integración directa con Blender.
 \end{itemize}
 
-El uso combinado de estas herramientas ha permitido estructurar de forma eficiente el proceso de desarrollo y facilitar el análisis posterior de los datos recopilados.
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Menor rendimiento en comparación con lenguajes compilados.
+    \item Dependencia de la API de Blender para ciertas funcionalidades.
+\end{itemize}
 
-\section{Metodología de validación}
+\section{API de Blender (\texttt{bpy})}
 
-Para verificar el correcto funcionamiento del sistema desarrollado se ha seguido una metodología de validación basada en un proceso iterativo.
+El módulo \texttt{bpy} proporciona acceso a la estructura interna de Blender, permitiendo manipular objetos, mallas, transformaciones y otros elementos de la escena.
 
-En una primera fase se desarrolló una versión experimental del addon que permitió comprobar la viabilidad del sistema de captura de eventos y la correcta recopilación de los datos generados durante el proceso de modelado.
+Esta API es fundamental para el desarrollo del sistema, ya que permite acceder a los datos necesarios para la recopilación de información del proceso de modelado.
 
-Posteriormente se realizaron pruebas controladas con usuarios de prueba, lo que permitió detectar posibles problemas en el registro de eventos y realizar ajustes en el sistema.
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Acceso completo a la escena y sus elementos.
+    \item Permite automatizar procesos complejos.
+\end{itemize}
 
-Finalmente, tras introducir las mejoras necesarias, se generó una versión estable del addon destinada a la recopilación de datos reales. Esta versión permite registrar información sobre el proceso de modelado de forma continua, proporcionando un conjunto de datos que posteriormente puede ser analizado para extraer conclusiones sobre los patrones de interacción de los usuarios en entornos de modelado tridimensional.
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Documentación técnica extensa y compleja.
+    \item Dependencia de la versión de Blender.
+\end{itemize}
 
-En conjunto, las técnicas y herramientas descritas permiten crear un sistema capaz de registrar de forma estructurada la interacción del usuario dentro de Blender y facilitar su posterior análisis desde diferentes perspectivas.
+\section{Sistema de eventos y handlers}
+
+Para la detección de cambios en la escena se han utilizado los mecanismos de eventos proporcionados por Blender, conocidos como \textit{handlers}. Estos permiten ejecutar código en respuesta a modificaciones en el entorno, como cambios en objetos o en la estructura de la escena.
+
+El uso de handlers permite implementar sistemas reactivos que capturan información en tiempo real, lo que resulta fundamental para el registro de eventos de modelado.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Permiten detectar cambios en tiempo real.
+    \item Integración directa con el flujo de trabajo del usuario.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Posibles problemas de rendimiento si no se gestionan adecuadamente.
+    \item Complejidad en la sincronización de eventos.
+\end{itemize}
+
+\section{Formato de almacenamiento: CSV}
+
+El formato CSV se ha utilizado para almacenar los datos recopilados durante las sesiones de modelado. Este formato permite representar información estructurada de forma sencilla y es ampliamente compatible con herramientas de análisis.
+
+El uso de CSV facilita la exportación y el procesamiento posterior de los datos mediante herramientas externas \cite{data_analysis}.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Formato simple y ligero.
+    \item Alta compatibilidad con herramientas de análisis.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item No soporta estructuras complejas de datos.
+    \item Sensible a errores de formato.
+\end{itemize}
+
+\section{Herramientas de desarrollo}
+
+Durante el desarrollo del proyecto se han utilizado diferentes herramientas auxiliares:
+
+\subsection{Entorno de desarrollo (IDE)}
+
+Se ha empleado un entorno de desarrollo integrado para la escritura y depuración del código.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Facilita la organización del código.
+    \item Mejora la detección de errores.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Dependencia de herramientas externas.
+\end{itemize}
+
+\subsection{Control de versiones}
+
+Se ha utilizado Git como sistema de control de versiones y GitHub como plataforma de almacenamiento y gestión del código.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Permite el seguimiento de cambios.
+    \item Facilita la gestión de versiones del proyecto.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Requiere conocimiento previo de la herramienta.
+\end{itemize}
+
+\section{Resumen}
+
+Las herramientas y técnicas descritas en este capítulo constituyen la base tecnológica del sistema desarrollado. Su selección responde a la necesidad de integrar la captura de datos, su almacenamiento y su posterior análisis dentro de un entorno de modelado tridimensional, garantizando la viabilidad del sistema propuesto.
+

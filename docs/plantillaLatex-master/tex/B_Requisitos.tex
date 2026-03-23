@@ -1,7 +1,12 @@
 \apendice{Especificación de Requisitos}
 
-En este apartado se presentan los casos de uso representativos de los dos addons desarrollados en el proyecto:  
-el addon de recopilación de datos y el addon de análisis de datos y métricas. Cada caso de uso incluye información detallada de precondiciones, acciones, postcondiciones y posibles excepciones.
+En este apartado se presenta la especificación de requisitos del sistema desarrollado, compuesto por dos addons independientes para Blender: un addon de recopilación de datos y un addon de análisis de datos y métricas.
+
+En primer lugar, se describen los casos de uso más representativos del sistema, ya que constituyen la base para la obtención de los requisitos funcionales. Posteriormente, se recogen los objetivos generales, los diagramas que modelan el comportamiento y la arquitectura del sistema, y finalmente el catálogo completo de requisitos funcionales, no funcionales, de interfaz y legales.
+
+\section{Casos de uso}
+
+A continuación, se describen los casos de uso principales del sistema. Las Tablas~\ref{tab:cu1} a~\ref{tab:cu6} recogen de forma estructurada la información esencial de cada caso de uso, incluyendo su descripción, precondiciones, flujo de acciones, postcondiciones y posibles excepciones.
 
 % ----------------------------
 % CU-1: Creación de objeto
@@ -11,24 +16,25 @@ el addon de recopilación de datos y el addon de análisis de datos y métricas.
 		\toprule
 		\textbf{CU-1}    & Registrar creación de objeto en la escena \\
 		\toprule
-		\textbf{Versión}              & 1.0    \\
+		\textbf{Versión}              & 1.0 \\
 		\textbf{Autor}                & María \\
-		\textbf{Requisitos asociados} & RF-01, RF-02 \\
-		\textbf{Descripción}          & Captura automática de la creación de un objeto por el usuario, incluyendo propiedades geométricas y posición espacial. \\
+		\textbf{Requisitos asociados} & RF-01, RF-10 \\
+		\textbf{Descripción}          & Captura automática de la creación de un objeto por parte del usuario, incluyendo propiedades geométricas y posición espacial. \\
 		\textbf{Precondición}         & El addon de recopilación de datos está activado y la sesión de Blender está abierta. \\
 		\textbf{Acciones}             &
 		\begin{enumerate}
 			\item El usuario crea un nuevo objeto en la escena.
 			\item El módulo de captura detecta la acción.
 			\item Se extraen las propiedades relevantes del objeto.
-			\item Los datos se almacenan en la estructura JSON correspondiente.
+			\item Los datos se almacenan en el archivo CSV correspondiente.
 		\end{enumerate} \\
-		\textbf{Postcondición}        & El evento queda registrado y disponible para análisis posterior. \\
+		\textbf{Postcondición}        & El evento queda registrado y disponible para su análisis posterior. \\
 		\textbf{Excepciones}          & Error en la captura debido a conflicto con otro addon o fallo interno de Blender. \\
 		\textbf{Importancia}          & Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-1: Registro de creación de objetos (addon de recopilación).}
+	\caption{CU-1: Registro de creación de objetos.}
+	\label{tab:cu1}
 \end{table}
 
 % ----------------------------
@@ -39,24 +45,25 @@ el addon de recopilación de datos y el addon de análisis de datos y métricas.
 		\toprule
 		\textbf{CU-2}    & Registrar modificaciones de geometría de un objeto \\
 		\toprule
-		\textbf{Versión}              & 1.0    \\
+		\textbf{Versión}              & 1.0 \\
 		\textbf{Autor}                & María \\
-		\textbf{Requisitos asociados} & RF-03, RF-04 \\
-		\textbf{Descripción}          & Detecta cambios en la geometría de los objetos, incluyendo vértices, aristas y caras, y registra las modificaciones. \\
+		\textbf{Requisitos asociados} & RF-02, RF-10 \\
+		\textbf{Descripción}          & Detecta cambios en la geometría de los objetos, incluyendo vértices, aristas y caras, y registra las modificaciones realizadas. \\
 		\textbf{Precondición}         & El addon de recopilación de datos está activo y el objeto existe en la escena. \\
 		\textbf{Acciones}             &
 		\begin{enumerate}
-			\item El usuario realiza modificaciones en el objeto (edición de malla, extrusión, etc.).
+			\item El usuario realiza modificaciones en el objeto, por ejemplo edición de malla, extrusión o combinación.
 			\item El sistema detecta los cambios geométricos mediante handlers de Blender.
 			\item Se registran las propiedades previas y actuales del objeto.
 			\item Los datos se almacenan para análisis temporal y estructural posterior.
 		\end{enumerate} \\
-		\textbf{Postcondición}        & La modificación queda registrada con información suficiente para reconstruir los cambios. \\
-		\textbf{Excepciones}          & Error en la captura si la malla es demasiado compleja o conflicto con otro addon. \\
+		\textbf{Postcondición}        & La modificación queda registrada con información suficiente para reconstruir los cambios relevantes. \\
+		\textbf{Excepciones}          & Error en la captura si la malla es demasiado compleja o existe conflicto con otro addon. \\
 		\textbf{Importancia}          & Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-2: Registro de modificaciones de geometría (addon de recopilación).}
+	\caption{CU-2: Registro de modificaciones de geometría.}
+	\label{tab:cu2}
 \end{table}
 
 % ----------------------------
@@ -69,21 +76,22 @@ el addon de recopilación de datos y el addon de análisis de datos y métricas.
 		\toprule
 		\textbf{Versión}              & 1.0 \\
 		\textbf{Autor}                & María \\
-		\textbf{Requisitos asociados} & RF-05, RF-06 \\
-		\textbf{Descripción}          & Detecta y registra cambios de modo de edición (Object/Edit/Vertex Paint/Weight Paint). \\
+		\textbf{Requisitos asociados} & RF-03, RF-10 \\
+		\textbf{Descripción}          & Detecta y registra los cambios de modo de trabajo en Blender, especialmente entre \textit{Object Mode} y \textit{Edit Mode}. \\
 		\textbf{Precondición}         & El addon de recopilación de datos está activo. \\
 		\textbf{Acciones}             &
 		\begin{enumerate}
 			\item El usuario cambia el modo de edición de un objeto.
 			\item El sistema detecta el cambio mediante handlers de Blender.
-			\item Se registra el tipo de modo anterior y el modo actual, así como el objeto afectado.
+			\item Se registra el modo anterior, el modo actual y el objeto afectado.
 		\end{enumerate} \\
-		\textbf{Postcondición}        & El cambio de modo queda registrado con timestamp. \\
-		\textbf{Excepciones}          & Fallo en la captura si la escena está bloqueada o el objeto no existe. \\
+		\textbf{Postcondición}        & El cambio de modo queda registrado con su marca temporal correspondiente. \\
+		\textbf{Excepciones}          & Fallo en la captura si la escena está bloqueada o el objeto ya no existe. \\
 		\textbf{Importancia}          & Media \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-3: Registro de cambios de modo (addon de recopilación).}
+	\caption{CU-3: Registro de cambios de modo.}
+	\label{tab:cu3}
 \end{table}
 
 % ----------------------------
@@ -96,21 +104,22 @@ el addon de recopilación de datos y el addon de análisis de datos y métricas.
 		\toprule
 		\textbf{Versión}              & 1.0 \\
 		\textbf{Autor}                & María \\
-		\textbf{Requisitos asociados} & RF-07, RF-08 \\
-		\textbf{Descripción}          & Registra la eliminación de un objeto de la escena, almacenando propiedades relevantes antes de su desaparición. \\
-		\textbf{Precondición}         & El addon de recopilación está activo y el objeto existe. \\
+		\textbf{Requisitos asociados} & RF-04, RF-10 \\
+		\textbf{Descripción}          & Registra la eliminación de un objeto de la escena, almacenando sus propiedades relevantes antes de su desaparición. \\
+		\textbf{Precondición}         & El addon de recopilación de datos está activo y el objeto existe en la escena. \\
 		\textbf{Acciones}             &
 		\begin{enumerate}
 			\item El usuario elimina un objeto.
 			\item El addon detecta la eliminación mediante handlers.
-			\item Se registran propiedades clave del objeto eliminado y la hora de la acción.
+			\item Se registran propiedades clave del objeto eliminado y la marca temporal de la acción.
 		\end{enumerate} \\
-		\textbf{Postcondición}        & La eliminación queda registrada para análisis histórico. \\
-		\textbf{Excepciones}          & Fallo si la escena está corrupta o conflicto con otro addon. \\
+		\textbf{Postcondición}        & La eliminación queda registrada para su análisis histórico posterior. \\
+		\textbf{Excepciones}          & Fallo si la escena está corrupta o existe conflicto con otro addon. \\
 		\textbf{Importancia}          & Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-4: Registro de eliminación de objetos (addon de recopilación).}
+	\caption{CU-4: Registro de eliminación de objetos.}
+	\label{tab:cu4}
 \end{table}
 
 % ----------------------------
@@ -123,21 +132,22 @@ el addon de recopilación de datos y el addon de análisis de datos y métricas.
 		\toprule
 		\textbf{Versión}              & 1.0 \\
 		\textbf{Autor}                & María \\
-		\textbf{Requisitos asociados} & RF-09, RF-10 \\
-		\textbf{Descripción}          & Permite consultar métricas temporales, espaciales y estadísticas de la sesión de modelado. \\
+		\textbf{Requisitos asociados} & RF-05, RF-07 \\
+		\textbf{Descripción}          & Permite consultar métricas temporales, espaciales y estadísticas obtenidas a partir de la sesión de modelado registrada. \\
 		\textbf{Precondición}         & El addon de análisis de datos tiene acceso a los registros de la sesión. \\
 		\textbf{Acciones}             &
 		\begin{enumerate}
 			\item El usuario abre el panel de métricas.
-			\item El addon calcula métricas a partir de los datos registrados.
-			\item Se muestran gráficas y resúmenes estadísticos filtrables por objeto, evento o rango temporal.
+			\item El addon calcula las métricas a partir de los datos registrados.
+			\item Se muestran resúmenes estadísticos y resultados filtrables por objeto, evento o rango temporal.
 		\end{enumerate} \\
 		\textbf{Postcondición}        & Las métricas quedan visibles en el panel del usuario. \\
 		\textbf{Excepciones}          & Datos incompletos o corruptos; error en el cálculo de métricas. \\
 		\textbf{Importancia}          & Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-5: Visualización de métricas (addon de análisis).}
+	\caption{CU-5: Visualización de métricas.}
+	\label{tab:cu5}
 \end{table}
 
 % ----------------------------
@@ -150,100 +160,109 @@ el addon de recopilación de datos y el addon de análisis de datos y métricas.
 		\toprule
 		\textbf{Versión}              & 1.0 \\
 		\textbf{Autor}                & María \\
-		\textbf{Requisitos asociados} & RF-11, RF-12 \\
-		\textbf{Descripción}          & Permite exportar los datos registrados en formato CSV o JSON para análisis externo. \\
-		\textbf{Precondición}         & Datos previamente registrados y addon de análisis activo. \\
+		\textbf{Requisitos asociados} & RF-06 \\
+		\textbf{Descripción}          & Permite exportar los datos registrados para su consulta o tratamiento externo. \\
+		\textbf{Precondición}         & Existen datos previamente registrados y el addon de análisis está activo. \\
 		\textbf{Acciones}             &
 		\begin{enumerate}
 			\item El usuario selecciona la opción de exportación.
-			\item El addon convierte los registros internos a CSV o JSON.
-			\item El archivo se guarda en la ubicación indicada.
+			\item El addon prepara los registros almacenados.
+			\item El archivo se guarda en la ubicación indicada por el usuario.
 		\end{enumerate} \\
 		\textbf{Postcondición}        & Los datos quedan disponibles para análisis externo. \\
-		\textbf{Excepciones}          & Error de escritura o permisos insuficientes. \\
+		\textbf{Excepciones}          & Error de escritura o permisos insuficientes en la ruta de destino. \\
 		\textbf{Importancia}          & Media \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-6: Exportación de datos (addon de análisis).}
+	\caption{CU-6: Exportación de datos.}
+	\label{tab:cu6}
 \end{table}
 
-% ----------------------------
+\clearpage
+
 \section{Objetivos generales}
 
+A partir de los casos de uso descritos en las Tablas~\ref{tab:cu1} a~\ref{tab:cu6}, se establecen los objetivos generales que debe satisfacer el sistema:
+
 \begin{itemize}
-    \item Registrar de manera precisa los eventos relevantes durante el modelado 3D.
-    \item Permitir análisis estadístico y visualización de los datos recopilados.
-    \item Garantizar persistencia, integridad y trazabilidad de los datos entre sesiones.
-    \item Proporcionar una interfaz clara y segura para la interacción con los addons.
-    \item Cumplir con la normativa legal y ética de protección de datos.
+    \item Registrar de manera precisa los eventos relevantes producidos durante el modelado 3D.
+    \item Permitir el análisis estadístico y la visualización de los datos recopilados.
+    \item Garantizar la persistencia, integridad y trazabilidad de los datos entre sesiones.
+    \item Proporcionar una interfaz clara y segura para la interacción con ambos addons.
+    \item Cumplir con la normativa legal y ética relativa a la protección de datos y al uso de software libre.
 \end{itemize}
 
-% ----------------------------
-
 \section{Diagramas del sistema}
+
+Con el fin de complementar la descripción textual del sistema, se incluyen a continuación varios diagramas que representan sus funcionalidades, flujo de trabajo, secuencia de interacción y arquitectura general.
+
+En primer lugar, la Figura~\ref{fig:casos_uso} muestra el diagrama UML de casos de uso. En él se representa al usuario como actor principal y se identifican las funcionalidades más importantes del sistema. Desde el punto de vista funcional, los casos de uso \textit{Crear objeto}, \textit{Modificar geometría} y \textit{Eliminar objeto} implican necesariamente la ejecución del caso de uso \textit{Registrar evento}, En este contexto, las relaciones entre los casos de uso se corresponden conceptualmente con relaciones de tipo \textit{<<include>>} y \textit{<<extend>>}, aunque en el diagrama se han representado de forma simplificada para facilitar su lectura.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{diagramas/uml_casos_uso.png}
-    \caption{Diagrama UML de casos de uso del sistema, mostrando la interacción del usuario y los addons.}
+    \caption{Diagrama UML de casos de uso del sistema.}
+    \label{fig:casos_uso}
 \end{figure}
+
+La Figura~\ref{fig:flujo} representa el flujo general de procesamiento del sistema, desde la interacción inicial del usuario con Blender hasta la visualización de métricas. Este diagrama permite observar cómo el sistema clasifica los eventos según su tipo, registra la información en CSV y la pone posteriormente a disposición del addon de análisis.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{diagramas/flujo.png}
-    \caption{Diagrama de flujo de captura y almacenamiento de eventos en Blender.}
+    \caption{Diagrama de flujo de captura, registro y análisis de eventos.}
+    \label{fig:flujo}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{diagramas/arquitectura.png}
-    \caption{Arquitectura del sistema basada en los dos addons independientes: recopilación de datos y análisis de métricas.}
-\end{figure}
+El comportamiento dinámico del sistema se describe con mayor detalle en el diagrama de secuencia incluido en el Apéndice C.
 
-% ----------------------------
+La Figura~\ref{fig:arquitectura} muestra una visión general del sistema, cuya arquitectura se desarrolla en detalle en el Apéndice C.
 
 \section{Catálogo de requisitos}
 
+A partir de los casos de uso y de los diagramas presentados en las Figuras~\ref{fig:casos_uso} a~\ref{fig:arquitectura}, se define el catálogo de requisitos del sistema, clasificado en requisitos funcionales, no funcionales, de interfaz de usuario y legales.
+
 \subsection{Requisitos funcionales (RF)}
 \begin{itemize}
-    \item RF-01: Registrar creación de objetos (CU-1)
-    \item RF-02: Registrar modificaciones de geometría (CU-2)
-    \item RF-03: Detectar cambios de modo de edición (CU-3)
-    \item RF-04: Registrar eliminación de objetos (CU-4)
-    \item RF-05: Visualizar métricas de modelado (CU-5)
-    \item RF-06: Exportar datos a CSV/JSON (CU-6)
-    \item RF-07: Filtrar métricas por objeto/evento/tiempo
-    \item RF-08: Notificar errores en datos
-    \item RF-09: Activar/desactivar captura desde la UI
-    \item RF-10: Registrar marcas temporales precisas
+    \item RF-01: Registrar la creación de objetos.
+    \item RF-02: Registrar modificaciones de geometría.
+    \item RF-03: Detectar cambios de modo de edición.
+    \item RF-04: Registrar la eliminación de objetos.
+    \item RF-05: Visualizar métricas de modelado.
+    \item RF-06: Exportar datos a archivo externo.
+    \item RF-07: Filtrar métricas por objeto, evento o tiempo.
+    \item RF-08: Notificar errores en los datos o en su procesamiento.
+    \item RF-09: Activar y desactivar la captura desde la interfaz de usuario.
+    \item RF-10: Registrar marcas temporales precisas en cada evento.
 \end{itemize}
 
 \subsection{Requisitos no funcionales (RNF)}
 \begin{itemize}
-    \item RNF-01: Eficiencia en captura de eventos
-    \item RNF-02: Soporte de múltiples objetos y cambios complejos
-    \item RNF-03: Persistencia de datos ante cierres inesperados
-    \item RNF-04: Interfaz clara e intuitiva
-    \item RNF-05: Código mantenible y modular
+    \item RNF-01: Eficiencia en la captura de eventos.
+    \item RNF-02: Soporte de múltiples objetos y cambios complejos.
+    \item RNF-03: Persistencia de datos ante cierres inesperados.
+    \item RNF-04: Interfaz clara e intuitiva.
+    \item RNF-05: Código mantenible y modular.
 \end{itemize}
 
 \subsection{Requisitos de interfaz de usuario (RIU)}
 \begin{itemize}
-    \item RIU-01: Panel de control de captura
-    \item RIU-02: Panel de métricas con gráficos y tablas
-    \item RIU-03: Configuración de exportación de datos
-    \item RIU-04: Alertas de errores
+    \item RIU-01: Panel de control de captura.
+    \item RIU-02: Panel de métricas con tablas o resúmenes visuales.
+    \item RIU-03: Configuración de exportación de datos.
+    \item RIU-04: Alertas de errores y estados del sistema.
 \end{itemize}
 
 \subsection{Requisitos legales y éticos (RLE)}
 \begin{itemize}
-    \item RLE-01: Cumplimiento normativa protección de datos
-    \item RLE-02: Consentimiento explícito del usuario
-    \item RLE-03: Uso de software libre respetando licencias
+    \item RLE-01: Cumplimiento de la normativa de protección de datos.
+    \item RLE-02: Consentimiento explícito del usuario para la recopilación de datos.
+    \item RLE-03: Uso de software libre respetando las licencias aplicables.
 \end{itemize}
 
-% ----------------------------
 \section{Especificación de requisitos}
+
+Una vez definido el catálogo general, la Tabla~\ref{tab:requisitos} recoge de forma consolidada la especificación completa de requisitos del sistema. En ella se relacionan los identificadores de requisito con su descripción, el addon responsable, su prioridad y el mecanismo de verificación asociado.
 
 \begin{table}[p]
 \centering
@@ -276,4 +295,5 @@ RLE-03 & Uso software libre respetando licencias & Ambos & Media & Licencias ver
 \bottomrule
 \end{tabular}
 \caption{Especificación completa de requisitos, relacionando RF, RNF, RIU y RLE con los casos de uso.}
+\label{tab:requisitos}
 \end{table}

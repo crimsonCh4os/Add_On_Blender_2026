@@ -1,91 +1,194 @@
 \capitulo{5}{Aspectos relevantes del desarrollo del proyecto}
 
-Este capítulo describe los aspectos más relevantes del proceso de desarrollo del sistema propuesto. En él se presentan las decisiones técnicas adoptadas durante las distintas fases del proyecto, así como las soluciones implementadas para abordar los principales retos encontrados.
+Este capítulo recoge las decisiones técnicas más relevantes adoptadas durante el desarrollo del sistema, así como los principales retos encontrados y las soluciones implementadas. A diferencia de los capítulos anteriores, centrados en fundamentos y herramientas, este apartado se enfoca en el diseño del sistema y en la justificación de las elecciones realizadas.
 
-A diferencia de los capítulos anteriores, centrados en los fundamentos teóricos y las herramientas utilizadas, este apartado se enfoca en la experiencia práctica obtenida durante la construcción del sistema. Se describen tanto el ciclo de vida seguido durante el desarrollo como los aspectos más significativos relacionados con el análisis del problema, el diseño de la arquitectura del addon y su posterior implementación.
-
-El objetivo de este capítulo es documentar las decisiones de diseño tomadas, justificando aquellas que han resultado especialmente relevantes para el correcto funcionamiento del sistema.
+Se abordan aspectos clave como la arquitectura del sistema, la elección de formatos de almacenamiento, los mecanismos de captura de eventos y las estrategias utilizadas para garantizar la eficiencia del sistema.
 
 \section{Ciclo de vida del desarrollo}
 
-El desarrollo del proyecto se ha llevado a cabo siguiendo un enfoque iterativo e incremental. Este tipo de enfoque permite construir el sistema de forma progresiva, validando cada una de las funcionalidades antes de continuar con las siguientes fases del desarrollo.
+El desarrollo del proyecto se ha realizado siguiendo un enfoque iterativo e incremental, ampliamente utilizado en el desarrollo de software por su capacidad para adaptarse a cambios y validar soluciones de forma progresiva \cite{pressman2005}.
 
-En una primera etapa se realizó un análisis preliminar del problema, identificando los requisitos principales del sistema y las capacidades que debía ofrecer el addon. Durante esta fase también se exploraron las posibilidades que ofrece la API de Blender para la captura de eventos y la extracción de información de la escena.
+Inicialmente se llevó a cabo un análisis exploratorio del problema, centrado en comprender las capacidades de la API de Blender y las posibilidades de capturar información del proceso de modelado.
 
-Posteriormente se desarrolló una primera versión experimental del sistema. Esta versión inicial permitió comprobar la viabilidad técnica de las principales funcionalidades, como la detección de eventos de modelado o el acceso a los datos estructurales de la escena.
-
-Una vez validada esta fase inicial, el desarrollo continuó mediante sucesivas iteraciones en las que se fueron incorporando nuevas funcionalidades, mejorando la organización del código y refinando los mecanismos de recopilación y almacenamiento de datos.
-
-Este enfoque permitió detectar problemas de forma temprana y adaptar progresivamente el diseño del sistema a los requisitos del proyecto.
-
-\section{Análisis del problema}
-
-Uno de los principales retos del proyecto consiste en registrar información relevante del proceso de modelado sin interferir en el flujo de trabajo del usuario. Para ello era necesario identificar qué tipo de eventos y variables resultaban significativos para el análisis del proceso de creación de modelos tridimensionales.
-
-Durante la fase de análisis se identificaron tres tipos principales de información que debían ser registrados por el sistema:
-
+Posteriormente se desarrolló una versión funcional mínima del sistema que permitió validar aspectos críticos como:
 \begin{itemize}
-    \item Información temporal, relacionada con el momento en el que se producen las distintas acciones del usuario.
-    
-    \item Información espacial, asociada a la posición, rotación y escala de los objetos dentro de la escena.
-    
-    \item Información estructural, que describe las características geométricas de los objetos modelados, como el número de vértices, aristas o caras.
+    \item La detección de eventos mediante handlers.
+    \item El acceso a datos de la escena en tiempo real.
+    \item La viabilidad de almacenar los datos generados.
 \end{itemize}
 
-Además, se identificaron ciertos eventos de modelado especialmente relevantes, como la duplicación de objetos, las operaciones de fusión de geometría o los cambios entre los distintos modos de edición de Blender.
+A partir de esta base, el sistema fue evolucionando mediante iteraciones sucesivas en las que se incorporaron nuevas métricas, mejoras en el rendimiento y refinamientos en la estructura del código.
 
-La identificación de estos eventos permitió definir los mecanismos necesarios para su detección automática dentro del entorno de Blender.
+\section{Análisis del problema y definición de métricas}
+
+Uno de los principales retos del proyecto consiste en determinar qué información es relevante para analizar el proceso de modelado 3D.
+
+A partir del análisis realizado, se definieron tres categorías principales de datos:
+
+\begin{itemize}
+    \item \textbf{Datos temporales}: permiten analizar la evolución del proceso (tiempo total, pausas, fases).
+    \item \textbf{Datos espaciales}: describen la interacción en el espacio 3D (posición, velocidad, proximidad).
+    \item \textbf{Datos estructurales}: caracterizan la geometría del modelo (vértices, caras, normales).
+\end{itemize}
+
+Estas categorías se implementan en el sistema mediante un conjunto de métricas definidas en estructuras como:
+
+\begin{verbatim}
+ANALYSIS = {
+    "A1": {"label":"Total time","typology":"Temporal"},
+    "A4": {"label":"Movement Speed","typology":"Spatial"},
+    "A12":{"label":"Model evolution","typology":"Strategy"}
+}
+\end{verbatim}
+
+Esta clasificación permite estructurar el análisis y facilita la generación de visualizaciones coherentes.
 
 \section{Diseño de la arquitectura del sistema}
 
-Con el objetivo de garantizar una buena organización del código y facilitar el mantenimiento del sistema, el addon fue diseñado siguiendo una arquitectura modular.
-
-Esta arquitectura divide el sistema en distintos componentes independientes que se encargan de gestionar funcionalidades específicas. De esta forma se reduce el acoplamiento entre las diferentes partes del sistema y se facilita la incorporación de nuevas funcionalidades en el futuro.
-
-Los principales componentes de la arquitectura son los siguientes:
+El sistema se ha diseñado siguiendo una arquitectura modular, que separa claramente las responsabilidades del sistema en distintos componentes:
 
 \begin{itemize}
-
-\item \textbf{Sistema de captura de eventos}
-
-Este componente se encarga de monitorizar los cambios que se producen dentro del entorno de modelado. Para ello se utilizan los mecanismos de gestión de eventos proporcionados por Blender, que permiten ejecutar código cuando se producen modificaciones en la escena.
-
-\item \textbf{Sistema de recopilación de datos}
-
-Una vez detectados los eventos relevantes, el sistema extrae información adicional sobre el estado de la escena y de los objetos implicados. Esta información incluye propiedades geométricas, transformaciones espaciales y otros atributos relevantes del modelo.
-
-\item \textbf{Sistema de almacenamiento}
-
-Los datos recopilados se almacenan en una estructura organizada que permite mantener la información entre diferentes sesiones de trabajo. Esto permite analizar posteriormente la evolución de los modelos a lo largo del tiempo.
-
-\item \textbf{Interfaz de usuario}
-
-El addon incluye una interfaz integrada en Blender que permite al usuario controlar el funcionamiento del sistema. Desde esta interfaz es posible activar o desactivar la recopilación de datos, consultar información básica sobre la sesión actual y gestionar el consentimiento del usuario.
-
+    \item \textbf{Captura de eventos}
+    \item \textbf{Procesamiento de datos}
+    \item \textbf{Almacenamiento}
+    \item \textbf{Visualización}
 \end{itemize}
 
-Esta organización modular facilita tanto el desarrollo del sistema como su posible ampliación en futuras versiones.
+Esta separación reduce el acoplamiento y facilita la escalabilidad del sistema, siguiendo principios de diseño de software como la modularidad y la cohesión funcional \cite{gamma1994}.
 
-\section{Aspectos relevantes de la implementación}
+\section{Decisión de almacenamiento: CSV frente a base de datos}
 
-Durante la fase de implementación fue necesario resolver varios problemas técnicos relacionados con la captura de eventos y el acceso a las estructuras internas de Blender.
+Una de las decisiones más relevantes del proyecto fue la elección del formato de almacenamiento.
 
-Uno de los principales retos consistía en detectar de forma fiable los cambios que se producen en la escena durante el proceso de modelado. Para ello se emplearon diferentes mecanismos proporcionados por la API de Blender, como los handlers asociados al grafo de dependencias del sistema.
+Aunque el uso de bases de datos (SQL o NoSQL) es habitual en sistemas de análisis de datos, en este proyecto se optó por el uso de archivos CSV.
 
-Estos mecanismos permiten ejecutar funciones específicas cuando se producen actualizaciones en la escena, lo que facilita la detección de modificaciones en los objetos o en sus propiedades.
+\textbf{Justificación:}
+\begin{itemize}
+    \item Simplicidad de implementación.
+    \item Integración directa con Blender.
+    \item Compatibilidad con herramientas de análisis (Python, Excel, etc.).
+\end{itemize}
 
-Otro aspecto relevante fue el diseño de la estructura de datos utilizada para almacenar la información recopilada. Dado que los datos pueden generarse de forma continua durante una sesión de modelado, era necesario utilizar un formato flexible que permitiera representar distintos tipos de información.
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Falta de estructura jerárquica.
+    \item Menor eficiencia en grandes volúmenes de datos.
+\end{itemize}
 
-Para resolver este problema se optó por utilizar un sistema de serialización basado en JSON, que permite almacenar estructuras de datos complejas de forma sencilla y facilita su posterior análisis mediante herramientas externas.
+El uso de CSV es común en procesos de análisis exploratorio de datos debido a su facilidad de uso \cite{data_analysis}.
 
-Finalmente, también se prestó especial atención al impacto del sistema sobre el rendimiento del entorno de modelado. Dado que el addon se ejecuta en paralelo con el trabajo del usuario, era fundamental minimizar la sobrecarga generada por el proceso de recopilación de datos. Para ello se diseñaron mecanismos de captura de eventos eficientes que registran únicamente la información estrictamente necesaria para el análisis posterior.
+Un ejemplo de registro generado es:
 
-\section{Experiencia obtenida durante el desarrollo}
+\begin{verbatim}
+USER_ID,TimeStamp,UserX,UserY,UserZ,VertexDelta,ModeChanged
+a1b2c3d4,12.34,1.2,0.5,3.1,5,1
+\end{verbatim}
 
-El desarrollo de este proyecto ha permitido explorar en profundidad las posibilidades que ofrece Blender para la creación de herramientas personalizadas mediante el uso de su API.
+\section{Captura de eventos: uso de handlers}
 
-Además, el proyecto ha puesto de manifiesto el potencial del análisis de datos aplicado a entornos de modelado tridimensional, abriendo la puerta a futuros trabajos orientados al estudio de los procesos de creación de modelos 3D.
+La captura de eventos se implementa mediante los \textit{handlers} de Blender, que permiten ejecutar código cuando se producen cambios en la escena.
 
-La experiencia adquirida durante el desarrollo también ha permitido identificar posibles mejoras que podrían incorporarse en futuras versiones del sistema, como la ampliación del conjunto de eventos registrados o la integración de herramientas más avanzadas de análisis de datos.
+Por ejemplo:
 
-En conjunto, el proyecto demuestra la viabilidad de desarrollar sistemas capaces de registrar y analizar la interacción del usuario dentro de entornos de modelado tridimensional, proporcionando una base sobre la que se pueden construir futuras investigaciones en este ámbito.
+\begin{verbatim}
+bpy.app.handlers.depsgraph_update_post.append(operator_tracker)
+\end{verbatim}
+
+\textbf{Justificación:}
+\begin{itemize}
+    \item Permiten capturar eventos en tiempo real.
+    \item No requieren modificar el flujo de trabajo del usuario.
+\end{itemize}
+
+\textbf{Problema:}
+Los handlers pueden ejecutarse con alta frecuencia, lo que puede afectar al rendimiento.
+
+\section{Estrategias de eficiencia del sistema}
+
+Uno de los aspectos más críticos del desarrollo ha sido minimizar el impacto del sistema en el rendimiento de Blender.
+
+Para ello se han implementado varias estrategias:
+
+\subsection{Registro basado en cambios (change-based logging)}
+
+En lugar de registrar datos continuamente, el sistema solo genera registros cuando detecta cambios relevantes:
+
+\begin{verbatim}
+if not state_changed and not any_operator_flag:
+    return None
+\end{verbatim}
+
+Esto reduce significativamente el número de operaciones de escritura.
+
+\subsection{Uso de firmas de estado}
+
+Se utiliza una firma del estado de la escena para detectar cambios:
+
+\begin{verbatim}
+signature = (verts, ngons, tris, mode, uv_hash)
+\end{verbatim}
+
+Solo se registra información cuando esta firma cambia.
+
+\subsection{Control de frecuencia mediante temporizador}
+
+El sistema utiliza un temporizador con intervalo controlado:
+
+\begin{verbatim}
+return 0.25
+\end{verbatim}
+
+Esto limita la frecuencia de ejecución a 4 veces por segundo.
+
+\subsection{Filtrado de eventos irrelevantes}
+
+Se filtran eventos que no aportan información significativa, evitando ruido en los datos.
+
+\section{Problemas encontrados y soluciones}
+
+Durante el desarrollo se identificaron varios problemas relevantes:
+
+\subsection{Exceso de datos generados}
+
+\textbf{Problema:} el sistema generaba un volumen excesivo de datos.
+
+\textbf{Solución:} uso de logging basado en cambios y eliminación de duplicados.
+
+\subsection{Detección de eventos complejos}
+
+\textbf{Problema:} algunos eventos no se detectan directamente.
+
+\textbf{Solución:} análisis combinado de operadores y estado interno.
+
+\subsection{Impacto en rendimiento}
+
+\textbf{Problema:} ejecución frecuente de handlers.
+
+\textbf{Solución:}
+\begin{itemize}
+    \item Reducción de frecuencia.
+    \item Minimización de cálculos.
+    \item Uso de estructuras ligeras.
+\end{itemize}
+
+\section{Integración del sistema completo}
+
+El sistema final integra dos addons principales:
+
+\begin{itemize}
+    \item \textbf{Data Logger}: encargado de la recopilación de datos.
+    \item \textbf{Sistema de análisis}: encargado del procesamiento y visualización.
+\end{itemize}
+
+Esta separación permite desacoplar la captura de datos del análisis, facilitando la reutilización del sistema.
+
+\section{Conclusiones del desarrollo}
+
+El desarrollo del sistema ha permitido demostrar la viabilidad de capturar y analizar la interacción del usuario en entornos de modelado 3D.
+
+Las decisiones adoptadas, especialmente en relación con la captura eficiente de eventos y el almacenamiento de datos, han sido fundamentales para garantizar el correcto funcionamiento del sistema.
+
+Asimismo, el proyecto abre nuevas posibilidades en el análisis de procesos creativos en entornos tridimensionales, constituyendo una base sólida para futuras investigaciones.
+
+Una vez descrito el sistema desarrollado y sus funcionalidades, resulta necesario contextualizar la propuesta dentro del panorama actual de investigación. Para ello, en el siguiente capítulo se analizan los principales trabajos relacionados con el estudio del proceso de diseño en entornos tridimensionales.
+

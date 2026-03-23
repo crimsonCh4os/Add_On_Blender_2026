@@ -1,23 +1,31 @@
-\capitulo{1}{Introducción}
+\capitulo{1}{Introducción} 
 
-El modelado tridimensional se ha convertido en una herramienta fundamental en múltiples áreas como los videojuegos, la animación, el diseño industrial, la arquitectura o la visualización científica. En estos ámbitos, herramientas como Blender permiten a los usuarios crear, modificar y analizar modelos tridimensionales mediante una amplia variedad de técnicas y flujos de trabajo.
+El modelado tridimensional se ha convertido en una herramienta fundamental en múltiples áreas como los videojuegos, la animación, el diseño industrial, la arquitectura o la visualización científica. En estos ámbitos, las herramientas de modelado 3D permiten a los usuarios crear, modificar y analizar modelos mediante una amplia variedad de técnicas y flujos de trabajo \cite{jankowski2014}.
 
-A pesar de la popularidad de este tipo de herramientas, el proceso de modelado 3D sigue siendo complejo y altamente dependiente de la experiencia del usuario. Comprender cómo interactúan los usuarios con el entorno de modelado puede proporcionar información valiosa para mejorar tanto las herramientas como las metodologías de trabajo.
+A pesar de la evolución de estas herramientas, el proceso de modelado 3D sigue siendo complejo y altamente dependiente de la experiencia del usuario. Diversos estudios han demostrado que la interacción en entornos tridimensionales presenta dificultades asociadas a la manipulación espacial, la comprensión de la geometría y la gestión de múltiples operaciones simultáneas \cite{lavioila2017}. 
 
-En este contexto surge la necesidad de desarrollar sistemas capaces de registrar y analizar la interacción del usuario durante el proceso de modelado. La recopilación de este tipo de información permite estudiar patrones de trabajo, identificar operaciones frecuentes y comprender mejor cómo se construyen los modelos tridimensionales en la práctica.
+Además, herramientas como Blender no incorporan mecanismos nativos que permitan registrar de forma estructurada la interacción del usuario ni el estado interno de la escena durante el proceso de modelado. Esta limitación dificulta la obtención de métricas objetivas y el análisis sistemático del flujo de trabajo, lo que restringe las posibilidades de optimización, automatización y evaluación del proceso.
 
-El presente Trabajo de Fin de Grado propone el desarrollo de un sistema que permita registrar la interacción del usuario en Blender mediante un addon específico. Este sistema recopila información relevante sobre las acciones realizadas durante el modelado, almacenando datos temporales, espaciales y estructurales que posteriormente pueden ser analizados.
+Comprender cómo interactúan los usuarios con el entorno de modelado es un aspecto clave dentro del ámbito de la interacción persona-computador, especialmente en sistemas tridimensionales \cite{bimanual2012}. La recopilación de información sobre las acciones realizadas permite identificar patrones de uso, operaciones frecuentes y estrategias de modelado, aportando una base para el desarrollo de herramientas más eficientes.
 
-A partir de estos datos es posible estudiar el proceso de modelado desde una perspectiva analítica, permitiendo explorar cómo evolucionan las escenas a lo largo del tiempo y qué tipo de operaciones realizan los usuarios durante la construcción de modelos tridimensionales.
+En este contexto, surge la necesidad de desarrollar sistemas capaces de registrar y analizar la interacción del usuario durante el proceso de modelado. En los últimos años, se han propuesto diferentes enfoques para capturar y analizar datos en entornos 3D, incluyendo sistemas basados en realidad mixta y herramientas asistidas por inteligencia artificial \cite{malik2023,3description2024}.
+
+El objetivo principal de este Trabajo de Fin de Grado es desarrollar una herramienta que permita capturar, estructurar y analizar datos generados durante sesiones de modelado en Blender. Para ello, se plantea la creación de un sistema basado en addons que registre de forma no intrusiva eventos de modelado, así como variables internas del entorno (escena, objetos, modificadores, etc.), con el fin de obtener información útil y métricas que faciliten el análisis del proceso.
+
+El sistema desarrollado permite recopilar datos temporales, espaciales y estructurales, que posteriormente pueden ser analizados y visualizados para estudiar el comportamiento del usuario y la evolución de las escenas. De este modo, se proporciona una base que facilita el diagnóstico del proceso de modelado y abre la posibilidad de desarrollar herramientas de optimización, análisis avanzado o automatización en entornos de modelado 3D.
 
 \section{Estructura de la memoria}
 
 La memoria de este trabajo se organiza en diferentes capítulos que describen el desarrollo completo del proyecto.
 
-En primer lugar, el Capítulo 1 introduce el contexto del trabajo y presenta los objetivos principales del proyecto. A continuación, el Capítulo 2 detalla los objetivos específicos que guían el desarrollo del sistema.
+En primer lugar, el Capítulo 1 introduce el contexto del trabajo y plantea el problema a abordar. A continuación, el Capítulo 2 presenta los objetivos generales y específicos que guían el desarrollo del sistema.
 
-El Capítulo 3 presenta los conceptos teóricos necesarios para comprender las tecnologías y técnicas utilizadas en el proyecto, incluyendo el formato de datos CSV, el análisis de datos y el desarrollo de addons en Blender.
+El Capítulo 3 se centra en los conceptos teóricos necesarios para comprender el trabajo, incluyendo aspectos relacionados con el análisis de datos, el formato CSV y el desarrollo de addons en Blender.
 
-Posteriormente, los capítulos siguientes describen las herramientas utilizadas, el diseño del sistema, la implementación del addon y los resultados obtenidos durante su desarrollo.
+El Capítulo 4 describe las técnicas y herramientas utilizadas, así como el diseño e implementación del sistema propuesto.
 
-Finalmente, la memoria concluye con un apartado de conclusiones y posibles líneas de trabajo futuro que podrían ampliarse a partir del sistema desarrollado.
+El Capítulo 5 recoge los aspectos más relevantes del desarrollo, incluyendo decisiones de diseño, dificultades encontradas y soluciones adoptadas durante la implementación.
+
+El Capítulo 6 presenta los trabajos relacionados, situando este proyecto dentro del contexto de investigaciones previas en el ámbito del modelado 3D y la interacción en entornos tridimensionales.
+
+Finalmente, los apartados posteriores corresponden a los anexos, donde se incluye información complementaria del proyecto.

@@ -1,4 +1,81 @@
 \capitulo{7}{Conclusiones y Líneas de trabajo futuras}
 
-Todo proyecto debe incluir las conclusiones que se derivan de su desarrollo. Éstas pueden ser de diferente índole, dependiendo de la tipología del proyecto, pero normalmente van a estar presentes un conjunto de conclusiones relacionadas con los resultados del proyecto y un conjunto de conclusiones técnicas. 
-Además, resulta muy útil realizar un informe crítico indicando cómo se puede mejorar el proyecto, o cómo se puede continuar trabajando en la línea del proyecto realizado. 
+\section{Conclusiones}
+
+El presente Trabajo de Fin de Grado ha tenido como objetivo el desarrollo de un sistema capaz de registrar y analizar la interacción del usuario en entornos de modelado tridimensional, utilizando Blender como plataforma de referencia. A lo largo del proyecto se ha diseñado e implementado un addon que permite capturar información relevante del proceso de modelado de forma automática y no intrusiva.
+
+A partir del trabajo realizado, se pueden extraer las siguientes conclusiones principales:
+
+\begin{itemize}
+
+    \item Se ha demostrado la viabilidad de registrar de forma continua la interacción del usuario dentro de Blender, capturando datos relacionados con transformaciones, geometría, eventos de modelado y cambios de estado sin interferir en el flujo de trabajo.
+
+    \item El sistema desarrollado permite estructurar la información en un formato adecuado para su posterior análisis, facilitando la obtención de métricas temporales, espaciales y geométricas del proceso de modelado.
+
+    \item La integración del sistema dentro del propio entorno de Blender, mediante un addon, permite una recopilación de datos en condiciones reales de uso, a diferencia de otros enfoques basados en entornos experimentales o simulados.
+
+    \item Se ha conseguido detectar eventos relevantes de modelado, como duplicados, fusiones de geometría, cambios de modo o modificaciones en coordenadas UV, lo que permite caracterizar de forma más precisa el comportamiento del usuario.
+
+    \item El uso de mecanismos de persistencia de datos integrados en el propio archivo \textit{.blend} garantiza la continuidad de la información entre sesiones, evitando la pérdida de datos y facilitando su gestión.
+
+\end{itemize}
+
+En conjunto, el sistema desarrollado proporciona una base sólida para el análisis del proceso de modelado tridimensional, permitiendo estudiar la evolución de la escena y el comportamiento del usuario a lo largo del tiempo.
+
+\section{Conclusiones técnicas}
+
+Desde un punto de vista técnico, el desarrollo del proyecto ha permitido obtener las siguientes conclusiones:
+
+\begin{itemize}
+
+    \item El uso de la API de Blender (\texttt{bpy}) permite acceder de forma eficiente a las estructuras internas del entorno, facilitando la extracción de información relevante de la escena y de los objetos.
+
+    \item La utilización de \textit{handlers} y temporizadores permite implementar un sistema de captura de eventos en tiempo real, adaptado al funcionamiento interno de Blender.
+
+    \item La detección de cambios mediante comparación de estados (snapshots) resulta una estrategia eficaz para evitar el registro redundante de información y reducir el volumen de datos generados.
+
+    \item La implementación de un sistema de logging no intrusivo requiere un equilibrio entre frecuencia de captura y rendimiento, siendo necesario optimizar el sistema para minimizar el impacto en la experiencia del usuario.
+
+    \item La gestión de eventos complejos, como las modificaciones en coordenadas UV o las operaciones de modelado encadenadas, requiere técnicas específicas de detección y procesamiento que van más allá del simple registro de comandos.
+
+\end{itemize}
+
+Estas conclusiones ponen de manifiesto la complejidad asociada a la captura y estructuración de datos en entornos interactivos, así como la necesidad de diseñar soluciones adaptadas al funcionamiento interno de las herramientas utilizadas.
+
+\section{Limitaciones del sistema}
+
+A pesar de los resultados obtenidos, el sistema desarrollado presenta ciertas limitaciones que deben ser consideradas:
+
+\begin{itemize}
+
+    \item El sistema se ha desarrollado específicamente para Blender, lo que limita su aplicabilidad directa a otros entornos de modelado 3D.
+
+    \item La detección de algunos eventos complejos depende del estado interno del software, lo que puede generar pequeñas imprecisiones en situaciones específicas.
+
+    \item El volumen de datos generado puede ser elevado en sesiones prolongadas, lo que requiere estrategias de optimización y filtrado.
+
+    \item El análisis de los datos recogidos se ha planteado de forma básica, siendo necesario el desarrollo de herramientas más avanzadas para su explotación completa.
+
+\end{itemize}
+
+\section{Líneas de trabajo futuras}
+
+A partir del trabajo realizado, se plantean diversas líneas de mejora y desarrollo futuro:
+
+\begin{itemize}
+
+    \item \textbf{Mejora del sistema de análisis}: desarrollo de herramientas avanzadas para el análisis de los datos recogidos, incluyendo técnicas de minería de datos, aprendizaje automático o visualización interactiva en 3D.
+
+    \item \textbf{Visualización de métricas}: implementación de sistemas que permitan representar los datos directamente dentro del entorno tridimensional, facilitando su interpretación mediante gráficos, mapas o animaciones.
+
+    \item \textbf{Extensión a otros entornos}: adaptación del sistema a otras herramientas de modelado 3D o CAD, permitiendo comparar procesos de diseño entre diferentes plataformas.
+
+    \item \textbf{Optimización del rendimiento}: mejora de la eficiencia del sistema para reducir el impacto en el rendimiento en escenas complejas o sesiones prolongadas.
+
+    \item \textbf{Análisis del comportamiento del usuario}: aplicación del sistema para estudiar patrones de diseño, diferencias entre usuarios o evolución del aprendizaje en contextos educativos.
+
+    \item \textbf{Integración con inteligencia artificial}: utilización de los datos recopilados para entrenar modelos capaces de predecir acciones del usuario, sugerir operaciones o asistir en el proceso de modelado.
+
+\end{itemize}
+
+En conjunto, estas líneas de trabajo abren nuevas posibilidades para el estudio del proceso de diseño y el desarrollo de herramientas inteligentes que mejoren la interacción entre el usuario y los entornos de modelado tridimensional.

@@ -1,48 +1,158 @@
-\apendice{Plan de Proyecto Software}
-
 \section{Introducción}
 
-El presente plan de proyecto tiene como objetivo establecer las bases organizativas y metodológicas para el desarrollo del addon \textit{Análisis 3D CSV} en Blender. Este documento define las fases de planificación, los recursos necesarios, los criterios de viabilidad y las estrategias de seguimiento del proyecto, con el fin de garantizar que el desarrollo se realice de manera eficiente y cumpliendo los objetivos establecidos en el TFG.
+El presente plan de proyecto tiene como objetivo establecer las bases organizativas y metodológicas para el desarrollo del addon \textit{Análisis 3D CSV} en Blender. Este documento define la planificación del desarrollo, los recursos necesarios, los criterios de viabilidad y las estrategias de seguimiento del proyecto, con el fin de garantizar que se cumplan los objetivos establecidos en el TFG.
 
-La planificación detallada permite minimizar riesgos, optimizar el uso de los recursos disponibles y asegurar la trazabilidad de las decisiones de diseño y desarrollo. Además, proporciona un marco de referencia para futuras iteraciones o ampliaciones del sistema.
+La definición de requisitos se realizó previamente al inicio del desarrollo. A partir de ese punto, el proyecto se ha desarrollado siguiendo un enfoque iterativo basado en ciclos de trabajo de dos semanas (sprints), permitiendo evolucionar el producto de forma incremental mediante distintas versiones funcionales del addon.
+
+El desarrollo se ha basado en principios de metodologías ágiles, inspiradas en Scrum, mediante iteraciones cortas y evolución incremental del producto.
+
+El repositorio GitHub ha actuado como herramienta central de gestión del proyecto, permitiendo el control de versiones, la trazabilidad del desarrollo y el seguimiento de la evolución del sistema mediante commits, incidencias (\textit{issues}) y versiones etiquetadas.
 
 \section{Planificación temporal}
 
-La planificación temporal del proyecto se ha organizado en diferentes fases, distribuidas a lo largo del período de desarrollo del TFG. Cada fase incluye un conjunto de tareas específicas, responsables y plazos estimados.
+La planificación del proyecto se ha estructurado en sprints quincenales, alineados con la evolución real del desarrollo. El seguimiento de cada sprint se ha realizado mediante el repositorio de GitHub, utilizando \textit{commits}, \textit{issues} y versiones etiquetadas (\textit{tags}).
 
-\begin{enumerate}
-    \item \textbf{Análisis de requisitos}: identificación de necesidades del sistema, definición de funcionalidades clave y recopilación de información sobre la API de Blender.  
-    \textit{Duración estimada: 2 semanas}
-    
-    \item \textbf{Diseño del sistema}: definición de la arquitectura del addon, módulos de captura y análisis de datos, y diseño de la interfaz de usuario.  
-    \textit{Duración estimada: 3 semanas}
-    
-    \item \textbf{Implementación}: desarrollo de los módulos de captura de eventos, extracción de variables, análisis y visualización de métricas.  
-    \textit{Duración estimada: 7 semanas}
-    
-    \item \textbf{Pruebas y validación}: pruebas unitarias y funcionales, ajuste de la recopilación de datos y validación del correcto funcionamiento con usuarios de prueba.  
-    \textit{Duración estimada: 2 semanas}
-    
-    \item \textbf{Documentación y entrega}: elaboración de la memoria, preparación de materiales complementarios y presentación del proyecto.  
-    \textit{Duración estimada: 2 semanas}
-\end{enumerate}
+\begin{itemize}
+    \item \textbf{Fase previa (Noviembre)}: Estudio de viabilidad del proyecto. Se realizaron pruebas iniciales para evaluar la posibilidad de desarrollar un sistema de recopilación y análisis de datos en Blender, incluyendo el análisis de su API, la viabilidad técnica de la captura de eventos y la posibilidad de generar métricas a partir de los datos registrados.
+    \item 
+    \item \textbf{Sprint 0 (Enero)}: Definición de requisitos, análisis del problema y estudio de la API de Blender.
 
-Esta planificación permite asegurar un progreso controlado y evaluar de manera continua la evolución del proyecto, incorporando mejoras de manera iterativa.
+    \item \textbf{Sprint 1 (Febrero - semanas 1-2)}: Desarrollo del primer addon funcional. Implementación inicial de la captura de eventos y exportación a CSV.
+    \textit{Resultado: versión inicial funcional del sistema (tag: v0.1)}
 
-\section{Estudio de viabilidad}
+    \item \textbf{Sprint 2 (Febrero - semanas 3-4)}: Mejora del primer addon, refinando la captura de datos y estructuración de la información.  
 
-El estudio de viabilidad del proyecto aborda distintos aspectos que permiten evaluar si el desarrollo del sistema es factible y sostenible dentro de los recursos disponibles.
+    \item \textbf{Sprint 3 (Marzo - semanas 1-2)}: Desarrollo del segundo addon, ampliando funcionalidades y mejorando la lógica de procesamiento de datos.
+    \textit{Resultado: ampliación del sistema (tag: v0.2)}
+
+    \item \textbf{Sprint 4 (Marzo - semanas 3-4)}: Incorporación de nuevas métricas y mejora del análisis de datos.  
+    
+
+    \item \textbf{Sprint 5 (Abril - semanas 1-2)}: Refactorización del sistema y mejora significativa de funcionalidades clave.  
+    \textit{Commit destacado: "Refactorización del sistema de logging y detección de eventos (v0.4)"}  
+
+    En este sprint se introducen mejoras relevantes:
+    \begin{itemize}
+        \item Soporte completo para Edit Mode mediante \textit{bmesh}.
+        \item Mejora en la detección de operadores (Shift+D, Alt+D, Ctrl+V, Merge).
+        \item Detección robusta de coordenadas UV.
+        \item Optimización del sistema de logging, registrando únicamente cambios reales.
+        \item Implementación de controles de ejecución (Start/Stop).
+        \item Incorporación de un panel de depuración.
+        \item Mejora en la generación y estructura de los archivos CSV.
+    \end{itemize}
+
+    \textit{Resultado: versión avanzada y estable del sistema (tag: v0.4)}
+
+    \item \textbf{Sprint 6 (Abril - semanas 3-4)}: Mejora de la usabilidad y ajustes funcionales adicionales.  
+    
+
+    \item \textbf{Sprint 7 (Mayo - semanas 1-2)}: Pruebas funcionales y corrección de errores.  
+     
+
+    \item \textbf{Sprint 8 (Mayo - semanas 3-4)}: Documentación final y preparación de la entrega.  
+    \textit{Resultado: versión final del sistema (tag: v1.0)}
+\end{itemize}
+
+La información reflejada en esta planificación se corresponde con la evolución real del repositorio del proyecto en GitHub, donde pueden consultarse los commits y versiones asociadas a cada iteración.
+
+Este enfoque permite reflejar un desarrollo incremental del sistema, donde cada sprint aporta mejoras o nuevas funcionalidades, apoyándose en el control de versiones para garantizar la trazabilidad del proyecto.
+
+\subsection{Resumen de sprints}
+
+A continuación, se presenta un resumen de los sprints realizados durante el desarrollo del proyecto, incluyendo las principales tareas llevadas a cabo y los resultados obtenidos en cada iteración.
+
+\begin{center}
+\begin{tabular}{|c|c|p{5cm}|p{4cm}|}
+\hline
+\textbf{Sprint} & \textbf{Periodo} & \textbf{Funcionalidades principales} & \textbf{Resultado} \\
+\hline
+
+Sprint 1 & Febrero (1-2) & Estructura inicial del addon, captura de eventos y exportación a CSV & Versión inicial (v0.1) \\
+\hline
+
+Sprint 2 & Febrero (3-4) & Mejora del sistema de captura de datos y formato CSV & Sistema más robusto \\
+\hline
+
+Sprint 3 & Marzo (1-2) & Desarrollo del segundo addon y ampliación del procesamiento de datos & Versión ampliada (v0.2) \\
+\hline
+
+Sprint 4 & Marzo (3-4) & Implementación de métricas y análisis de datos & Sistema analítico inicial \\
+\hline
+
+Sprint 5 & Abril (1-2) & Refactorización del sistema, mejoras en logging y detección de eventos (Edit Mode, operadores, UV) & Versión avanzada (v0.4) \\
+\hline
+
+Sprint 6 & Abril (3-4) & Mejora de usabilidad, integración y optimización general & Sistema optimizado \\
+\hline
+
+Sprint 7 & Mayo (1-2) & Pruebas funcionales, validación y corrección de errores & Sistema validado \\
+\hline
+
+Sprint 8 & Mayo (3-4) & Documentación final y preparación de la entrega & Versión final (v1.0) \\
+\hline
+
+\end{tabular}
+\end{center}
+
+La información reflejada en esta tabla se corresponde con la evolución del repositorio del proyecto en GitHub.
 
 \subsection{Viabilidad económica}
 
-El proyecto se desarrolla utilizando herramientas libres y de código abierto, como Blender y Python, lo que reduce significativamente los costos asociados al desarrollo. El único recurso económico necesario corresponde al tiempo de desarrollo y a los equipos de hardware disponibles, que ya son propiedad del estudiante o del centro académico.
+Aunque el proyecto se desarrolla en un entorno académico, es posible estimar su coste aproximado considerando un escenario profesional. Para ello, se tienen en cuenta los costes de software, hardware y desarrollo.
 
-Por tanto, desde un punto de vista económico, el proyecto es totalmente viable, sin necesidad de inversiones adicionales.
+\subsubsection{Costes de software}
+
+El proyecto utiliza principalmente herramientas de software libre, por lo que no implica costes directos de licencia:
+
+\begin{itemize}
+    \item Blender (GPL): 0 €
+    \item Python (PSF License): 0 €
+    \item GitHub (plan gratuito): 0 €
+\end{itemize}
+
+No obstante, el uso de un sistema operativo propietario como Windows puede implicar un coste aproximado de licencia de 150 €.
+
+\subsubsection{Costes de hardware}
+
+Se ha utilizado un equipo personal con un valor estimado de 1200 €. Considerando una amortización en 4 años (48 meses) y una duración del proyecto de aproximadamente 4 meses, el coste imputable sería:
+
+\[
+\text{Coste hardware} = \frac{1200}{48} \times 4 = 100 \,€
+\]
+
+\subsubsection{Coste de desarrollo}
+
+Para estimar el coste de desarrollo, se considera un perfil de desarrollador junior con un salario aproximado de 1200 € mensuales durante 4 meses:
+
+\[
+\text{Coste desarrollo} = 1200 \times 4 = 4800 \,€
+\]
+
+\subsubsection{Coste total estimado}
+
+\[
+\text{Coste total} = 150 + 100 + 4800 = 5050 \,€
+\]
+
+Por tanto, aunque el coste real del proyecto es reducido al tratarse de un entorno académico, su equivalente en un contexto profesional sería de aproximadamente 5050 €.
+
+Este análisis demuestra que el sistema es económicamente viable, especialmente al basarse en herramientas de software libre que reducen significativamente los costes de desarrollo.
+
+\section{Estudio de viabilidad}
 
 \subsection{Viabilidad legal}
 
-El desarrollo del addon se realiza cumpliendo con las licencias de software libre aplicables a Blender y Python. Asimismo, el sistema implementa un mecanismo explícito de consentimiento del usuario para la recopilación de datos, asegurando que la obtención de información cumple con la normativa vigente de protección de datos personales.
+Dado que Blender se distribuye bajo licencia GPL, los addons desarrollados para esta plataforma deben ser compatibles con dicha licencia. Por ello, el producto final se distribuye bajo licencia GPL (GNU General Public License), garantizando la libertad de uso, modificación y distribución del software.
 
-No se emplean librerías o recursos con restricciones legales que puedan afectar la distribución o uso del addon dentro del ámbito académico o profesional.
+En caso de utilizar bibliotecas de terceros, estas deberán ser compatibles con dicha licencia (por ejemplo, MIT o BSD).
 
-En conjunto, estos análisis confirman que el proyecto es viable desde los puntos de vista económico, técnico y legal, proporcionando un marco seguro y sostenible para el desarrollo del sistema.
+Asimismo, el sistema incluye mecanismos de consentimiento del usuario para la recopilación de datos, cumpliendo con la normativa vigente en materia de protección de datos.
+
+\subsection{Análisis de riesgos}
+
+Como principal riesgo del proyecto se identifica la complejidad de la API de Blender, especialmente en la detección de eventos en distintos modos de trabajo como \textit{Object Mode} y \textit{Edit Mode}. 
+
+Este riesgo se ha mitigado mediante un desarrollo iterativo, pruebas continuas y refactorizaciones progresivas del sistema, como la realizada en la versión v0.4.
+
+Este planteamiento permite alinear la planificación teórica con la implementación real del sistema, garantizando coherencia entre la documentación y el desarrollo del proyecto.
