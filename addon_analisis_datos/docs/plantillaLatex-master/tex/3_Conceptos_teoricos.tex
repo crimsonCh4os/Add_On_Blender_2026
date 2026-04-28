@@ -1,0 +1,48 @@
+\capitulo{3}{Conceptos teóricos}
+
+Para el desarrollo del sistema propuesto es necesario comprender diversos conceptos relacionados con el análisis de datos, el formato CSV, la visualización de información y el funcionamiento de los addons en Blender. En este capítulo se presentan los fundamentos teóricos que permiten entender el contexto tecnológico del proyecto y las bases sobre las que se ha desarrollado la aplicación.
+
+El proyecto se centra en la recopilación, análisis y visualización de datos generados durante el proceso de modelado tridimensional. Este enfoque se enmarca dentro del ámbito del análisis de interacción en entornos 3D, donde el estudio de la actividad del usuario permite mejorar la comprensión del proceso de modelado y optimizar herramientas existentes \cite{jankowski2014,lavioila2017}.
+
+\section{Formato de datos CSV}
+
+El formato CSV (Comma-Separated Values) es un estándar ampliamente utilizado para el almacenamiento de datos estructurados en forma tabular. Su simplicidad y compatibilidad lo convierten en una opción adecuada para la exportación y procesamiento de datos en múltiples entornos \cite{data_analysis}.
+
+En este proyecto, los archivos CSV se utilizan para almacenar información generada durante las sesiones de modelado, incluyendo datos temporales, espaciales y estructurales. Este tipo de formato permite una integración sencilla con herramientas de análisis y facilita la posterior visualización de los datos.
+
+\section{Análisis y procesamiento de datos}
+
+El análisis de datos consiste en la extracción de información significativa a partir de conjuntos de datos estructurados. En el contexto de este trabajo, el análisis se centra en identificar patrones de uso, evolución de la escena y comportamiento del usuario durante el modelado.
+
+Para ello, es necesario aplicar procesos de preprocesamiento, como la limpieza, normalización y estructuración de los datos. Estas etapas permiten garantizar la coherencia de la información y facilitan su tratamiento posterior mediante herramientas de análisis \cite{data_analysis}.
+
+El análisis de interacción en entornos tridimensionales es un campo relevante dentro de la interacción persona-computador, ya que permite estudiar cómo los usuarios manipulan objetos en espacios virtuales y qué estrategias utilizan durante el proceso de modelado \cite{bimanual2012}.
+
+\section{Visualización de datos en entornos tridimensionales}
+
+La visualización de datos es un elemento clave para interpretar la información obtenida a partir del análisis. En este proyecto, se plantea la representación de datos dentro de un entorno tridimensional, lo que permite explorar la información de forma más intuitiva y contextualizada.
+
+La integración de datos en espacios 3D facilita la comprensión de relaciones espaciales y temporales, y permite representar la evolución del proceso de modelado de forma visual. Este tipo de enfoques se relaciona con las tendencias actuales en sistemas interactivos y visualización avanzada de datos \cite{malik2023}.
+
+\section{Desarrollo de addons en Blender}
+
+Blender permite ampliar sus funcionalidades mediante el uso de addons desarrollados en Python. Estos addons proporcionan acceso a la API interna del software, lo que permite interactuar con la escena, los objetos y las operaciones realizadas por el usuario.
+
+El desarrollo de addons constituye una herramienta clave para la automatización y extensión de Blender, permitiendo implementar sistemas personalizados adaptados a necesidades específicas. En este proyecto, se utiliza este mecanismo para capturar información del entorno y registrar eventos de modelado de forma no intrusiva.
+
+\section{Tipos de datos utilizados}
+
+En el contexto del proyecto, los datos recopilados pueden clasificarse en diferentes categorías:
+
+\begin{itemize}
+    \item \textbf{Datos temporales}: permiten analizar la evolución del proceso de modelado a lo largo del tiempo.
+    \item \textbf{Datos espaciales}: representan la posición y transformación de objetos dentro del entorno tridimensional.
+    \item \textbf{Datos estructurales}: describen la geometría de los modelos, como número de vértices, caras o modificadores.
+\end{itemize}
+
+El tratamiento adecuado de estos datos es fundamental para garantizar una correcta interpretación y análisis de la información.
+
+\section{Resumen}
+
+Los conceptos presentados en este capítulo constituyen la base teórica del proyecto, abarcando desde el almacenamiento y procesamiento de datos hasta su visualización en entornos tridimensionales. Estos fundamentos permiten comprender el funcionamiento del sistema desarrollado y justifican las decisiones técnicas adoptadas durante su implementación.
+

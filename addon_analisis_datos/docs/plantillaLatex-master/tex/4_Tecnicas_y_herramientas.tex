@@ -1,0 +1,134 @@
+\capitulo{4}{Técnicas y herramientas}
+
+En este capítulo se describen las técnicas y herramientas utilizadas para el desarrollo del sistema, centrándose en los recursos tecnológicos empleados y su justificación dentro del proyecto.
+
+\section{Herramienta principal: Blender}
+
+Blender es un software libre y de código abierto ampliamente utilizado en la creación de contenido tridimensional, que incluye funcionalidades de modelado, animación, simulación y renderizado. Su arquitectura extensible permite incorporar nuevas funcionalidades mediante addons desarrollados por terceros.
+
+Una de las principales ventajas de Blender es su flexibilidad y su capacidad de personalización, lo que lo convierte en una plataforma adecuada para el desarrollo de herramientas experimentales y sistemas de análisis dentro del entorno 3D \cite{jankowski2014}.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Software libre y multiplataforma.
+    \item Amplia comunidad y documentación.
+    \item API completa para acceder a datos internos.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Curva de aprendizaje elevada.
+    \item API compleja y en constante evolución.
+\end{itemize}
+
+\section{Lenguaje de programación: Python}
+
+El desarrollo del sistema se ha realizado utilizando Python, lenguaje oficial de scripting de Blender. Python permite interactuar con el entorno de Blender mediante su API, facilitando la automatización de tareas y la creación de herramientas personalizadas.
+
+El uso de Python es habitual en entornos de análisis de datos y desarrollo de software debido a su simplicidad y versatilidad \cite{data_analysis}.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Lenguaje sencillo y legible.
+    \item Gran cantidad de librerías disponibles.
+    \item Integración directa con Blender.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Menor rendimiento en comparación con lenguajes compilados.
+    \item Dependencia de la API de Blender para ciertas funcionalidades.
+\end{itemize}
+
+\section{API de Blender (\texttt{bpy})}
+
+El módulo \texttt{bpy} proporciona acceso a la estructura interna de Blender, permitiendo manipular objetos, mallas, transformaciones y otros elementos de la escena.
+
+Esta API es fundamental para el desarrollo del sistema, ya que permite acceder a los datos necesarios para la recopilación de información del proceso de modelado.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Acceso completo a la escena y sus elementos.
+    \item Permite automatizar procesos complejos.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Documentación técnica extensa y compleja.
+    \item Dependencia de la versión de Blender.
+\end{itemize}
+
+\section{Sistema de eventos y handlers}
+
+Para la detección de cambios en la escena se han utilizado los mecanismos de eventos proporcionados por Blender, conocidos como \textit{handlers}. Estos permiten ejecutar código en respuesta a modificaciones en el entorno, como cambios en objetos o en la estructura de la escena.
+
+El uso de handlers permite implementar sistemas reactivos que capturan información en tiempo real, lo que resulta fundamental para el registro de eventos de modelado.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Permiten detectar cambios en tiempo real.
+    \item Integración directa con el flujo de trabajo del usuario.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Posibles problemas de rendimiento si no se gestionan adecuadamente.
+    \item Complejidad en la sincronización de eventos.
+\end{itemize}
+
+\section{Formato de almacenamiento: CSV}
+
+El formato CSV se ha utilizado para almacenar los datos recopilados durante las sesiones de modelado. Este formato permite representar información estructurada de forma sencilla y es ampliamente compatible con herramientas de análisis.
+
+El uso de CSV facilita la exportación y el procesamiento posterior de los datos mediante herramientas externas \cite{data_analysis}.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Formato simple y ligero.
+    \item Alta compatibilidad con herramientas de análisis.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item No soporta estructuras complejas de datos.
+    \item Sensible a errores de formato.
+\end{itemize}
+
+\section{Herramientas de desarrollo}
+
+Durante el desarrollo del proyecto se han utilizado diferentes herramientas auxiliares:
+
+\subsection{Entorno de desarrollo (IDE)}
+
+Se ha empleado un entorno de desarrollo integrado para la escritura y depuración del código.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Facilita la organización del código.
+    \item Mejora la detección de errores.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Dependencia de herramientas externas.
+\end{itemize}
+
+\subsection{Control de versiones}
+
+Se ha utilizado Git como sistema de control de versiones y GitHub como plataforma de almacenamiento y gestión del código.
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Permite el seguimiento de cambios.
+    \item Facilita la gestión de versiones del proyecto.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Requiere conocimiento previo de la herramienta.
+\end{itemize}
+
+\section{Resumen}
+
+Las herramientas y técnicas descritas en este capítulo constituyen la base tecnológica del sistema desarrollado. Su selección responde a la necesidad de integrar la captura de datos, su almacenamiento y su posterior análisis dentro de un entorno de modelado tridimensional, garantizando la viabilidad del sistema propuesto.
+
