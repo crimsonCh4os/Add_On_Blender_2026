@@ -2,10 +2,16 @@
 
 \section{Introducción}
 
-<<<<<<< HEAD
 En este apartado se describe el uso del sistema desde el punto de vista del usuario final. Se detallan los requisitos necesarios, el proceso de instalación y las instrucciones de uso de los addons desarrollados.
 
 El sistema está diseñado para ser utilizado principalmente en un entorno educativo, donde un usuario (por ejemplo, un alumno) trabaja con Blender mientras el sistema registra automáticamente su actividad. Posteriormente, estos datos pueden ser analizados mediante un segundo addon destinado a la visualización de métricas.
+
+El sistema completo está compuesto por dos addons complementarios:
+
+\begin{itemize}
+    \item \textbf{Addon de recopilación de datos}, encargado de registrar la actividad del usuario.
+    \item \textbf{Addon de análisis}, encargado de procesar y visualizar la información recogida.
+\end{itemize}
 
 \section{Requisitos de usuario}
 
@@ -13,8 +19,9 @@ Para utilizar el sistema, el usuario debe disponer de los siguientes elementos:
 
 \begin{itemize}
     \item Blender instalado (versión compatible con Python 3).
+    \item Sistema operativo compatible con Blender (Windows, Linux o macOS).
     \item Conocimientos básicos de uso de Blender.
-    \item Acceso al archivo \texttt{.blend} o al script proporcionado.
+    \item Acceso a los archivos proporcionados (script y addon).
 \end{itemize}
 
 No se requieren conocimientos de programación para utilizar el sistema.
@@ -31,8 +38,8 @@ El addon de recopilación se distribuye como un script que debe ejecutarse dentr
     \item Abrir Blender.
     \item Acceder al espacio de trabajo \textit{Scripting}.
     \item Cargar el archivo \texttt{DeteccionDatosV4.py}.
-    \item Activar la opción \textit{Register}.
     \item Ejecutar el script.
+    \item Registrar el addon mediante la opción correspondiente.
     \item Guardar el archivo \texttt{.blend}.
 \end{enumerate}
 
@@ -64,11 +71,9 @@ El usuario puede trabajar de forma habitual, realizando operaciones como:
     \item Eliminar elementos.
 \end{itemize}
 
-El sistema registra estas acciones de forma transparente, sin requerir intervención adicional.
+El sistema registra estas acciones de forma transparente, sin requerir intervención adicional y sin interferir en el flujo de trabajo del usuario.
 
-Durante el uso, el sistema almacena la información en archivos CSV asociados al proyecto. Estos datos se generan automáticamente al guardar el archivo \texttt{.blend}.
-
-El usuario no necesita realizar ninguna acción adicional para registrar su actividad.
+Durante el uso, el sistema almacena la información en archivos CSV asociados al proyecto. Estos datos se generan automáticamente durante la sesión de trabajo.
 
 \subsection{Uso del addon de análisis}
 
@@ -79,11 +84,11 @@ Para utilizarlo:
 \begin{enumerate}
     \item Abrir Blender con el addon instalado.
     \item Acceder al panel de análisis.
-    \item Cargar los archivos CSV generados.
+    \item Cargar los archivos CSV generados por el addon de recopilación.
     \item Seleccionar las métricas o gráficos a visualizar.
 \end{enumerate}
 
-El sistema mostrará información sobre la actividad realizada, incluyendo métricas y representaciones visuales.
+El sistema mostrará información sobre la actividad realizada, incluyendo métricas y representaciones visuales en 2D y 3D.
 
 \subsection{Flujo de uso completo}
 
@@ -92,19 +97,28 @@ El flujo típico de uso del sistema es el siguiente:
 \begin{enumerate}
     \item El usuario abre Blender y ejecuta el addon de recopilación.
     \item Acepta el consentimiento de recopilación de datos.
-    \item Guarda el archivo \texttt{.blend}, generando los datos.
     \item Realiza su trabajo de modelado de forma habitual.
-    \item Entrega el archivo o los datos generados.
+    \item Los datos se registran automáticamente durante la sesión.
+    \item Se generan archivos CSV con la información recogida.
     \item El analista o profesor utiliza el addon de análisis para visualizar métricas.
 \end{enumerate}
 
 Este proceso permite registrar la actividad del usuario de forma automática y analizar posteriormente su comportamiento durante el modelado.
-=======
-\section{Requisitos de usuarios}
 
-\section{Instalación}
+\section{Posibles problemas y soluciones}
 
-\section{Manual del usuario}
+\begin{itemize}
+    \item \textbf{El addon no aparece en Blender:} comprobar que se ha instalado correctamente y que está activado en las preferencias.
+    
+    \item \textbf{No se generan archivos CSV:} verificar que el addon de recopilación está ejecutándose correctamente.
+    
+    \item \textbf{Errores al cargar datos:} asegurarse de que los archivos CSV no están corruptos y corresponden al formato esperado.
+    
+    \item \textbf{Problemas de rendimiento:} cerrar aplicaciones innecesarias o reducir la complejidad de la escena en Blender.
+\end{itemize}
 
+\section{Consideraciones de uso}
 
->>>>>>> d0b38e6 (v0.3: optimización del análisis temporal y espacial, corrección de errores en CSV y mejoras en la interfaz)
+El sistema está diseñado para entornos educativos, por lo que se recomienda informar siempre al usuario sobre la recopilación de datos y obtener su consentimiento antes de iniciar la monitorización.
+
+Asimismo, los datos generados deben utilizarse únicamente con fines académicos o de investigación, respetando en todo momento la privacidad del usuario.

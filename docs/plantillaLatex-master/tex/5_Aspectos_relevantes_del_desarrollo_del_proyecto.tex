@@ -1,6 +1,6 @@
 \capitulo{5}{Aspectos relevantes del desarrollo del proyecto}
 
-<<<<<<< HEAD
+
 Este capítulo recoge las decisiones técnicas más relevantes adoptadas durante el desarrollo del sistema, así como los principales retos encontrados y las soluciones implementadas. A diferencia de los capítulos anteriores, centrados en fundamentos y herramientas, este apartado se enfoca en el diseño del sistema y en la justificación de las elecciones realizadas.
 
 Se abordan aspectos clave como la arquitectura del sistema, la elección de formatos de almacenamiento, los mecanismos de captura de eventos y las estrategias utilizadas para garantizar la eficiencia del sistema.
@@ -43,6 +43,8 @@ ANALYSIS = {
 \end{verbatim}
 
 Esta clasificación permite estructurar el análisis y facilita la generación de visualizaciones coherentes.
+
+\section{Primer addon desarrollado}
 
 \section{Diseño de la arquitectura del sistema}
 
@@ -200,87 +202,236 @@ A diferencia de los capítulos anteriores, centrados en los fundamentos teórico
 
 El objetivo de este capítulo es documentar las decisiones de diseño tomadas, justificando aquellas que han resultado especialmente relevantes para el correcto funcionamiento del sistema.
 
-\section{Ciclo de vida del desarrollo}
 
-El desarrollo del proyecto se ha llevado a cabo siguiendo un enfoque iterativo e incremental. Este tipo de enfoque permite construir el sistema de forma progresiva, validando cada una de las funcionalidades antes de continuar con las siguientes fases del desarrollo.
+\section{Segundo addon desarrollado}
 
-En una primera etapa se realizó un análisis preliminar del problema, identificando los requisitos principales del sistema y las capacidades que debía ofrecer el addon. Durante esta fase también se exploraron las posibilidades que ofrece la API de Blender para la captura de eventos y la extracción de información de la escena.
+\section{Diseño de la arquitectura del segundo addon}
 
-Posteriormente se desarrolló una primera versión experimental del sistema. Esta versión inicial permitió comprobar la viabilidad técnica de las principales funcionalidades, como la detección de eventos de modelado o el acceso a los datos estructurales de la escena.
+El segundo addon se ha diseñado como un módulo complementario al sistema de captura de datos, centrado en la visualización y análisis de la información generada por el primer addon.
 
-Una vez validada esta fase inicial, el desarrollo continuó mediante sucesivas iteraciones en las que se fueron incorporando nuevas funcionalidades, mejorando la organización del código y refinando los mecanismos de recopilación y almacenamiento de datos.
+A diferencia del primero, cuya función principal es la recopilación de datos, este segundo desarrollo se orienta a transformar dichos datos en representaciones visuales dentro del propio entorno de Blender.
 
-Este enfoque permitió detectar problemas de forma temprana y adaptar progresivamente el diseño del sistema a los requisitos del proyecto.
-
-\section{Análisis del problema}
-
-Uno de los principales retos del proyecto consiste en registrar información relevante del proceso de modelado sin interferir en el flujo de trabajo del usuario. Para ello era necesario identificar qué tipo de eventos y variables resultaban significativos para el análisis del proceso de creación de modelos tridimensionales.
-
-Durante la fase de análisis se identificaron tres tipos principales de información que debían ser registrados por el sistema:
+La arquitectura del sistema se organiza en los siguientes componentes:
 
 \begin{itemize}
-    \item Información temporal, relacionada con el momento en el que se producen las distintas acciones del usuario.
-    
-    \item Información espacial, asociada a la posición, rotación y escala de los objetos dentro de la escena.
-    
-    \item Información estructural, que describe las características geométricas de los objetos modelados, como el número de vértices, aristas o caras.
+    \item \textbf{Lectura de datos}: encargado de importar la información generada por el sistema de logging.
+    \item \textbf{Procesamiento}: responsable de transformar los datos en estructuras adecuadas para su representación.
+    \item \textbf{Generación de geometría}: creación de elementos visuales en el espacio 3D.
+    \item \textbf{Visualización}: representación gráfica mediante objetos y librerías externas.
 \end{itemize}
 
-Además, se identificaron ciertos eventos de modelado especialmente relevantes, como la duplicación de objetos, las operaciones de fusión de geometría o los cambios entre los distintos modos de edición de Blender.
+Esta arquitectura permite desacoplar completamente la fase de captura de datos de su posterior análisis visual.
 
-La identificación de estos eventos permitió definir los mecanismos necesarios para su detección automática dentro del entorno de Blender.
+\section{Decisión de uso de librerías de visualización}
+
+Para la representación de los datos se han empleado dos enfoques principales:
+
+\begin{itemize}
+    \item Generación de geometría 3D dentro de Blender.
+    \item Uso de librerías externas como \textit{matplotlib}.
+\end{itemize}
+
+\textbf{Justificación:}
+\begin{itemize}
+    \item Permite combinar visualización clásica (gráficas) con representación espacial.
+    \item Facilita la interpretación de datos directamente en el entorno de modelado.
+    \item Amplía las capacidades analíticas del sistema.
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+    \item Dependencia de librerías externas.
+    \item Mayor complejidad en la integración dentro de Blender.
+\end{itemize}
+
+\section{Generación de visualizaciones en 3D}
+
+Uno de los elementos más relevantes del addon es la generación de representaciones visuales directamente en el espacio tridimensional.
+
+Entre las visualizaciones implementadas destaca el uso de gráficos tipo radar en 3D, que permiten representar múltiples métricas simultáneamente.
+
+Estas representaciones se generan mediante la creación de geometría utilizando el sistema BMesh de Blender:
+
+\begin{itemize}
+    \item Cálculo de posiciones en función de valores métricos.
+    \item Generación de vértices y caras.
+    \item Aplicación de materiales y colores.
+\end{itemize}
+
+Este enfoque permite integrar los datos analíticos dentro del propio entorno de trabajo del usuario.
+
+\section{Uso de matplotlib para visualización}
+
+Además de la representación en 3D, el addon incorpora el uso de la librería \textit{matplotlib} para la generación de gráficas tradicionales.
+
+Por ejemplo:
+
+\begin{verbatim}
+plt.plot(x, y)
+plt.show()
+\end{verbatim}
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Permite generar gráficos estándar de forma rápida.
+    \item Facilita el análisis exploratorio de los datos.
+\end{itemize}
+
+\section{Estrategias de integración con Blender}
+
+La integración del sistema de visualización dentro de Blender presenta varios retos técnicos.
+
+Para su resolución se han adoptado las siguientes estrategias:
+
+\subsection{Generación dinámica de objetos}
+
+Las visualizaciones se crean como objetos dentro de la escena, permitiendo su manipulación por parte del usuario.
+
+\subsection{Gestión de objetos previos}
+
+Antes de generar nuevas visualizaciones, se eliminan las existentes para evitar duplicidades:
+
+\begin{verbatim}
+bpy.data.objects.remove(obj, do_unlink=True)
+\end{verbatim}
+
+\subsection{Uso de operadores personalizados}
+
+El sistema se integra en Blender mediante operadores que permiten ejecutar las visualizaciones desde la interfaz.
+
+\section{Problemas encontrados y soluciones}
+
+\subsection{Representación de datos incompletos}
+
+\textbf{Problema:} existencia de valores nulos o no definidos.
+
+\textbf{Solución:} filtrado previo de datos antes de la visualización.
+
+\subsection{Escalado de métricas}
+
+\textbf{Problema:} diferentes magnitudes dificultan la representación conjunta.
+
+\textbf{Solución:} normalización de valores antes de su representación.
+
+\subsection{Gestión de la escena}
+
+\textbf{Problema:} acumulación de objetos generados.
+
+\textbf{Solución:} eliminación de visualizaciones previas antes de generar nuevas.
+
+\section{Integración con el sistema completo}
+
+El segundo addon actúa como una capa de análisis visual sobre los datos generados por el primero.
+
+Mientras que el primer addon se encarga de la captura de información, este segundo componente permite interpretar dichos datos mediante representaciones gráficas, tanto en 2D como en 3D.
+
+Esta separación refuerza la modularidad del sistema y facilita su evolución.
+
+\section{Conclusiones del segundo addon}
+
+El desarrollo de este addon ha permitido incorporar capacidades de visualización avanzada dentro del entorno de Blender, facilitando la interpretación de los datos recogidos durante el proceso de modelado.
+
+La combinación de visualización tridimensional y herramientas externas como \textit{matplotlib} proporciona un enfoque flexible para el análisis de datos, ampliando significativamente las posibilidades del sistema desarrollado.
+
+\section{Ciclo de vida del desarrollo}
+
+El desarrollo del proyecto se ha llevado a cabo siguiendo un enfoque iterativo e incremental, lo que ha permitido construir el sistema de forma progresiva y validar cada una de sus funcionalidades antes de avanzar a nuevas fases.
+
+En una primera etapa se realizó un análisis preliminar del problema, identificando los requisitos principales del sistema y las capacidades que debía ofrecer el primer addon, centrado en la captura de datos dentro del entorno de Blender. Durante esta fase también se exploraron las posibilidades que ofrece la API de Blender para la detección de eventos y la extracción de información de la escena.
+
+Posteriormente se desarrolló una primera versión experimental del sistema de captura. Esta versión inicial permitió comprobar la viabilidad técnica de las funcionalidades principales, como la detección de eventos de modelado y el acceso a los datos estructurales de la escena.
+
+Una vez validada esta fase inicial, el desarrollo continuó mediante sucesivas iteraciones en las que se mejoraron los mecanismos de recopilación y almacenamiento de datos, dando lugar al primer addon encargado del registro de la actividad del usuario.
+
+En una fase posterior del proyecto se identificó la necesidad de facilitar la interpretación de los datos recogidos, lo que llevó al desarrollo de un segundo addon orientado a la visualización y análisis de la información generada. Este segundo componente permitió completar el sistema, incorporando representaciones gráficas tanto en 2D como en 3D dentro del propio entorno de Blender.
+
+De este modo, el sistema evolucionó desde una solución centrada en la captura de datos hacia una herramienta completa de analíticas de aprendizaje, integrando tanto la recogida como la interpretación de la información.
+
+La Figura~\ref{fig:flujo_sistema} muestra el flujo completo del sistema desarrollado, desde la interacción del usuario con Blender hasta la generación de visualizaciones mediante el segundo addon.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{diagramas/flujo_sistema.png}
+    \caption{Flujo completo del sistema: captura de eventos mediante el primer addon, almacenamiento de datos y visualización a través del segundo addon.}
+    \label{fig:flujo_sistema}
+\end{figure}
+
+Este enfoque permitió detectar problemas de forma temprana y adaptar progresivamente el diseño del sistema a los requisitos del proyecto, dando lugar a una arquitectura modular compuesta por dos addons claramente diferenciados pero complementarios.
 
 \section{Diseño de la arquitectura del sistema}
 
-Con el objetivo de garantizar una buena organización del código y facilitar el mantenimiento del sistema, el addon fue diseñado siguiendo una arquitectura modular.
+Con el objetivo de garantizar una buena organización del código y facilitar el mantenimiento del sistema, la solución desarrollada se ha diseñado siguiendo una arquitectura modular compuesta por dos addons complementarios.
 
-Esta arquitectura divide el sistema en distintos componentes independientes que se encargan de gestionar funcionalidades específicas. De esta forma se reduce el acoplamiento entre las diferentes partes del sistema y se facilita la incorporación de nuevas funcionalidades en el futuro.
+Esta arquitectura permite separar claramente las distintas responsabilidades del sistema, distinguiendo entre la fase de captura de datos y la fase de análisis y visualización. De este modo, se reduce el acoplamiento entre componentes y se facilita la evolución independiente de cada uno de ellos.
 
-Los principales componentes de la arquitectura son los siguientes:
+Los dos componentes principales del sistema son los siguientes:
 
 \begin{itemize}
 
-\item \textbf{Sistema de captura de eventos}
+\item \textbf{Primer addon: sistema de captura de eventos}
 
-Este componente se encarga de monitorizar los cambios que se producen dentro del entorno de modelado. Para ello se utilizan los mecanismos de gestión de eventos proporcionados por Blender, que permiten ejecutar código cuando se producen modificaciones en la escena.
+Este componente se encarga de monitorizar los cambios que se producen dentro del entorno de modelado en Blender. Para ello se utilizan los mecanismos de gestión de eventos proporcionados por la API, que permiten ejecutar código cuando se producen modificaciones en la escena.
 
-\item \textbf{Sistema de recopilación de datos}
+Además de detectar los eventos relevantes, este addon recopila información asociada al estado de la escena, incluyendo propiedades geométricas, transformaciones espaciales y datos temporales. Toda esta información se almacena en un formato estructurado que permite su análisis posterior.
 
-Una vez detectados los eventos relevantes, el sistema extrae información adicional sobre el estado de la escena y de los objetos implicados. Esta información incluye propiedades geométricas, transformaciones espaciales y otros atributos relevantes del modelo.
+\item \textbf{Segundo addon: sistema de visualización y análisis}
 
-\item \textbf{Sistema de almacenamiento}
+El segundo componente del sistema se encarga de procesar y representar visualmente los datos generados por el primer addon. Su objetivo principal es facilitar la interpretación de la información recogida mediante la generación de visualizaciones tanto en 2D como en 3D.
 
-Los datos recopilados se almacenan en una estructura organizada que permite mantener la información entre diferentes sesiones de trabajo. Esto permite analizar posteriormente la evolución de los modelos a lo largo del tiempo.
-
-\item \textbf{Interfaz de usuario}
-
-El addon incluye una interfaz integrada en Blender que permite al usuario controlar el funcionamiento del sistema. Desde esta interfaz es posible activar o desactivar la recopilación de datos, consultar información básica sobre la sesión actual y gestionar el consentimiento del usuario.
+Para ello, este addon integra diferentes mecanismos de representación, incluyendo la generación de geometría dentro de Blender y el uso de librerías externas como \textit{matplotlib}, lo que permite combinar análisis clásico de datos con visualización espacial.
 
 \end{itemize}
 
-Esta organización modular facilita tanto el desarrollo del sistema como su posible ampliación en futuras versiones.
+Adicionalmente, el sistema incluye un componente de almacenamiento basado en archivos CSV, que actúa como intermediario entre ambos addons. Este mecanismo permite desacoplar completamente la captura de datos de su posterior análisis, facilitando la reutilización de la información y su procesamiento mediante herramientas externas.
+En conjunto, la arquitectura modular adoptada permite construir un sistema flexible y escalable, en el que cada componente puede evolucionar de forma independiente, manteniendo una integración coherente dentro del flujo global del sistema.
 
-\section{Aspectos relevantes de la implementación}
+Desde el punto de vista del desarrollo, la implementación de esta solución ha supuesto una experiencia significativa en el diseño de sistemas distribuidos dentro de un mismo entorno de trabajo. La separación en dos addons ha permitido abordar de forma diferenciada los problemas asociados a la captura de datos y a su posterior análisis, evidenciando la importancia de desacoplar responsabilidades en sistemas complejos.
 
-Durante la fase de implementación fue necesario resolver varios problemas técnicos relacionados con la captura de eventos y el acceso a las estructuras internas de Blender.
+Asimismo, el proyecto ha permitido profundizar en el uso de la API de Blender para la creación de herramientas personalizadas, así como en la integración de librerías externas para el análisis de datos, combinando conceptos de desarrollo software, visualización y analíticas de aprendizaje.
 
-Uno de los principales retos consistía en detectar de forma fiable los cambios que se producen en la escena durante el proceso de modelado. Para ello se emplearon diferentes mecanismos proporcionados por la API de Blender, como los handlers asociados al grafo de dependencias del sistema.
+Este enfoque refuerza la utilidad del sistema como herramienta para el análisis del comportamiento del usuario en entornos de modelado tridimensional y sienta las bases para futuras líneas de investigación en este ámbito.
 
-Estos mecanismos permiten ejecutar funciones específicas cuando se producen actualizaciones en la escena, lo que facilita la detección de modificaciones en los objetos o en sus propiedades.
+\section{Actividad de recogida de datos en la EASD Burgos}
 
-Otro aspecto relevante fue el diseño de la estructura de datos utilizada para almacenar la información recopilada. Dado que los datos pueden generarse de forma continua durante una sesión de modelado, era necesario utilizar un formato flexible que permitiera representar distintos tipos de información.
+Con el objetivo de validar el sistema desarrollado en un entorno educativo real y obtener datos de uso fuera de un contexto puramente experimental, se llevó a cabo una actividad práctica en la Escuela de Arte y Superior de Diseño de Burgos (EASD Burgos).
 
-Para resolver este problema se optó por utilizar un sistema de serialización basado en JSON, que permite almacenar estructuras de datos complejas de forma sencilla y facilita su posterior análisis mediante herramientas externas.
+La actividad tuvo lugar el día 30 de abril y estuvo dirigida al alumnado del Ciclo Formativo de Grado Superior en Animación y del Grado en Diseño de Producto. Durante la sesión se presentó el funcionamiento general del sistema desarrollado, explicando cómo puede integrarse la informática en procesos creativos relacionados con el modelado y el diseño tridimensional.
 
-Finalmente, también se prestó especial atención al impacto del sistema sobre el rendimiento del entorno de modelado. Dado que el addon se ejecuta en paralelo con el trabajo del usuario, era fundamental minimizar la sobrecarga generada por el proceso de recopilación de datos. Para ello se diseñaron mecanismos de captura de eventos eficientes que registran únicamente la información estrictamente necesaria para el análisis posterior.
+\subsection{Objetivos de la actividad}
 
-\section{Experiencia obtenida durante el desarrollo}
+La realización de esta actividad perseguía varios objetivos:
 
-El desarrollo de este proyecto ha permitido explorar en profundidad las posibilidades que ofrece Blender para la creación de herramientas personalizadas mediante el uso de su API.
+\begin{itemize}
+    \item Presentar al alumnado una aplicación práctica del desarrollo software en entornos de creación 3D.
+    \item Mostrar cómo Blender puede ser ampliado mediante addons personalizados.
+    \item Explicar el papel de las analíticas de aprendizaje en el estudio del comportamiento del usuario.
+    \item Recoger datos reales de interacción durante el uso del sistema desarrollado.
+    \item Validar el funcionamiento de los addons en un contexto educativo real.
+\end{itemize}
 
-Además, el proyecto ha puesto de manifiesto el potencial del análisis de datos aplicado a entornos de modelado tridimensional, abriendo la puerta a futuros trabajos orientados al estudio de los procesos de creación de modelos 3D.
+\subsection{Desarrollo de la sesión}
 
-La experiencia adquirida durante el desarrollo también ha permitido identificar posibles mejoras que podrían incorporarse en futuras versiones del sistema, como la ampliación del conjunto de eventos registrados o la integración de herramientas más avanzadas de análisis de datos.
+La sesión se estructuró en dos partes principales. En primer lugar, se realizó una introducción al desarrollo de software dentro de Blender, explicando de forma general cómo se pueden crear herramientas personalizadas mediante Python y la API del entorno.
 
-En conjunto, el proyecto demuestra la viabilidad de desarrollar sistemas capaces de registrar y analizar la interacción del usuario dentro de entornos de modelado tridimensional, proporcionando una base sobre la que se pueden construir futuras investigaciones en este ámbito.
->>>>>>> d0b38e6 (v0.3: optimización del análisis temporal y espacial, corrección de errores en CSV y mejoras en la interfaz)
+Posteriormente, se presentó el sistema desarrollado en este Trabajo de Fin de Grado, formado por dos addons complementarios: el primero orientado a la captura de datos durante el proceso de modelado y el segundo destinado al análisis y visualización de la información recopilada.
+
+Tras esta explicación, el alumnado participó en una actividad práctica en la que pudo interactuar directamente con el software. Durante esta fase, los participantes realizaron tareas dentro del entorno 3D, permitiendo obtener datos reales sobre su comportamiento y sobre la forma en la que interactuaban con Blender.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{diagramas/easd_actividad.png}
+    \caption{Actividad práctica realizada en la Escuela de Arte y Superior de Diseño de Burgos.}
+    \label{fig:easd_actividad}
+\end{figure}
+
+\subsection{Recogida de datos}
+
+La actividad permitió recopilar información generada por usuarios reales durante una sesión de modelado. Estos datos resultan especialmente relevantes, ya que no proceden únicamente de pruebas internas, sino de un entorno formativo en el que los participantes utilizaron el sistema de forma práctica.
+
+La información recogida permitió comprobar el funcionamiento del sistema en condiciones de uso más cercanas a un escenario real, evaluando aspectos como la captura de eventos, el almacenamiento de datos y la posterior posibilidad de análisis mediante el segundo addon.
+
+\subsection{Valoración de la experiencia}
+
+La experiencia resultó positiva tanto desde el punto de vista técnico como educativo. Por un lado, permitió validar el sistema desarrollado en un contexto real de uso. Por otro, facilitó la colaboración entre el ámbito de la ingeniería informática y disciplinas creativas como la animación y el diseño de producto.
+
+Además, esta actividad permitió acercar al alumnado conceptos relacionados con el desarrollo software, la visualización de datos y las analíticas de aprendizaje aplicadas a entornos tridimensionales. De este modo, la visita a la EASD Burgos no solo sirvió como mecanismo de validación del proyecto, sino también como una oportunidad para mostrar el potencial de la informática en otros ámbitos de conocimiento.
