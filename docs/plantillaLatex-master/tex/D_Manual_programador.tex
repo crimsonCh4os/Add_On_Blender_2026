@@ -2,72 +2,119 @@
 
 \section{Introducción}
 
+En este apartado se describe la estructura técnica del sistema desarrollado, así como los aspectos necesarios para su instalación, ejecución y mantenimiento.
 
-En este apartado se describe la estructura técnica del sistema desarrollado, así como los aspectos necesarios para su instalación, ejecución y mantenimiento. Se detallan los módulos que componen cada uno de los addons, su organización interna y las principales funcionalidades implementadas.
+El sistema está compuesto por dos addons diferenciados pero complementarios:
 
-El sistema está formado por dos addons diferenciados: el addon de recopilación de datos, implementado como un script ejecutable dentro de Blender, y el addon de análisis de datos, distribuido como un paquete instalable. Ambos componentes trabajan de forma complementaria mediante el uso de archivos CSV como medio de intercambio de información.
+\begin{itemize}
+    \item Un addon de recopilación de datos, encargado de registrar la actividad del usuario durante el proceso de modelado.
+    \item Un addon de análisis y visualización, encargado de procesar la información generada y representar métricas mediante gráficos y visualizaciones tridimensionales.
+\end{itemize}
+
+Ambos componentes trabajan conjuntamente mediante el uso de archivos CSV como mecanismo de intercambio de información.
+
+En este anexo se describen la organización interna del proyecto, la estructura de directorios, los módulos principales de cada addon y los procedimientos necesarios para su instalación y ejecución.
 
 \section{Estructura de directorios}
 
-El proyecto se divide en dos partes principales correspondientes a los dos addons desarrollados.
+El proyecto se divide en dos componentes principales correspondientes a los addons desarrollados.
 
 \subsection{Addon de recopilación de datos}
 
-Este addon se implementa como un único archivo Python:
+El addon de recopilación se implementa principalmente como un script Python ejecutable dentro de Blender.
+
+Su estructura principal es la siguiente:
 
 \begin{itemize}
-    \item \textbf{DeteccionDatosV4.py}: script principal encargado de la captura de eventos, detección de cambios en la escena y registro de datos en archivos CSV.
+    \item \textbf{DeteccionDatosV4.py}: archivo principal encargado de:
+    \begin{itemize}
+        \item Registrar handlers de Blender.
+        \item Detectar eventos en la escena.
+        \item Capturar propiedades geométricas y espaciales.
+        \item Generar archivos CSV.
+        \item Gestionar controles Start/Stop y paneles de depuración.
+    \end{itemize}
 \end{itemize}
 
-Este enfoque permite una ejecución directa desde el editor de scripting de Blender, facilitando su uso en entornos académicos.
+Este enfoque facilita su ejecución directa desde el editor de scripting de Blender.
 
-\subsection{Addon de análisis de datos}
+\subsection{Addon de análisis y visualización}
 
-Este addon se distribuye como un paquete estructurado en varios módulos:
+El segundo addon se distribuye como un paquete modular compuesto por distintos archivos Python.
+
+La estructura principal del addon es la siguiente:
 
 \begin{itemize}
-    \item \textbf{\_\_init\_\_.py}: archivo de inicialización del addon e integración con Blender.
-    \item \textbf{metrics\_ui.py}: gestión de la interfaz de usuario y panel de visualización de métricas.
+
+    \item \textbf{\_\_init\_\_.py}: archivo de inicialización e integración del addon con Blender.
+
+    \item \textbf{metrics\_ui.py}: definición de paneles, interfaz gráfica y controles de visualización de métricas.
+
     \item \textbf{graphs.py}: generación de gráficos y representaciones visuales.
-    \item \textbf{utils.py}: funciones auxiliares para procesamiento de datos.
-    \item \textbf{operator.py}: definición de operadores de Blender para la interacción con el sistema.
+
+    \item \textbf{utils.py}: funciones auxiliares para lectura y procesamiento de datos.
+
+    \item \textbf{operators.py}: definición de operadores personalizados utilizados por Blender.
+
+    \item \textbf{visualization.py}: generación de geometría tridimensional y representaciones visuales dentro de la escena.
+
     \item \textbf{site-packages/}: dependencias externas necesarias para el funcionamiento del addon.
+
 \end{itemize}
 
-Esta estructura modular facilita la mantenibilidad, escalabilidad y reutilización del código.
+La estructura modular facilita el mantenimiento, la reutilización de código y la ampliación futura del sistema.
 
 \section{Manual del programador}
 
-El sistema ha sido desarrollado siguiendo un enfoque modular y orientado a eventos.
+El sistema se ha desarrollado siguiendo un enfoque modular y orientado a eventos.
 
 \subsection{Addon de recopilación}
 
-El addon de recopilación se basa en el uso de \textit{handlers} de Blender para detectar eventos en la escena. Su funcionamiento principal consiste en:
+El addon de recopilación utiliza handlers de Blender para detectar automáticamente cambios dentro de la escena.
+
+Su funcionamiento principal consiste en:
 
 \begin{itemize}
-    \item Detectar cambios en la escena mediante eventos de Blender.
-    \item Identificar el tipo de acción realizada (creación, modificación, eliminación).
+    \item Detectar cambios mediante eventos del \textit{dependency graph}.
+    \item Identificar el tipo de operación realizada.
     \item Capturar propiedades relevantes del objeto afectado.
     \item Registrar la información en archivos CSV.
 \end{itemize}
 
-Se han implementado mecanismos para evitar el registro de cambios redundantes, de forma que únicamente se almacenan modificaciones reales en el estado de los objetos.
-
-Además, el sistema incorpora control de ejecución mediante funcionalidades de inicio y parada (Start/Stop), permitiendo al usuario gestionar la captura de datos.
-
-\subsection{Addon de análisis}
-
-El addon de análisis está diseñado de forma modular, separando claramente la lógica de procesamiento de datos de la interfaz de usuario.
-
-Sus componentes principales son:
+Entre las funcionalidades implementadas destacan:
 
 \begin{itemize}
-    \item \textbf{Carga de datos}: lectura de archivos CSV generados por el addon de recopilación.
-    \item \textbf{Procesamiento de métricas}: cálculo de estadísticas y métricas a partir de los datos registrados.
-    \item \textbf{Visualización}: representación de resultados mediante gráficos y paneles dentro de Blender.
+    \item Detección de creación y eliminación de objetos.
+    \item Detección de cambios geométricos en \textit{Edit Mode}.
+    \item Captura de coordenadas UV.
+    \item Detección de operadores como duplicado, pegado o merge.
+    \item Control de ejecución mediante Start/Stop.
+    \item Logging basado en cambios.
 \end{itemize}
 
-El sistema permite analizar la información de forma flexible, ofreciendo diferentes tipos de visualización y facilitando la interpretación de los datos.
+El sistema implementa mecanismos para evitar registros redundantes, almacenando únicamente cambios significativos en el estado de la escena.
+
+\subsection{Addon de análisis y visualización}
+
+El addon de análisis se organiza de forma modular, separando claramente procesamiento, interfaz y representación visual.
+
+Sus principales componentes funcionales son:
+
+\begin{itemize}
+
+    \item \textbf{Carga de datos}: lectura y validación de archivos CSV generados por el addon de recopilación.
+
+    \item \textbf{Procesamiento de métricas}: cálculo de estadísticas temporales, espaciales y estructurales.
+
+    \item \textbf{Visualización 2D}: generación de gráficos estadísticos mediante librerías externas como \textit{matplotlib}.
+
+    \item \textbf{Visualización 3D}: creación dinámica de geometría y representaciones analíticas dentro de Blender.
+
+    \item \textbf{Interfaz de usuario}: paneles y operadores personalizados integrados en la interfaz de Blender.
+
+\end{itemize}
+
+El addon permite representar métricas directamente dentro de la escena tridimensional, facilitando la interpretación visual de la información recopilada.
 
 \section{Compilación, instalación y ejecución del proyecto}
 
@@ -79,51 +126,87 @@ El addon de recopilación se ejecuta directamente desde Blender siguiendo estos 
     \item Abrir Blender.
     \item Acceder al espacio de trabajo \textit{Scripting}.
     \item Cargar el archivo \texttt{DeteccionDatosV4.py}.
-    \item Activar la opción \textit{Register}.
     \item Ejecutar el script.
+    \item Registrar el addon mediante la opción correspondiente.
     \item Guardar el archivo \texttt{.blend}.
 \end{enumerate}
 
-Una vez ejecutado, el sistema solicita el consentimiento del usuario para la recopilación de datos. A partir de ese momento, la captura de eventos se realiza automáticamente durante el uso del proyecto.
+Una vez ejecutado, el sistema solicita el consentimiento del usuario para la recopilación de datos. A partir de ese momento, la captura de eventos se realiza automáticamente durante el uso de Blender.
 
-\subsection{Addon de análisis}
+\subsection{Addon de análisis y visualización}
 
-El addon de análisis se instala como un addon estándar de Blender:
+El addon de análisis se instala como un addon estándar de Blender.
+
+El procedimiento de instalación es el siguiente:
 
 \begin{enumerate}
     \item Comprimir el addon en formato \texttt{.zip}.
     \item Acceder a \textit{Edit > Preferences > Add-ons}.
-    \item Seleccionar \textit{Install} e importar el archivo \texttt{.zip}.
+    \item Seleccionar la opción \textit{Install}.
+    \item Importar el archivo \texttt{.zip}.
     \item Activar el addon.
 \end{enumerate}
 
-Una vez instalado, el usuario puede acceder al panel de análisis y cargar los datos generados para su procesamiento.
+Una vez instalado, el usuario puede acceder al panel de análisis y cargar los archivos CSV generados previamente.
+
+\section{Dependencias externas}
+
+El addon de análisis incorpora varias librerías externas utilizadas para el procesamiento y visualización de datos.
+
+Entre las principales dependencias utilizadas destacan:
+
+\begin{itemize}
+    \item \textbf{matplotlib}: generación de gráficos estadísticos.
+    \item \textbf{numpy}: operaciones numéricas y normalización de métricas.
+    \item \textbf{csv}: lectura y escritura de archivos CSV.
+\end{itemize}
+
+Estas dependencias se integran dentro del addon mediante el directorio \texttt{site-packages}.
 
 \section{Pruebas del sistema}
 
-Se han realizado diferentes pruebas para validar el correcto funcionamiento del sistema.
+Se realizaron diferentes pruebas para validar el correcto funcionamiento de ambos addons.
 
 \subsection{Pruebas del addon de recopilación}
 
 \begin{itemize}
-    \item Registro correcto de creación de objetos.
+    \item Registro correcto de creación y eliminación de objetos.
     \item Detección de modificaciones en \textit{Edit Mode}.
-    \item Captura de operaciones como duplicado (Shift+D), pegado (Ctrl+V) y eliminación.
-    \item Verificación del funcionamiento de los controles Start/Stop.
-    \item Comprobación de que no se registran cambios redundantes.
-    \item Validación del almacenamiento correcto en archivos CSV.
+    \item Captura de operaciones como Shift+D, Ctrl+V y Merge.
+    \item Validación de coordenadas UV.
+    \item Comprobación del funcionamiento de controles Start/Stop.
+    \item Verificación de generación correcta de archivos CSV.
+    \item Validación del sistema de logging basado en cambios.
 \end{itemize}
 
 \subsection{Pruebas del addon de análisis}
 
 \begin{itemize}
-    \item Carga correcta de archivos CSV.
+    \item Lectura correcta de archivos CSV.
     \item Verificación del cálculo de métricas.
-    \item Validación de la representación gráfica (escalas, ejes y datos).
-    \item Comprobación de la coherencia de la información mostrada en pantalla.
-    \item Pruebas de funcionamiento de distintos tipos de gráficos.
+    \item Validación de gráficos estadísticos.
+    \item Generación correcta de visualizaciones 3D.
+    \item Comprobación de integración de objetos visuales en Blender.
+    \item Validación de normalización y representación de métricas.
+    \item Verificación de funcionamiento de paneles y operadores personalizados.
 \end{itemize}
 
-Estas pruebas permiten garantizar que el sistema funciona de forma consistente, tanto en la captura de datos como en su posterior análisis.
+Estas pruebas permitieron garantizar el correcto funcionamiento del sistema completo, tanto en la captura de datos como en su posterior análisis y representación visual.
 
-El sistema ha sido validado de forma incremental durante su desarrollo, asegurando la coherencia entre los datos capturados y los resultados obtenidos en el análisis.
+\section{Mantenimiento y ampliación}
+
+La arquitectura modular adoptada facilita el mantenimiento y la ampliación futura del sistema.
+
+La separación entre captura, procesamiento y visualización permite incorporar nuevas funcionalidades sin modificar significativamente el resto de componentes.
+
+Entre las posibles ampliaciones futuras destacan:
+
+\begin{itemize}
+    \item Incorporación de nuevas métricas de análisis.
+    \item Soporte para otros formatos de almacenamiento.
+    \item Exportación automática de resultados.
+    \item Integración con sistemas de analíticas de aprendizaje.
+    \item Mejora de las visualizaciones tridimensionales.
+\end{itemize}
+
+El diseño modular del sistema favorece su reutilización y evolución en futuras investigaciones o desarrollos relacionados con el análisis de interacción en entornos tridimensionales.
