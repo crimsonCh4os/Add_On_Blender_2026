@@ -2,19 +2,21 @@
 
 \section{Introducción}
 
-En este apartado se describe el uso del sistema desde el punto de vista del usuario final. Se detallan los requisitos necesarios, el proceso de instalación y las instrucciones de uso de los addons desarrollados para Blender.
+En este apartado se explica cómo utilizar el sistema desarrollado desde el punto de vista del usuario final. Se describen los requisitos necesarios, el proceso de instalación y el funcionamiento general de los addons desarrollados para Blender.
 
-El sistema está diseñado principalmente para entornos educativos y de investigación, donde resulta de interés analizar el comportamiento del usuario durante el proceso de modelado tridimensional.
+El sistema está pensado principalmente para entornos educativos y de investigación, donde puede resultar útil estudiar cómo trabaja un usuario dentro de un entorno de modelado 3D.
 
 El sistema completo está formado por dos addons complementarios:
 
 \begin{itemize}
     \item \textbf{Addon de recopilación de datos}, encargado de registrar automáticamente la actividad realizada por el usuario dentro de Blender.
     
-    \item \textbf{Addon de análisis y visualización}, encargado de procesar los datos registrados y generar métricas y representaciones visuales.
+    \item \textbf{Addon de análisis y visualización}, encargado de procesar los datos registrados y generar métricas, gráficos y representaciones visuales.
 \end{itemize}
 
-Ambos componentes funcionan de forma complementaria mediante archivos CSV generados automáticamente durante las sesiones de trabajo.
+Ambos componentes trabajan conjuntamente mediante archivos CSV generados automáticamente durante las sesiones de modelado.
+
+El sistema fue diseñado para integrarse dentro del flujo normal de trabajo de Blender, permitiendo capturar y analizar información sin interferir significativamente en la experiencia del usuario.
 
 \section{Requisitos de usuario}
 
@@ -48,7 +50,7 @@ El procedimiento de instalación es el siguiente:
     \item Guardar el archivo \texttt{.blend}.
 \end{enumerate}
 
-Una vez realizado este proceso, el sistema queda integrado en el entorno de trabajo.
+Una vez realizado este proceso, el sistema queda integrado dentro del entorno de trabajo de Blender.
 
 \subsection{Addon de análisis y visualización}
 
@@ -63,7 +65,7 @@ Para instalarlo:
     \item Activar el addon.
 \end{enumerate}
 
-Una vez instalado, el usuario podrá acceder al panel de análisis desde la interfaz de Blender.
+Una vez instalado, el usuario podrá acceder al panel de análisis desde la interfaz lateral de Blender.
 
 \section{Manual del usuario}
 
@@ -71,22 +73,44 @@ Una vez instalado, el usuario podrá acceder al panel de análisis desde la inte
 
 Tras ejecutar el script, el sistema solicitará el consentimiento del usuario para la recopilación de datos.
 
-Una vez aceptado, el addon comenzará a registrar automáticamente la actividad realizada en Blender.
+Una vez aceptado, el addon comenzará a registrar automáticamente la actividad realizada dentro de Blender.
 
 El usuario puede trabajar de forma habitual realizando operaciones como:
 
 \begin{itemize}
-    \item Crear objetos.
-    \item Modificar geometría.
-    \item Cambiar de modo de edición.
-    \item Duplicar elementos.
-    \item Eliminar objetos.
-    \item Modificar coordenadas UV.
+    \item crear objetos,
+    \item modificar geometría,
+    \item cambiar de modo de edición,
+    \item duplicar elementos,
+    \item eliminar objetos,
+    \item o modificar coordenadas UV.
 \end{itemize}
 
-El sistema registra estas acciones de forma transparente, sin requerir intervención adicional y minimizando el impacto sobre el rendimiento.
+El sistema registra estas acciones automáticamente, sin requerir interacción adicional por parte del usuario.
 
 Durante la sesión, la información capturada se almacena automáticamente en archivos CSV asociados al proyecto.
+
+La Figura~\ref{fig:data_logger_con_debug} muestra el panel principal del addon de recopilación junto con las herramientas de depuración integradas.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.32\textwidth]{diagramas/data_logger_con_debug.png}
+    \caption{Panel de control y depuración del addon de recopilación.}
+    \label{fig:data_logger_con_debug}
+\end{figure}
+
+El panel permite controlar el estado del sistema y consultar información relacionada con:
+
+\begin{itemize}
+    \item estado actual del logger,
+    \item temporizadores activos,
+    \item último operador detectado,
+    \item cambios de modo,
+    \item detección de operaciones especiales,
+    \item y estado actual de la escena.
+\end{itemize}
+
+Estas herramientas facilitan supervisar el funcionamiento interno del sistema durante las sesiones de modelado.
 
 \subsection{Uso del addon de análisis y visualización}
 
@@ -105,52 +129,58 @@ Para utilizarlo:
 El sistema permite visualizar diferentes tipos de información:
 
 \begin{itemize}
-    \item Métricas temporales.
-    \item Estadísticas de interacción.
-    \item Representaciones gráficas 2D.
-    \item Visualizaciones tridimensionales dentro de Blender.
+    \item métricas temporales,
+    \item estadísticas de interacción,
+    \item representaciones gráficas 2D,
+    \item y visualizaciones tridimensionales dentro de Blender.
 \end{itemize}
+
+La interfaz del addon de análisis sigue una organización similar al addon de recopilación, facilitando su uso y manteniendo coherencia visual entre ambos componentes.
 
 \subsection{Visualizaciones 2D}
 
 El addon incorpora gráficos estadísticos generados mediante librerías externas como \textit{matplotlib}.
 
 Estas representaciones permiten analizar:
+
 \begin{itemize}
-    \item Evolución temporal de métricas.
-    \item Frecuencia de operaciones.
-    \item Comparación entre sesiones.
-    \item Distribución de eventos.
+    \item evolución temporal de métricas,
+    \item frecuencia de operaciones,
+    \item comparación entre sesiones,
+    \item y distribución de eventos.
 \end{itemize}
 
-Los gráficos se generan automáticamente a partir de los datos cargados.
+Los gráficos se generan automáticamente a partir de los datos cargados por el usuario.
 
 \subsection{Visualizaciones 3D}
 
 El sistema también permite generar representaciones visuales directamente dentro de la escena de Blender.
 
 Entre las visualizaciones disponibles se incluyen:
+
 \begin{itemize}
-    \item Representaciones geométricas de métricas.
-    \item Gráficos tridimensionales.
-    \item Visualizaciones espaciales de interacción.
+    \item representaciones geométricas de métricas,
+    \item gráficos tridimensionales,
+    \item visualizaciones espaciales de interacción,
+    \item y geometría generada proceduralmente.
 \end{itemize}
 
 Estas representaciones permiten integrar el análisis directamente dentro del entorno tridimensional de trabajo.
 
 \subsection{Flujo de uso completo}
 
-El flujo típico de utilización del sistema es el siguiente:
+El flujo general de utilización del sistema es el siguiente:
 
 \begin{enumerate}
     \item El usuario ejecuta el addon de recopilación.
     \item Se acepta el consentimiento de recopilación de datos.
-    \item El usuario trabaja normalmente en Blender.
+    \item El usuario trabaja normalmente dentro de Blender.
     \item El sistema registra automáticamente los eventos relevantes.
     \item Se generan archivos CSV con la información capturada.
-    \item El usuario o analista abre el addon de análisis.
+    \item El usuario abre el addon de análisis.
     \item Se cargan los archivos CSV generados.
     \item El sistema calcula métricas y genera visualizaciones.
+    \item Los resultados se muestran dentro del entorno 3D.
 \end{enumerate}
 
 Este flujo permite estudiar el comportamiento del usuario durante el modelado de forma automática y estructurada.
@@ -186,10 +216,10 @@ Asimismo, se recomienda realizar copias de seguridad periódicas de los archivos
 Para obtener resultados adecuados durante el análisis, se recomienda:
 
 \begin{itemize}
-    \item Utilizar escenas organizadas y correctamente estructuradas.
-    \item Evitar modificar manualmente los archivos CSV generados.
-    \item Realizar sesiones de modelado completas para obtener métricas más representativas.
-    \item Mantener actualizados Blender y las dependencias utilizadas por el addon de análisis.
+    \item utilizar escenas organizadas y correctamente estructuradas,
+    \item evitar modificar manualmente los archivos CSV generados,
+    \item realizar sesiones de modelado completas para obtener métricas más representativas,
+    \item y mantener actualizados Blender y las dependencias utilizadas por el addon de análisis.
 \end{itemize}
 
 El sistema ha sido diseñado para integrarse de forma transparente dentro del flujo habitual de trabajo en Blender, permitiendo registrar y analizar información sin interferir significativamente en la experiencia del usuario.

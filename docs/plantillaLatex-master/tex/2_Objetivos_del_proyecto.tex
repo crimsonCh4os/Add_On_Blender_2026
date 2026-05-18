@@ -1,35 +1,39 @@
 \capitulo{2}{Objetivos del proyecto}
 
-El objetivo principal de este Trabajo de Fin de Grado es el diseño y desarrollo de un sistema capaz de registrar, analizar y visualizar la interacción del usuario en entornos de modelado tridimensional, utilizando Blender como plataforma de referencia.
+El objetivo principal de este TFG es desarrollar un sistema que registre, analice y visualice la interacción del usuario durante el proceso de modelado 3D usando Blender.
 
-El propósito de esta herramienta es proporcionar un mecanismo que permita capturar y estructurar información del proceso de modelado de forma automática, con el fin de facilitar su análisis posterior. De este modo, se busca obtener métricas objetivas sobre el comportamiento del usuario, el uso de las herramientas y la evolución de las escenas, contribuyendo a una mejor comprensión del proceso de modelado tridimensional \cite{jankowski2014,lavioila2017}.
+Se trata de crear un instrumento que permita registrar y organizar los datos generados durante el modelado en forma automática.
 
-Este sistema pretende capturar información relevante sobre el proceso de modelado sin interferir en el flujo de trabajo del usuario, permitiendo posteriormente analizar los datos obtenidos para estudiar cómo se construyen los modelos tridimensionales, qué operaciones se realizan con mayor frecuencia y cómo evoluciona la interacción en el entorno 3D \cite{bimanual2012}.
+Además, nuestro objetivo es analizar la forma en que el usuario modela, cuales son las herramientas más utilizadas y cómo evoluciona el modelo a lo largo de cada sesión.
 
-El proyecto se centra tanto en la recopilación de datos como en su posterior análisis y visualización, proporcionando herramientas que permitan explorar la información registrada desde diferentes perspectivas, como el análisis temporal de las acciones realizadas, el estudio de la evolución de la escena, la detección de eventos relevantes de modelado y la representación gráfica de las métricas obtenidas. Este enfoque se alinea con las tendencias actuales en el análisis de interacción en entornos tridimensionales y sistemas de modelado avanzados \cite{malik2023}.
+Nuestro sistema intenta recabar información relevante sobre el proceso de modelado sin alterar la experiencia del usuario. El propósito es obtener datos que ayuden a entender cómo se elaboran los modelos 3D, las tareas principales que se realizan y qué ocurre con la interacción dentro del espacio tridimensional.
+
+No solo se recoge información sino que además se analiza y representa visualmente. Por ello, el proyecto incluye funciones que faciliten la vista y el análisis de la información recopilada desde distintas perspectivas: observación de las acciones secuenciales, variaciones en la escena, acontecimientos significativos, métricas visualizadas como gráficos y vistas 3D.
+
+Con estos recursos, el proyecto se adapta al análisis de interacción en entornos tridimensionales y las estadísticas educativas en la aplicación de herramientas digitales.
 
 \section{Objetivos específicos}
 
-Para alcanzar este objetivo general, se han definido los siguientes objetivos específicos:
+Para conseguir todo esto, nos hemos marcado estos objetivos más concretos:
 
 \begin{itemize}
-    \item Diseñar un sistema de recopilación de datos no intrusivo que funcione de manera transparente para el usuario durante el proceso de modelado 3D.
 
-    \item Implementar un primer addon para Blender capaz de registrar información temporal, espacial y estructural de la escena y de los objetos modelados.
+\item Diseñar un sistema para recoger datos que no moleste nada al usuario y que funcione sin que se dé cuenta mientras modela en 3D.
 
-    \item Detectar de forma automática eventos relevantes de modelado, tales como duplicados, fusiones de geometría, cambios de modo de edición y modificaciones en las coordenadas UV.
+\item Crear el primer \textit{addon} para Blender que pueda guardar información sobre el tiempo, el espacio y la estructura de la escena y los objetos que se están modelando.
 
-    \item Garantizar la persistencia de los datos recopilados entre sesiones de trabajo mediante un formato estructurado que permita su análisis posterior.
+\item Que el sistema detecte automáticamente cosas importantes que pasan al modelar, como cuando se duplican objetos, se unen vértices, se cambia el modo de edición o se tocan las coordenadas UV (que dicen dónde van las texturas en el modelo 3D).
 
-    \item Incorporar un mecanismo explícito de consentimiento del usuario que asegure una recopilación de datos ética y transparente.
+\item Asegurarnos de que los datos guardados no se pierdan entre una sesión de trabajo y otra, usando un formato bien organizado para poder analizarlos después.
 
-    \item Validar el correcto funcionamiento del sistema mediante pruebas experimentales y sesiones de uso con usuarios.
+\item Incluir una forma clara para que el usuario dé su permiso, así la recogida de datos será ética y transparente.
 
-    \item Recopilar datos reales a partir de una versión estable del sistema utilizada en sesiones de modelado.
+\item Comprobar que el sistema funciona bien haciendo pruebas y dejando que lo usen otras personas.
 
-    \item Desarrollar un segundo addon orientado al análisis y visualización de los datos recogidos desde una perspectiva temporal, espacial y estadística.
+\item Recoger datos de verdad usando una versión ya estable del sistema en sesiones de modelado.
 
-    \item Extraer conclusiones a partir del análisis de los datos obtenidos que permitan comprender mejor el proceso de modelado tridimensional.
+\item Desarrollar un segundo \textit{addon} que sirva para analizar y mostrar los datos que se han recogido, mirando el tiempo, el espacio y las estadísticas.
+
 \end{itemize}
 
-Estos objetivos permiten estructurar el desarrollo del proyecto en diferentes fases, desde la implementación del sistema de registro de datos hasta el análisis y visualización de la información obtenida a partir de su uso en entornos reales.
+Con estos objetivos, podemos organizar el proyecto en varias etapas, desde cuando implementamos el sistema que guarda los datos hasta que analizamos y mostramos la información que obtenemos al usarlo en la vida real.

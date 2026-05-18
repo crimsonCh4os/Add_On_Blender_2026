@@ -38,6 +38,37 @@ Su estructura principal es la siguiente:
 
 Este enfoque facilita su ejecución directa desde el editor de scripting de Blender.
 
+\subsection{Paneles de depuración y monitorización}
+
+Durante el desarrollo se implementaron distintos paneles de depuración integrados directamente dentro de la interfaz de Blender.
+
+Estos paneles permiten supervisar en tiempo real el estado interno del sistema mientras el usuario trabaja dentro del entorno 3D.
+
+La Figura~\ref{fig:data_logger_con_debug} muestra el panel de depuración utilizado por el addon de recopilación.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.32\textwidth]{diagramas/data_logger_con_debug.png}
+    \caption{Panel de depuración del addon de recopilación.}
+    \label{fig:data_logger_con_debug}
+\end{figure}
+
+A través de este panel es posible visualizar información relacionada con:
+
+\begin{itemize}
+    \item estado del sistema de captura,
+    \item temporizadores activos,
+    \item último operador detectado,
+    \item cambios de estado registrados,
+    \item detección de coordenadas UV,
+    \item operaciones como Shift+D, Ctrl+V o Merge,
+    \item y modo actual de Blender.
+\end{itemize}
+
+Estas herramientas facilitaron enormemente las tareas de depuración, validación y ajuste del sistema durante el desarrollo.
+
+El addon de análisis incorpora una interfaz similar, adaptada a la visualización y procesamiento de métricas.
+
 \subsection{Addon de análisis y visualización}
 
 El segundo addon se distribuye como un paquete modular compuesto por distintos archivos Python.

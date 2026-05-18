@@ -1,54 +1,68 @@
-\capitulo{5}{Aspectos relevantes del desarrollo del proyecto}
+\capitulo{5}{Aspectos importantes del desarrollo del proyecto}
 
-Este capítulo describe los aspectos más relevantes del proceso de desarrollo del sistema propuesto. En él se presentan las decisiones técnicas adoptadas durante las distintas fases del proyecto, así como las soluciones implementadas para abordar los principales retos encontrados.
-
-A diferencia de los capítulos anteriores, centrados en los fundamentos teóricos y las herramientas utilizadas, este apartado se enfoca en la experiencia práctica obtenida durante la construcción del sistema. Se describen tanto el ciclo de vida seguido durante el desarrollo como los aspectos más significativos relacionados con el análisis del problema, el diseño de la arquitectura y la implementación de los addons desarrollados.
-
-El objetivo de este capítulo es documentar las decisiones de diseño tomadas y justificar aquellas que han resultado especialmente relevantes para el correcto funcionamiento del sistema.
+En este capítulo se explican las partes más importantes del desarrollo del proyecto. No solo se cuenta lo que se hizo, sino también cómo fue avanzando todo poco a poco. Además, se explican algunas decisiones que hicimos y algunos problemas que aparecieron durante el proceso.
 
 \section{Ciclo de vida del desarrollo}
 
-El desarrollo del proyecto se ha llevado a cabo siguiendo un enfoque iterativo e incremental, ampliamente utilizado en ingeniería del software por su capacidad para adaptarse a cambios y validar soluciones de forma progresiva \cite{pressman2005}.
+El proyecto se desarrolló de forma iterativa. Esto significa que no se hizo todo de golpe, sino poco a poco, por sprints, probando cada parte y mejorándola según iban surgiendo nuevas necesidades.
 
-En una primera etapa se realizó un análisis preliminar del problema, identificando los requisitos principales del sistema y explorando las capacidades que ofrece la API de Blender para la detección de eventos y la extracción de información de la escena.
+Primero se realizó un análisis inicial del problema. Se estudió qué tipo de información podía obtenerse desde Blender y qué acciones del usuario podían ser útiles para analizar el proceso de modelado.
 
-Posteriormente se desarrolló una primera versión experimental del sistema de captura de datos. Esta implementación inicial permitió comprobar la viabilidad técnica de funcionalidades clave, como:
+Después se creó una primera versión centrada únicamente en capturar datos. Esta primera prueba sirvió para comprobar que Blender podía registrar automáticamente la información sobre las acciones realizadas por el usuario.
+
+Las primeras pruebas ayudaron a comprobar aspectos importantes como:
+
 \begin{itemize}
-    \item La detección de eventos mediante handlers.
-    \item El acceso a información de la escena en tiempo real.
-    \item El almacenamiento estructurado de los datos generados.
+    \item la detección de eventos mediante \textit{handlers},
+    \item el acceso a información de la escena en tiempo real,
+    \item y el almacenamiento ordenado de los datos.
 \end{itemize}
 
-Una vez validada esta fase inicial, el sistema evolucionó mediante sucesivas iteraciones en las que se incorporaron nuevas métricas, mejoras de rendimiento y refinamientos en la arquitectura del código.
+Cuando esta primera parte ya funcionaba, el sistema fue mejorando mediante distintas versiones. En cada una de ellas se añadieron nuevas métricas, se ajustó el rendimiento y se empezaron a incluir formas de visualizar la información.
 
-En una fase posterior se identificó la necesidad de facilitar la interpretación de los datos recopilados, lo que condujo al desarrollo de un segundo addon orientado al análisis y la visualización de la información generada.
+Con el tiempo vimos que no bastaba con guardar datos. También hacía falta una forma sencilla de entenderlos. Por eso se desarrolló un segundo \textit{addon}, pensado especialmente para analizar y mostrar la información recogida.
 
-De este modo, el proyecto evolucionó desde una solución centrada únicamente en la captura de datos hacia un sistema completo de analíticas aplicado al modelado tridimensional, integrando tanto la recogida como el análisis visual de la información.
+El proyecto evolucionó de una aplicación simple para registrar datos hasta transformarse en un sistema más sofisticado dedicado al estudio del proceso de creación de modelos 3D.
 
-La Figura~\ref{fig:flujo_sistema} muestra el flujo general del sistema desarrollado.
+Además, durante el desarrollo vimos que separar el sistema en distintos módulos hacía mucho más sencillo mantener el código y añadir nuevas funcionalidades sin afectar al resto del proyecto.
+
+En la Figura~\ref{fig:Flujo} se presenta de manera abreviada cómo opera el sistema de medición y análisis. 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{diagramas/flujo_sistema.png}
-    \caption{Flujo general del sistema desarrollado.}
-    \label{fig:flujo_sistema}
+    \includegraphics[
+        width=\textwidth,
+        height=0.7\textheight,
+        keepaspectratio
+    ]{diagramas/ciclo_general.png}
+    \caption{Flujo general de análisis y visualización de datos.}
+    \label{fig:Flujo}
 \end{figure}
 
 \section{Análisis del problema y definición de métricas}
 
-Uno de los principales retos del proyecto consiste en determinar qué información resulta relevante para analizar el proceso de modelado 3D.
+Lo primero que tuvimos que establecer fue qué datos eran más importantes. Blender genera muchos cambios mientras se modela, pero no todos son igual de útiles para entender cómo trabaja el usuario.
 
-A partir del análisis realizado se definieron tres categorías principales de datos:
+Después de analizar varias opciones, dividimos los datos en tres grupos principales:
 
 \begin{itemize}
-    \item \textbf{Datos temporales}: permiten analizar la evolución temporal del proceso de modelado, incluyendo duración de tareas, pausas o ritmo de trabajo.
+    \item \textbf{Datos temporales}: tienen que ver con el tiempo de trabajo y el ritmo al modelar.
     
-    \item \textbf{Datos espaciales}: describen la interacción del usuario dentro del entorno tridimensional, incluyendo posición, movimiento o proximidad entre elementos.
+    \item \textbf{Datos espaciales}: se refieren a la ubicación y el movimiento de los elementos en la escena.
     
-    \item \textbf{Datos estructurales}: caracterizan la geometría y evolución del modelo mediante información como vértices, caras, polígonos o modificadores.
+    \item \textbf{Datos estructurales}: se centran en la geometría del modelo, incluyendo vértices, caras u otros modificadores.
 \end{itemize}
 
-Estas categorías se implementan en el sistema mediante un conjunto de métricas estructuradas que permiten organizar la información capturada y facilitar su análisis posterior.
+Gracias a estas métricas podemos guardar información como:
+
+\begin{itemize}
+    \item cuánto tiempo pasa el usuario modelando,
+    \item cuántos vértices añade o elimina,
+    \item cuánto se mueve dentro de la escena,
+    \item o cada cuánto cambia de herramienta.
+\end{itemize}
+
+Dentro del sistema, las métricas se organizan con identificadores. Esto nos permite clasificar automáticamente cada dato que se registra.
 
 Un ejemplo simplificado de esta estructura es el siguiente:
 
@@ -60,65 +74,128 @@ ANALYSIS = {
 }
 \end{verbatim}
 
-Esta clasificación permite estructurar el análisis de forma coherente y facilita la generación de representaciones visuales posteriores.
+Las métricas utilizadas por el sistema se organizan mediante identificadores internos y categorías asociadas. Esto permite clasificar automáticamente los distintos tipos de análisis, separando métricas temporales, espaciales y estructurales.
 
-\section{Diseño de la arquitectura del sistema}
+Gracias a esta estructura modular, el sistema puede ampliar fácilmente nuevas métricas sin modificar el funcionamiento general del addon.
 
-Con el objetivo de garantizar una buena organización del código y facilitar el mantenimiento del sistema, la solución desarrollada se ha diseñado siguiendo una arquitectura modular compuesta por dos addons complementarios.
 
-Esta arquitectura permite separar claramente las responsabilidades del sistema, distinguiendo entre la fase de captura de datos y la fase de análisis y visualización. De este modo, se reduce el acoplamiento entre componentes y se facilita la evolución independiente de cada uno de ellos.
+Por ejemplo, algunas métricas sirven para medir el tiempo de trabajo, mientras que otras se centran en el movimiento o en cómo va cambiando la geometría del modelo.
 
-\subsection{Primer addon: sistema de captura de datos}
+La Figura~\ref{fig:metricas} muestra los datos recogidos y analizados.
+ 
+\begin{figure}[H]
+    \centering
+    \includegraphics[
+        width=\textwidth,
+        height=0.68\textheight,
+        keepaspectratio
+    ]{diagramas/tipo_datos.png}
+    \caption{Estructura general de las métricas utilizadas en el sistema.}
+    \label{fig:metricas}
+\end{figure}
 
-El primer addon se encarga de monitorizar la interacción del usuario dentro del entorno de modelado de Blender.
 
-Para ello se utilizan mecanismos de gestión de eventos proporcionados por la API de Blender, que permiten ejecutar código cuando se producen modificaciones en la escena.
 
-Además de detectar eventos relevantes, este componente recopila información asociada al estado interno de la escena, incluyendo propiedades geométricas, transformaciones espaciales y datos temporales.
+\subsection{Primer \textit{addon}: sistema de captura de datos}
 
-Toda esta información se almacena posteriormente en un formato estructurado para permitir su análisis posterior.
+El primer \textit{addon} es el encargado de vigilar lo que ocurre dentro de Blender mientras el usuario trabaja.
 
-\subsection{Segundo addon: sistema de análisis y visualización}
+Este componente detecta automáticamente eventos importantes y guarda información relacionada con el estado de la escena.
 
-El segundo addon actúa como una capa de análisis visual sobre los datos generados por el primero.
+Por ejemplo, el sistema puede detectar:
 
-Su objetivo principal es facilitar la interpretación de la información recopilada mediante representaciones visuales tanto en 2D como en 3D dentro del propio entorno de Blender.
-
-Para ello, este componente integra distintos mecanismos de representación, incluyendo:
 \begin{itemize}
-    \item Generación de geometría tridimensional.
-    \item Uso de librerías externas como \textit{matplotlib}.
-    \item Creación dinámica de objetos dentro de la escena.
+    \item creación de objetos,
+    \item cambios de modo,
+    \item modificaciones geométricas,
+    \item transformaciones espaciales,
+    \item o cambios en coordenadas UV.
 \end{itemize}
 
-Esta separación entre captura y análisis refuerza la modularidad del sistema y facilita su reutilización y escalabilidad.
+Toda esta información se guarda después en archivos CSV, para poder analizarla más adelante.
+
+\subsection{Segundo \textit{addon}: sistema de análisis y visualización}
+
+El segundo \textit{addon} funciona como una capa de análisis sobre los datos que ya se han guardado.
+
+Este componente no solo se encarga de mostrar información visualmente, sino también de procesar automáticamente los datos registrados para generar métricas y detectar patrones relacionados con el comportamiento del usuario.
+
+Su objetivo es que la información recogida sea más fácil de entender. Para ello, genera representaciones visuales en 3D y también dentro del propio entorno de Blender.
+
+Por ejemplo, el usuario puede ver gráficas basadas en los datos temporales, espaciales y estructurales recogidos por el sistema o detectar qué zonas de la escena han tenido más actividad durante el modelado.
+
+Para conseguirlo, este componente utiliza distintos métodos de representación:
+
+\begin{itemize}
+    \item generación de geometría tridimensional,
+    \item uso de librerías externas como \textit{matplotlib},
+    \item y creación dinámica de objetos dentro de Blender.
+\end{itemize}
+
+El \textit{addon} de análisis permite transformar una gran cantidad de eventos en información más comprensible.
+
+\subsection{Pipeline de análisis de datos}
+
+Una vez que el sistema guarda la información en archivos CSV, el segundo \textit{addon} se encarga de procesar esos datos para convertirlos en métricas y representaciones visuales.
+
+El proceso general de análisis sigue varias etapas consecutivas:
+
+\begin{enumerate}
+    \item lectura de los archivos CSV generados durante las sesiones de modelado,
+    
+    \item procesamiento y filtrado de los datos registrados,
+    
+    \item cálculo automático de métricas temporales, espaciales y estructurales,
+    
+    \item generación de representaciones visuales y gráficos.
+\end{enumerate}
+
+Este flujo permitió separar claramente las fases de captura, procesamiento y visualización, evitando que las tareas de análisis afectaran directamente al rendimiento de Blender durante el modelado.
+
+
+La Figura~\ref{fig:pipeline_analisis} muestra de forma resumida cómo funciona el sistema de análisis.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{diagramas/pipeline.png}
+    \caption{Pipeline general de análisis de datos utilizado por el sistema.}
+    \label{fig:pipeline_analisis}
+\end{figure}
+
+\subsection{Generación de visualizaciones}
+
+Una de las partes más importantes del segundo \textit{addon} es la forma en la que se muestran los datos recogidos durante el modelado. La idea no era solo guardar información, sino también conseguir que fuera fácil de entender visualmente.
+
+Para ello usamos distintos tipos de representaciones dependiendo del tipo de información que se quisiera analizar.
+
+Por ejemplo, el sistema puede generar:
+
+\begin{itemize}
+    \item gráficas temporales usando \textit{matplotlib},
+    
+    \item representaciones espaciales directamente dentro del entorno 3D de Blender,
+    
+    \item gráficos tipo radar para comparar distintas métricas,
+    
+    \item y geometría generada proceduralmente para representar información de forma visual.
+\end{itemize}
+
+Gracias a estas visualizaciones es más fácil detectar patrones, entender cómo evoluciona la escena y analizar mejor el comportamiento del usuario durante el modelado.
+
+Además, al estar integradas directamente dentro de Blender, el usuario puede explorar la información sin necesidad de utilizar programas externos.
+
 
 \section{Decisiones técnicas relevantes}
 
-Durante el desarrollo del sistema se tomaron diversas decisiones técnicas que resultaron fundamentales para garantizar el correcto funcionamiento de la herramienta.
+Durante el desarrollo tuvimos que tomar varias decisiones técnicas importantes para que el sistema funcionara correctamente y fuera cómodo de usar.
 
 \subsection{Decisión de almacenamiento: CSV frente a base de datos}
 
-Una de las decisiones más relevantes fue la elección del formato de almacenamiento de los datos generados.
+Una de las decisiones más importantes fue elegir cómo guardar los datos.
 
-Aunque el uso de bases de datos relacionales o NoSQL es habitual en sistemas de análisis de datos, en este proyecto se optó por el uso de archivos CSV.
+Aunque las bases de datos se encuentran en muchos estudios, en nuestro proyecto decidimos manejar archivos CSV.
 
-\textbf{Justificación:}
-\begin{itemize}
-    \item Simplicidad de implementación.
-    \item Integración directa con Blender y Python.
-    \item Compatibilidad con herramientas externas de análisis.
-    \item Facilidad de exportación y reutilización de datos.
-\end{itemize}
-
-\textbf{Limitaciones:}
-\begin{itemize}
-    \item Falta de estructura jerárquica.
-    \item Menor eficiencia en grandes volúmenes de datos.
-    \item Ausencia de mecanismos avanzados de consulta.
-\end{itemize}
-
-El uso de CSV resulta habitual en procesos de análisis exploratorio de datos debido a su simplicidad y facilidad de uso \cite{data_analysis}.
+La elección de archivos CSV fue adecuada para nuestro caso, ya que encaja con nuestra forma de procesar la información y facilita el seguimiento y la verificación de los datos obtenidos.
 
 Un ejemplo simplificado de registro generado es el siguiente:
 
@@ -129,152 +206,120 @@ a1b2c3d4,12.34,1.2,0.5,3.1,5,1
 
 \subsection{Captura de eventos mediante handlers}
 
-La captura de eventos se implementa mediante el sistema de \textit{handlers} de Blender, que permite ejecutar funciones cuando se producen cambios dentro de la escena.
+Para capturar los eventos usamos los \textit{handlers} de Blender.
 
-Por ejemplo:
+Los \textit{handlers} funcionan como avisos automáticos. Cuando pasa algo dentro de Blender, el sistema puede reaccionar y guardar información sobre ese cambio.
+
+Algunas líneas del siguiente texto muestran cómo Blender facilita el registro de funciones automáticamente vinculadas a eventos interiores de la escena:
 
 \begin{verbatim}
 bpy.app.handlers.depsgraph_update_post.append(operator_tracker)
 \end{verbatim}
 
-\textbf{Ventajas:}
-\begin{itemize}
-    \item Permiten capturar eventos en tiempo real.
-    \item No requieren modificar el flujo de trabajo del usuario.
-    \item Facilitan el acceso al estado actualizado de la escena.
-\end{itemize}
-
-\textbf{Problema principal:}
-
-Los handlers pueden ejecutarse con alta frecuencia, lo que puede generar un impacto considerable en el rendimiento del sistema.
+De esta manera, Blender puede identificar cambios en la escena sin ninguna acción adicional por parte del usuario.
 
 \subsection{Uso de librerías de visualización}
 
-Para la representación visual de los datos se combinaron dos enfoques principales:
+Para mostrar los datos de forma visual combinamos dos formas de representación:
+
 \begin{itemize}
-    \item Visualización tridimensional dentro de Blender.
-    \item Uso de librerías externas como \textit{matplotlib}.
+    \item visualización tridimensional dentro de Blender,
+    \item y uso de librerías externas como \textit{matplotlib}.
 \end{itemize}
 
-Esta combinación permite integrar análisis clásico de datos con representación espacial dentro del entorno de modelado.
+Con este tipo de gráficos, podemos hacer uso de la versatilidad de las gráficas tradicionales proporcionadas por \textit{matplotlib}, mientras que Blender nos proporciona un espacio 3D para trabajar con dichas gráficas.
 
-Por ejemplo, mediante \textit{matplotlib} se pueden generar gráficas convencionales de forma sencilla:
+Por ejemplo, con \textit{matplotlib}
 
 \begin{verbatim}
 plt.plot(x, y)
 plt.show()
 \end{verbatim}
 
-Asimismo, el sistema permite generar representaciones tridimensionales mediante geometría creada dinámicamente dentro de Blender.
+Además, el sistema también puede generar representaciones tridimensionales directamente dentro de Blender.
+
+La combinación entre gráficos tradicionales y visualización espacial permitió representar distintos tipos de métricas dependiendo del análisis que se quisiera realizar.
 
 \section{Estrategias de eficiencia del sistema}
 
-Uno de los aspectos más críticos del desarrollo ha sido minimizar el impacto del sistema sobre el rendimiento de Blender.
+Una parte importante del desarrollo fue intentar que el sistema no afectara demasiado al rendimiento de Blender.
 
-Para ello se implementaron diversas estrategias de optimización.
+Para conseguirlo, se aplicaron varias estrategias de optimización.
 
 \subsection{Registro basado en cambios}
 
-En lugar de registrar información continuamente, el sistema únicamente genera registros cuando detecta cambios relevantes en el estado de la escena.
+En vez de guardar información todo el rato, el sistema solo registra datos cuando detecta que ha pasado algo relevante en la escena.
 
 \begin{verbatim}
 if not state_changed and not any_operator_flag:
     return None
 \end{verbatim}
 
-Este enfoque reduce significativamente el número de operaciones de escritura y disminuye el volumen de datos generados.
+Con esto se reduce mucho la cantidad de datos generados.
 
 \subsection{Uso de firmas de estado}
 
-Se implementó un mecanismo basado en firmas de estado para detectar modificaciones relevantes en la escena.
+Para evitar guardar información repetida, el sistema crea una especie de “firma” del estado actual de la escena.
 
 \begin{verbatim}
 signature = (verts, ngons, tris, mode, uv_hash)
 \end{verbatim}
 
-Solo se registra información cuando esta firma cambia, evitando almacenar datos redundantes.
+Solo se guarda información nueva cuando esta firma cambia.
 
 \subsection{Control de frecuencia mediante temporizador}
 
-El sistema utiliza un temporizador con intervalo controlado para limitar la frecuencia de ejecución.
+El sistema también usa un temporizador para controlar cada cuánto se actualiza.
 
 \begin{verbatim}
 return 0.25
 \end{verbatim}
 
-Esto limita la actualización del sistema a cuatro ejecuciones por segundo, reduciendo el impacto sobre el rendimiento general de Blender.
-
-\subsection{Filtrado de eventos irrelevantes}
-
-También se implementó un filtrado de eventos con el objetivo de evitar la generación de información innecesaria o poco relevante para el análisis posterior.
+Esto quiere decir que el sistema se actualiza unas cuatro veces por segundo, reduciendo así el impacto sobre el rendimiento general de Blender.
 
 \section{Problemas encontrados y soluciones}
 
-Durante el desarrollo del proyecto se identificaron diversos problemas técnicos que requirieron soluciones específicas.
+Durante el desarrollo aparecieron varios problemas técnicos. Algunos eran esperables, pero otros surgieron al probar el sistema dentro de Blender.
 
 \subsection{Exceso de datos generados}
 
-\textbf{Problema:} el sistema generaba inicialmente un volumen excesivo de información.
+\textbf{Problema:} al principio el sistema guardaba demasiada información.
 
-\textbf{Solución:} implementación de logging basado en cambios y eliminación de registros duplicados.
+\textbf{Solución:} se añadió un sistema de registro basado en cambios y se eliminaron registros duplicados.
 
 \subsection{Detección de eventos complejos}
 
-\textbf{Problema:} determinados eventos de Blender no podían detectarse de forma directa.
+\textbf{Problema:} algunos eventos de Blender no se podían detectar directamente.
 
-\textbf{Solución:} combinación de análisis de operadores y comprobación del estado interno de la escena.
+\textbf{Solución:} se combinaron dos estrategias: analizar los operadores usados por el usuario y revisar el estado interno de la escena.
 
 \subsection{Impacto en el rendimiento}
 
-\textbf{Problema:} la ejecución frecuente de handlers afectaba al rendimiento del entorno de modelado.
+\textbf{Problema:} ejecutar los \textit{handlers} con mucha frecuencia podía afectar al rendimiento de Blender.
 
 \textbf{Solución:}
+
 \begin{itemize}
-    \item Reducción de frecuencia de actualización.
-    \item Minimización de cálculos innecesarios.
-    \item Uso de estructuras ligeras de almacenamiento.
+    \item reducir la frecuencia de actualización,
+    \item evitar cálculos innecesarios,
+    \item y usar estructuras de almacenamiento ligeras.
 \end{itemize}
 
 \subsection{Representación de datos incompletos}
 
-\textbf{Problema:} existencia de valores nulos o inconsistentes en algunas métricas.
+\textbf{Problema:} en algunas métricas aparecían valores incompletos o poco coherentes.
 
-\textbf{Solución:} filtrado y validación previa de los datos antes de su visualización.
-
-\subsection{Escalado de métricas}
-
-\textbf{Problema:} las diferentes magnitudes dificultaban la representación conjunta de los datos.
-
-\textbf{Solución:} normalización de valores antes de su representación gráfica.
+\textbf{Solución:} se añadieron comprobaciones y filtros antes de mostrar los datos en las visualizaciones.
 
 \section{Actividad de recogida de datos en la EASD Burgos}
 
-Con el objetivo de validar el sistema desarrollado en un entorno educativo real y obtener datos de uso fuera de un contexto puramente experimental, se llevó a cabo una actividad práctica en la Escuela de Arte y Superior de Diseño de Burgos (EASD Burgos).
+Probamos el sistema en un entorno real realizando una actividad práctica en la Escuela de Arte y Superior de Diseño de Burgos (EASD Burgos).
 
-La actividad tuvo lugar el día 30 de abril y estuvo dirigida al alumnado del Ciclo Formativo de Grado Superior en Animación y del Grado en Diseño de Producto.
+En la actividad explicamos de manera general cómo funcionaba el \textit{addon} de captura y cómo Blender puede extenderse a través de \textit{addons} personalizados para entender lo que hace el usuario al interactuar con el software.
 
-Durante la sesión se presentó el funcionamiento general del sistema desarrollado, explicando cómo Blender puede ampliarse mediante addons personalizados y cómo las analíticas de aprendizaje pueden aplicarse al estudio del comportamiento del usuario en entornos tridimensionales.
+Después, los alumnos participaron en una práctica utilizando el sistema dentro del entorno 3D.
 
-\subsection{Objetivos de la actividad}
-
-La actividad perseguía varios objetivos:
-\begin{itemize}
-    \item Presentar una aplicación práctica del desarrollo software en Blender.
-    \item Mostrar el funcionamiento de addons personalizados.
-    \item Explicar el papel de las analíticas de aprendizaje.
-    \item Recoger datos reales de interacción.
-    \item Validar el funcionamiento del sistema en un contexto educativo.
-\end{itemize}
-
-\subsection{Desarrollo de la sesión}
-
-La sesión se estructuró en dos partes principales.
-
-En primer lugar, se realizó una introducción al desarrollo de herramientas dentro de Blender utilizando Python y la API del entorno.
-
-Posteriormente, se presentó el sistema desarrollado en este Trabajo de Fin de Grado, mostrando tanto el addon de captura de datos como el sistema de análisis y visualización.
-
-Tras esta explicación, el alumnado participó en una actividad práctica en la que pudo interactuar directamente con el sistema dentro del entorno 3D.
+La Figura~\ref{fig:easd_actividad} muestra la presentación de la actividad en una de las aulas.
 
 \begin{figure}[H]
     \centering
@@ -283,32 +328,33 @@ Tras esta explicación, el alumnado participó en una actividad práctica en la 
     \label{fig:easd_actividad}
 \end{figure}
 
-\subsection{Recogida de datos y validación}
+Esta experiencia sirvió para comprobar:
 
-La actividad permitió recopilar información generada por usuarios reales durante sesiones de modelado.
-
-Estos datos resultan especialmente relevantes, ya que no proceden únicamente de pruebas internas, sino de un entorno educativo real en el que distintos participantes interactuaron con el sistema desarrollado.
-
-La experiencia permitió validar aspectos como:
 \begin{itemize}
-    \item La correcta captura de eventos.
-    \item El almacenamiento de datos.
-    \item El funcionamiento de las métricas implementadas.
-    \item La posterior visualización de la información.
+    \item que los eventos se capturaban correctamente,
+    \item que los datos se guardaban bien,
+    \item que las métricas funcionaban,
+    \item y que la información podía visualizarse después.
 \end{itemize}
 
-\subsection{Valoración de la experiencia}
+\section{Validación del sistema}
 
-La experiencia resultó positiva tanto desde el punto de vista técnico como educativo.
+Para comprobar que el sistema funcionaba correctamente se realizaron distintas pruebas dentro de Blender utilizando sesiones reales de modelado.
 
-Por un lado, permitió validar el sistema desarrollado en un contexto de uso real. Por otro, facilitó la colaboración entre el ámbito de la ingeniería informática y disciplinas creativas relacionadas con la animación y el diseño de producto.
+Durante estas pruebas se revisó que los eventos se detectaran correctamente, que los datos se guardaran de forma organizada y que las métricas y visualizaciones funcionaran como se esperaba dentro del entorno 3D.
 
-Además, la actividad permitió acercar al alumnado conceptos relacionados con el desarrollo software, la visualización de datos y las analíticas aplicadas a entornos tridimensionales.
+También se realizaron pruebas ajustando la frecuencia con la que el sistema revisaba los cambios en la escena, para comprobar que Blender siguiera funcionando de forma fluida mientras se capturaban los datos.
+
+Con estas pruebas, se pudo ajustar más bien el equilibrio entre la cantidad de datos recopilados y la facilidad del sistema al momento de realizar tareas cuando el usuario lo hacía.
+
+Parte de la validación se llevó a cabo durante la actividad práctica efectuada en la EASD Burgos, que contó con el participación de 6 estudiantes del curso de Animación en 1º y 8 estudiantes del curso de Producto en 2º.
+
+La ocasión permitió probar el sistema en entornos prácticos donde trabajar, comprobando así si el procedimiento de recopilación, almacenamiento y presentación de datos se ejecutaba correctamente durante varias sesiones de modelado.
 
 \section{Conclusiones del desarrollo}
 
-El desarrollo del sistema ha permitido demostrar la viabilidad de capturar y analizar la interacción del usuario en entornos de modelado 3D mediante addons desarrollados para Blender.
+El desarrollo del sistema nos permitió comprobar que es posible capturar y analizar automáticamente lo que hace un usuario dentro de un entorno de modelado 3D usando \textit{addons} para Blender.
 
-Las decisiones adoptadas durante el proyecto, especialmente aquellas relacionadas con la captura eficiente de eventos, el almacenamiento de datos y la modularidad de la arquitectura, han resultado fundamentales para garantizar el correcto funcionamiento del sistema.
+Las decisiones tomadas durante el proyecto ayudaron a que la herramienta funcionara correctamente. La separación por módulos, la captura de eventos y la forma de mostrar los datos hicieron que el sistema tuviera mejor estructura y fuera fácil de usar.
 
-Asimismo, el proyecto pone de manifiesto el potencial de las analíticas aplicadas a entornos tridimensionales y abre nuevas posibilidades para futuras investigaciones relacionadas con el análisis de procesos creativos, la optimización de flujos de trabajo y el estudio del comportamiento del usuario en herramientas de modelado 3D.
+Además, el uso de una arquitectura modular permitió desarrollar un sistema más flexible y preparado para futuras ampliaciones relacionadas con análisis de datos y visualización dentro de entornos 3D.

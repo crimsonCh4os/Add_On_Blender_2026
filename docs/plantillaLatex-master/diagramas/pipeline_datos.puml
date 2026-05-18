@@ -1,0 +1,10 @@
+@startuml
+left to right direction
+rectangle "Sesión de modelado" as S
+rectangle "Captura de métricas" as C
+rectangle "Filtrado y validación" as F
+database "CSV" as D
+rectangle "Análisis" as A
+rectangle "Visualización" as V
+S --> C --> F --> D --> A --> V
+@enduml

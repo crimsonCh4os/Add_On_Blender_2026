@@ -2,14 +2,17 @@
 
 \section{Introducción}
 
-En este apartado se presenta la especificación de requisitos del sistema desarrollado, compuesto por dos addons independientes pero complementarios para Blender:
+El presente anexo comprende los criterios que el sistema tiene que cumplir para estar listo. El propósito es explicar lo que proporcionan cada adición y las restricciones al que debe adherirse el sistema para operar adecuadamente dentro de Blender.
+
+El sistema está formado por dos addons complementarios:
 
 \begin{itemize}
-    \item Un addon de recopilación de datos, encargado de registrar la actividad del usuario durante el proceso de modelado 3D.
-    \item Un addon de análisis y visualización, encargado de procesar los datos registrados y generar métricas y representaciones visuales.
+    \item Un addon de recopilación de datos, encargado de registrar automáticamente eventos producidos durante el modelado 3D.
+
+    \item Un addon de análisis y visualización, encargado de procesar los datos registrados y generar métricas, gráficos y representaciones visuales.
 \end{itemize}
 
-En primer lugar, se describen los casos de uso más representativos del sistema. Posteriormente, se recogen los objetivos generales, los diagramas que modelan el comportamiento y la arquitectura del sistema, y finalmente el catálogo completo de requisitos funcionales, no funcionales, de interfaz y legales.
+Para organizar la especificación se describen primero los casos de uso principales. Después se incluyen los objetivos generales, los diagramas del sistema y el catálogo de requisitos funcionales, no funcionales, de interfaz y legales.
 
 \section{Casos de uso}
 
@@ -253,29 +256,33 @@ A continuación, se describen los casos de uso principales del sistema. Las Tabl
 
 \clearpage
 
-\section{Objetivos generales}
+\section{Objetivos generales del sistema}
 
-A partir de los casos de uso descritos, se establecen los objetivos generales que debe satisfacer el sistema:
+A partir de los casos de uso definidos, se establecen los siguientes objetivos generales:
 
 \begin{itemize}
-    \item Registrar de manera precisa los eventos relevantes producidos durante el modelado 3D.
-    
+    \item Registrar automáticamente los eventos relevantes que ocurren durante una sesión de modelado 3D.
+
+    \item Guardar la información capturada de forma estructurada para poder analizarla posteriormente.
+
     \item Permitir el análisis temporal, espacial y estructural de la actividad del usuario.
-    
-    \item Generar visualizaciones gráficas y tridimensionales de las métricas obtenidas.
-    
-    \item Garantizar la persistencia e integridad de los datos entre sesiones.
-    
-    \item Proporcionar una interfaz clara y accesible para ambos addons.
-    
-    \item Mantener una arquitectura modular y desacoplada.
-    
-    \item Cumplir con la normativa legal y ética relacionada con la protección de datos y el uso de software libre.
+
+    \item Generar métricas que ayuden a entender cómo evoluciona el proceso de modelado.
+
+    \item Mostrar los resultados mediante gráficos 2D y visualizaciones tridimensionales dentro de Blender.
+
+    \item Mantener una interfaz sencilla para activar la captura, cargar datos y consultar resultados.
+
+    \item Reducir el impacto sobre el rendimiento de Blender durante el uso del sistema.
+
+    \item Respetar la privacidad del usuario mediante consentimiento previo para la recopilación de datos.
 \end{itemize}
 
 \section{Diagramas del sistema}
 
-Con el fin de complementar la descripción textual del sistema, se incluyen varios diagramas que representan sus funcionalidades, flujo de trabajo y arquitectura general.
+Para entender mejor cómo funciona el sistema, se añadieron varios diagramas y representaciones visuales. 
+
+Estos gráficos ayudan a ver de una forma más clara cómo está organizado el proyecto, cómo se conectan sus distintas partes y cómo funciona el sistema en general.
 
 La Figura~\ref{fig:casos_uso} muestra el diagrama UML de casos de uso del sistema.
 
@@ -286,7 +293,7 @@ La Figura~\ref{fig:casos_uso} muestra el diagrama UML de casos de uso del sistem
     \label{fig:casos_uso}
 \end{figure}
 
-La Figura~\ref{fig:flujo} representa el flujo general de captura, procesamiento y visualización de datos.
+La Figura~\ref{fig:flujo} representa el flujo general de captura, almacenamiento, análisis y visualización de datos.
 
 \begin{figure}[H]
     \centering
@@ -295,59 +302,128 @@ La Figura~\ref{fig:flujo} representa el flujo general de captura, procesamiento 
     \label{fig:flujo}
 \end{figure}
 
-La Figura~\ref{fig:arquitectura} muestra la arquitectura basada en dos addons independientes.
+La Figura~\ref{fig:arquitectura_requisitos} muestra la arquitectura basada en dos addons complementarios.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{diagramas/arquitectura.png}
     \caption{Arquitectura del sistema basada en dos addons complementarios.}
+    \label{fig:arquitectura_requisitos}
 \end{figure}
 
 \section{Catálogo de requisitos}
 
-\subsection{Requisitos funcionales (RF)}
+En este apartado se presentan los requisitos definidos para el sistema desarrollado. 
+
+Para organizar mejor la información y facilitar su comprensión, los requisitos se han dividido en cuatro categorías: funcionales, no funcionales, de interfaz y legales o éticos.
+
+\subsection{Requisitos funcionales}
+
+Los requisitos funcionales describen las acciones que el sistema debe poder realizar.
 
 \begin{itemize}
-    \item RF-01: Registrar la creación de objetos.
-    \item RF-02: Registrar modificaciones geométricas.
-    \item RF-03: Detectar cambios de modo de edición.
-    \item RF-04: Registrar eliminación de objetos.
-    \item RF-05: Visualizar métricas de modelado.
-    \item RF-06: Exportar datos para análisis externo.
-    \item RF-07: Filtrar métricas por objeto, evento o tiempo.
-    \item RF-08: Notificar errores de captura o procesamiento.
-    \item RF-09: Activar y desactivar la captura desde la interfaz.
-    \item RF-10: Registrar marcas temporales precisas.
-    \item RF-11: Generar visualizaciones tridimensionales.
-    \item RF-12: Integrar representaciones visuales dentro de Blender.
-    \item RF-13: Generar gráficos estadísticos 2D.
+    \item \textbf{RF-01.} El sistema debe registrar la creación de objetos dentro de la escena.
+
+    \item \textbf{RF-02.} El sistema debe registrar modificaciones geométricas realizadas sobre los objetos.
+
+    \item \textbf{RF-03.} El sistema debe detectar cambios entre modos de trabajo, como \textit{Object Mode} y \textit{Edit Mode}.
+
+    \item \textbf{RF-04.} El sistema debe registrar la eliminación de objetos de la escena.
+
+    \item \textbf{RF-05.} El sistema debe permitir visualizar métricas relacionadas con el proceso de modelado.
+
+    \item \textbf{RF-06.} El sistema debe permitir exportar o reutilizar los datos registrados mediante archivos CSV.
+
+    \item \textbf{RF-07.} El sistema debe permitir filtrar o seleccionar información según archivos, métricas u objetos analizados.
+
+    \item \textbf{RF-08.} El sistema debe mostrar avisos o información de estado cuando se produzcan errores de captura o procesamiento.
+
+    \item \textbf{RF-09.} El sistema debe permitir activar y detener la captura de datos desde la interfaz.
+
+    \item \textbf{RF-10.} El sistema debe registrar marcas temporales asociadas a los eventos capturados.
+
+    \item \textbf{RF-11.} El sistema debe generar visualizaciones tridimensionales a partir de los datos analizados.
+
+    \item \textbf{RF-12.} El sistema debe integrar las representaciones visuales dentro del entorno de Blender.
+
+    \item \textbf{RF-13.} El sistema debe generar gráficos estadísticos 2D mediante herramientas de visualización.
 \end{itemize}
 
-\subsection{Requisitos no funcionales (RNF)}
+\subsection{Requisitos no funcionales}
+
+Los requisitos no funcionales indican las condiciones de calidad que debe cumplir el sistema.
 
 \begin{itemize}
-    \item RNF-01: Eficiencia en la captura de eventos.
-    \item RNF-02: Soporte para múltiples objetos y escenas complejas.
-    \item RNF-03: Persistencia de datos ante cierres inesperados.
-    \item RNF-04: Interfaz clara e intuitiva.
-    \item RNF-05: Código modular y mantenible.
-    \item RNF-06: Bajo impacto en el rendimiento de Blender.
+    \item \textbf{RNF-01.} El sistema debe capturar eventos de forma eficiente, evitando almacenar información redundante.
+
+    \item \textbf{RNF-02.} El sistema debe poder trabajar con escenas formadas por varios objetos.
+
+    \item \textbf{RNF-03.} Los datos generados deben mantenerse disponibles para su análisis posterior.
+
+    \item \textbf{RNF-04.} La interfaz debe ser clara y fácil de utilizar para usuarios con conocimientos básicos de Blender.
+
+    \item \textbf{RNF-05.} El código debe organizarse de forma modular para facilitar su mantenimiento y ampliación.
+
+    \item \textbf{RNF-06.} El sistema debe minimizar el impacto sobre el rendimiento de Blender durante las sesiones de modelado.
+
+    \item \textbf{RNF-07.} El sistema debe permitir revisar manualmente los datos generados cuando sea necesario.
 \end{itemize}
 
-\subsection{Requisitos de interfaz de usuario (RIU)}
+\subsection{Requisitos de interfaz de usuario}
+
+Estos requisitos describen los elementos principales que debe ofrecer la interfaz del sistema.
 
 \begin{itemize}
-    \item RIU-01: Panel de control de captura.
-    \item RIU-02: Panel de análisis y métricas.
-    \item RIU-03: Configuración de exportación de datos.
-    \item RIU-04: Alertas y mensajes de error.
-    \item RIU-05: Controles para visualizaciones 2D y 3D.
+    \item \textbf{RIU-01.} El sistema debe incluir un panel de control para iniciar y detener la captura de datos.
+
+    \item \textbf{RIU-02.} El sistema debe incluir un panel de análisis para cargar archivos CSV y consultar métricas.
+
+    \item \textbf{RIU-03.} El sistema debe ofrecer opciones para exportar o seleccionar archivos de datos.
+
+    \item \textbf{RIU-04.} El sistema debe mostrar información de estado, mensajes de error o avisos relevantes.
+
+    \item \textbf{RIU-05.} El sistema debe proporcionar controles para generar visualizaciones 2D y 3D.
+
+    \item \textbf{RIU-06.} El sistema debe incluir información de depuración que facilite comprobar el estado del logger durante el desarrollo.
 \end{itemize}
 
-\subsection{Requisitos legales y éticos (RLE)}
+\subsection{Requisitos legales y éticos}
+
+Estos requisitos están relacionados con el uso responsable del sistema y la protección de los datos generados.
 
 \begin{itemize}
-    \item RLE-01: Cumplimiento de la normativa de protección de datos.
-    \item RLE-02: Consentimiento explícito del usuario para la recopilación de información.
-    \item RLE-03: Uso de software libre respetando las licencias aplicables.
+    \item \textbf{RLE-01.} El sistema debe informar al usuario sobre la recopilación de datos antes de iniciar la captura.
+
+    \item \textbf{RLE-02.} El sistema debe solicitar consentimiento explícito para registrar información durante la sesión de modelado.
+
+    \item \textbf{RLE-03.} Los datos recopilados deben utilizarse únicamente con fines académicos, analíticos o de investigación.
+
+    \item \textbf{RLE-04.} El desarrollo debe respetar las licencias de Blender, Python y las librerías externas utilizadas.
 \end{itemize}
+
+\section{Trazabilidad entre casos de uso y requisitos}
+
+Tabla \ref{tab:trazabilidad_requisitos} resume la conexión entre los casos de uso establecidos y los requisitos clave del sistema.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{l l}
+\hline
+\textbf{Caso de uso} & \textbf{Requisitos asociados} \\
+\hline
+CU-1 Registrar creación de objeto & RF-01, RF-10, RNF-01 \\
+CU-2 Registrar modificaciones geométricas & RF-02, RF-10, RNF-01 \\
+CU-3 Registrar cambios de modo & RF-03, RF-10 \\
+CU-4 Registrar eliminación de objeto & RF-04, RF-10 \\
+CU-5 Visualizar métricas de modelado & RF-05, RF-07, RIU-02 \\
+CU-6 Exportar datos para análisis externo & RF-06, RIU-03 \\
+CU-7 Generar visualizaciones 3D & RF-11, RF-12, RIU-05 \\
+CU-8 Generar gráficos estadísticos & RF-13, RIU-05 \\
+\hline
+\end{tabular}
+\caption{Trazabilidad entre casos de uso y requisitos.}
+\label{tab:trazabilidad_requisitos}
+\end{table}
+
+Esta trazabilidad permite comprobar que las funcionalidades principales del sistema quedan cubiertas por los requisitos definidos.

@@ -1,0 +1,13 @@
+@startuml
+start
+:Usuario modifica la escena;
+:Blender ejecuta handler/temporizador;
+:Se obtiene snapshot del estado;
+if (¿cambió la firma?) then (sí)
+  :Validar y normalizar datos;
+  :Guardar registro CSV;
+else (no)
+  :Descartar evento redundante;
+endif
+stop
+@enduml

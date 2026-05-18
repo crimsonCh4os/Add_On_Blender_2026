@@ -14,6 +14,8 @@
 \usepackage{float}
 \usepackage{tikz}
 \usepackage{tikz}
+\usepackage{float}
+\usepackage{graphicx}
 \usetikzlibrary{positioning,arrows.meta}
 \newcolumntype{Y}{>{\RaggedRight\arraybackslash}X} 
 
@@ -262,7 +264,7 @@
 \definecolor{cgoLight}{HTML}{EEEEEE}
 \definecolor{cgoExtralight}{HTML}{FFFFFF}
 
-%
+
 % Nuevo comando para tablas grandes sin cabecera.
 \newcommand{\tablaSinCabeceraConBandas}[5]{%
   \begin{center}
@@ -299,12 +301,11 @@
 \chapterstyle{bianchi}
 \newcommand{\capitulo}[2]{
 	\setcounter{chapter}{#1}
+	\addtocounter{chapter}{-1}
 	\setcounter{section}{0}
 	\setcounter{figure}{0}
 	\setcounter{table}{0}
-	\chapter*{\thechapter.\enskip #2}
-	\addcontentsline{toc}{chapter}{\thechapter.\enskip #2}
-	\markboth{#2}{#2}
+	\chapter{\thechapter.\ #2}
 }
 
 % Apéndices
@@ -370,9 +371,9 @@
 \author{\nombre}
 \tutor{Bruno Rodrígez García y Raúl Marticorena Sánchez}
 
-\title{Herramientas para la monitorización y análisis de procesos de modelado 3D en Blender}
+\title{Addon Blender 1.0}
 \author{\nombre}
-\tutor{Bruno Rodrígez García y Raúl Marticorena Sánchez}
+\tutor{Bruno Rodríguez García y Raúl Marticorena Sánchez}
 
 \date{\today}
 
@@ -391,11 +392,11 @@
 \noindent\includegraphics[width=\textwidth]{cabecera}\vspace{1cm}
 
 
-\noindent D.Bruno Rodrígez García y  D.Raúl Marticorena Sánchez, profesores del departamento de Ingeniería Informática, área Lenguajes y Sistemas Informáticos.
+\noindent D. Bruno Rodrígez García y  D. Raúl Marticorena Sánchez, profesores del departamento de Ingeniería Informática, área Lenguajes y Sistemas Informáticos.
 
 \noindent Exponen:
 
-\noindent Que la alumna Dª. María Molina Goyena, con DNI 72906146X, ha realizado el Trabajo final de Grado en Ingeniería Informática titulado AddOn Blender 1.0. 
+\noindent Que la alumna Dª. María Molina Goyena, con DNI 72906146X, ha realizado el Trabajo de final de Grado en Ingeniería Informática titulado AddOn Blender 1.0. 
 
 \noindent Y que dicho trabajo ha sido realizado por la alumna bajo la dirección de los que suscriben, en virtud de lo cual se autoriza su presentación y defensa.
 
@@ -411,7 +412,7 @@ En Burgos, {\large \today}
 \begin{minipage}{0.45\textwidth}
 \begin{flushleft} %\large
 
-Vª. Bº. del Tutor:\\[2cm]
+Vº. Bº. del Tutor:\\[2cm]
 D. Bruno Rodríguez García
 
 \end{flushleft}
@@ -420,7 +421,7 @@ D. Bruno Rodríguez García
 \begin{minipage}{0.45\textwidth}
 \begin{flushleft} %\large
 
-Vª. Bº. del Tutor:\\[2cm]
+Vº. Bº. del Tutor:\\[2cm]
 D. Raúl Marticorena Sánchez
 
 \end{flushleft}
@@ -433,10 +434,10 @@ D. Raúl Marticorena Sánchez
 % y descomentar lo siguiente
 %Vº. Bº. del Tutor:\\[2cm]
 
-%D. Bruno Rodrígez García, Raúl Marticorena Sánchez
+%D. Bruno Rodríguez García, Raúl Marticorena Sánchez
 
 
-%D. Bruno Rodrígez García, Raúl Marticonera Sánchez
+%D. Bruno Rodríguez García, Raúl Marticonera Sánchez
 
 
 \newpage\null\thispagestyle{empty}\newpage
@@ -450,18 +451,17 @@ D. Raúl Marticorena Sánchez
 \renewcommand*\abstractname{Resumen}
 \begin{abstract}
 
-El proceso de modelado en Blender carece de herramientas que permitan registrar y analizar de forma estructurada la actividad del usuario y el estado interno de la escena. Esto dificulta la obtención de métricas objetivas para evaluar, automatizar o mejorar el flujo de trabajo en entornos de modelado 3D.
-Este proyecto presenta el desarrollo de un sistema compuesto por dos addons para Blender, orientado a la recopilación y análisis de datos generados durante sesiones de modelado tridimensional. 
-El primer addon permite registrar de forma no intrusiva eventos de modelado, como la creación, modificación o eliminación de objetos, cambios de modo y propiedades geométricas. 
-El segundo addon proporciona herramientas de análisis de métricas temporales, espaciales y estadísticas, facilitando la evaluación del proceso de modelado, así como la visualización de estos datos mediante representaciones gráficas, incluyendo su exploración en entornos tridimensionales.
-El trabajo incluye la implementación, validación y uso de los addons para la obtención de datos reales del proceso de modelado 3D.
+La actividad del usuario y el estado interno de una escena de modelado 3D no puede registrarse ni analizarse en términos estructurados por medio de herramientas que permiten obtener métricas objetivas que ayuden a evaluar el flujo de trabajo en entornos de modelado 3D. 
+Este proyecto plantea el desarrollo de un sistema integrado con dos \textit{addons} para Blender, con el fin de recopilar y analizar datos provenientes de sesiones de modelado tridimensional. El primer \textit{addon} registra las actividades del usuario y la evolución interna del modelo, como la creación, modificación y eliminación de objetos, los cambios de modo y los atributos geométricos. 
+El segundo \textit{addon} ofrece herramientas de análisis con métricas temporales, espaciales e estadísticas, lo que permite evaluar el proceso de modelado y representarlo en tres dimensiones, incluyendo su exploración en entornos tridimensionales.
+El trabajo trata sobre la implementación, prueba y uso de ambos addons para obtener datos reales en procesos de modelado 3D.
 
 \end{abstract}
 
 \renewcommand*\abstractname{Descriptores}
 \begin{abstract}
 
-Blender, modelado 3D, addon, recopilación de datos, análisis de métricas, visualización, Python, métricas espaciales, temporales y estratégicas.
+Modelado 3D, addon, recopilación de datos, análisis de métricas, visualización, Blender, Python, métricas espaciales, temporales y estratégicas.
 
 
 \end{abstract}
@@ -471,20 +471,27 @@ Blender, modelado 3D, addon, recopilación de datos, análisis de métricas, vis
 
 % Abstract en inglés (por ahora no lo toques)
 
-% Abstract en inglés
-
+% Abstract in English
 \renewcommand*\abstractname{Abstract}
 \begin{abstract}
-This project presents the development of a system composed of two Blender addons, aimed at the collection and analysis of data generated during 3D modeling sessions. 
-The first addon allows non-intrusive recording of modeling events such as object creation, modification or deletion, mode changes, and geometric properties. 
-The second addon provides tools for analyzing temporal, spatial, and statistical metrics, facilitating the evaluation of the modeling process. 
-The work includes implementation, validation, and use of the addons to obtain real data, as well as extracting conclusions about user behavior and the efficiency of the 3D modeling workflow.
+
+User activity and the internal state of a 3D modeling scene cannot usually be recorded or analyzed in a structured way using tools capable of obtaining objective metrics to evaluate workflows in 3D modeling environments.
+
+This project proposes the development of an integrated system composed of two Blender \textit{addons} aimed at collecting and analyzing data generated during 3D modeling sessions. The first \textit{addon} records user activity and the internal evolution of the model, including object creation, modification and deletion, mode changes, and geometric attributes.
+
+The second \textit{addon} provides analysis tools based on temporal, spatial and statistical metrics, allowing the evaluation of the modeling process and its representation through three-dimensional visualizations integrated within Blender.
+
+This work focuses on the implementation, testing and practical use of both addons in order to obtain real data from 3D modeling processes.
+
 \end{abstract}
 
 \renewcommand*\abstractname{Keywords}
 \begin{abstract}
-Blender, 3D modeling, addon, data collection, metrics analysis, visualization, Python, spatial and temporal metrics
+
+3D modeling, addon, data collection, metric analysis, visualization, Blender, Python, spatial metrics, temporal metrics, strategic metrics.
+
 \end{abstract}
+
 \clearpage
 
 % Indices

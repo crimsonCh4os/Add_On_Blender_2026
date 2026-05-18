@@ -1,86 +1,63 @@
-\capitulo{7}{Conclusiones y Líneas de trabajo futuras}
-
+\capitulo{7}{Conclusiones y trabajo futuro}
 
 \section{Conclusiones}
 
-El presente Trabajo de Fin de Grado ha tenido como objetivo el desarrollo de un sistema capaz de registrar y analizar la interacción del usuario en entornos de modelado tridimensional, utilizando Blender como plataforma de referencia. A lo largo del proyecto se ha diseñado e implementado un addon que permite capturar información relevante del proceso de modelado de forma automática y no intrusiva.
+En este Trabajo de Final de Grado se ha desarrollado un sistema para almacenar y analizar qué hace un usuario durante la creación 3D en Blender. Para ello se creó un controlador que registra la información necesaria para poder hacerlo sin perturbar al usuario mientras usa el programa.
 
-A partir del trabajo realizado, se pueden extraer las siguientes conclusiones principales:
+Se constató durante el desarrollo del proyecto que Blender puede acceder a mucha información sobre las diferentes secuencias en él mismo. Por tanto, el sistema puede grabar todo lo referente a los objetos, los cambios de la geometría, los cambios en el modelado, y otros elementos significativos que ocurren mientras el usuario trabaja en él.
 
-\begin{itemize}
+Uno de los aspectos más importantes de nuestro trabajo fue encontrar una manera de registrar todo esto de forma continua y estructurada. El controlador almacena los datos para poder analizarlos más fácilmente después. Esto permite examinar la evolución de la escena y cómo interactúa el usuario con las herramientas que Blender ofrece.
 
-    \item Se ha demostrado la viabilidad de registrar de forma continua la interacción del usuario dentro de Blender, capturando datos relacionados con transformaciones, geometría, eventos de modelado y cambios de estado sin interferir en el flujo de trabajo.
+También se consiguió integrar el sistema directamente dentro de Blender mediante un \textit{addon}. Esto hace que el usuario pueda trabajar de forma normal mientras el sistema registra información en segundo plano. Gracias a esto, los datos recogidos se parecen más a situaciones reales de trabajo y no solo a pruebas preparadas en laboratorio.
 
-    \item El sistema desarrollado permite estructurar la información en un formato adecuado para su posterior análisis, facilitando la obtención de métricas temporales, espaciales y geométricas del proceso de modelado.
+Otro aspecto importante fue la detección de algunos eventos concretos durante el modelado. Por ejemplo, el sistema puede detectar cuándo se duplican objetos, cuándo se modifica geometría, cuándo se cambia de modo dentro de Blender o cuándo se realizan ciertos cambios sobre coordenadas UV. Toda esta información ayuda a entender mejor cómo trabaja el usuario durante el proceso de diseño.
 
-    \item La integración del sistema dentro del propio entorno de Blender, mediante un addon, permite una recopilación de datos en condiciones reales de uso, a diferencia de otros enfoques basados en entornos experimentales o simulados.
+Además, el sistema desarrollado permite guardar los datos dentro de los propios archivos \textit{.blend}. De esta forma, la información no se pierde cuando se cierra el programa y puede seguir utilizándose más adelante.
 
-    \item Se ha conseguido detectar eventos relevantes de modelado, como duplicados, fusiones de geometría, cambios de modo o modificaciones en coordenadas UV, lo que permite caracterizar de forma más precisa el comportamiento del usuario.
-
-    \item El uso de mecanismos de persistencia de datos integrados en el propio archivo \textit{.blend} garantiza la continuidad de la información entre sesiones, evitando la pérdida de datos y facilitando su gestión.
-
-\end{itemize}
-
-En conjunto, el sistema desarrollado proporciona una base sólida para el análisis del proceso de modelado tridimensional, permitiendo estudiar la evolución de la escena y el comportamiento del usuario a lo largo del tiempo.
+En general, este proyecto sirve como una base bastante útil para estudiar el proceso de modelado 3D y analizar cómo trabaja una persona dentro de Blender.
 
 \section{Conclusiones técnicas}
 
-Desde un punto de vista técnico, el desarrollo del proyecto ha permitido obtener las siguientes conclusiones:
+A nivel técnico, el proyecto también permitió aprender muchas cosas sobre Blender y sobre el desarrollo de sistemas de captura de datos.
 
-\begin{itemize}
+Se comprobó que la API de Blender permite acceder fácilmente a información interna del programa, como objetos, geometría o estados de la escena. Esto facilitó mucho el desarrollo del sistema.
 
-    \item El uso de la API de Blender (\texttt{bpy}) permite acceder de forma eficiente a las estructuras internas del entorno, facilitando la extracción de información relevante de la escena y de los objetos.
+También se utilizaron \textit{handlers} y temporizadores para detectar cambios mientras el usuario trabajaba en tiempo real. Gracias a esto, el sistema puede registrar eventos continuamente sin necesidad de que el usuario haga nada especial.
 
-    \item La utilización de \textit{handlers} y temporizadores permite implementar un sistema de captura de eventos en tiempo real, adaptado al funcionamiento interno de Blender.
+Otra parte importante fue el uso de comparaciones entre estados de la escena. Esto permitió evitar guardar información repetida y ayudó a reducir la cantidad de datos generados.
 
-    \item La detección de cambios mediante comparación de estados (snapshots) resulta una estrategia eficaz para evitar el registro redundante de información y reducir el volumen de datos generados.
+Durante el proyecto también se vio que guardar demasiada información puede afectar al rendimiento del programa. Por eso fue necesario buscar un equilibrio entre capturar suficientes datos y mantener Blender funcionando de forma fluida.
 
-    \item La implementación de un sistema de logging no intrusivo requiere un equilibrio entre frecuencia de captura y rendimiento, siendo necesario optimizar el sistema para minimizar el impacto en la experiencia del usuario.
+Además, algunos eventos complejos fueron más difíciles de detectar. Por ejemplo, ciertos cambios en geometría o en coordenadas UV necesitan técnicas más avanzadas porque no siempre basta con registrar comandos simples.
 
-    \item La gestión de eventos complejos, como las modificaciones en coordenadas UV o las operaciones de modelado encadenadas, requiere técnicas específicas de detección y procesamiento que van más allá del simple registro de comandos.
-
-\end{itemize}
-
-Estas conclusiones ponen de manifiesto la complejidad asociada a la captura y estructuración de datos en entornos interactivos, así como la necesidad de diseñar soluciones adaptadas al funcionamiento interno de las herramientas utilizadas.
+Todo esto demuestra que crear un sistema de captura de datos dentro de Blender es un trabajo bastante complejo y que requiere adaptarse al funcionamiento interno del programa.
 
 \section{Limitaciones del sistema}
 
-A pesar de los resultados obtenidos, el sistema desarrollado presenta ciertas limitaciones que deben ser consideradas:
+Aunque el sistema opera adecuadamente y cumple con los fines principales del proyecto, aún hay ciertas incompatibilidades.
 
-\begin{itemize}
+El mayor problema surge porque el software ha sido diseñado exclusivamente para Blender; como tal, no funciona directamente en otros programas de modelado 3D.
 
-    \item El sistema se ha desarrollado específicamente para Blender, lo que limita su aplicabilidad directa a otros entornos de modelado 3D.
+También hay algunos eventos complejos que dependen mucho del estado interno del programa. Por eso, en ciertas situaciones pueden aparecer pequeñas imprecisiones en los datos recogidos.
 
-    \item La detección de algunos eventos complejos depende del estado interno del software, lo que puede generar pequeñas imprecisiones en situaciones específicas.
+Otra limitación es que en sesiones largas de trabajo se genera una gran cantidad de información. Esto hace necesario aplicar filtros y optimizaciones para evitar almacenar demasiados datos.
 
-    \item El volumen de datos generado puede ser elevado en sesiones prolongadas, lo que requiere estrategias de optimización y filtrado.
-
-    \item El análisis de los datos recogidos se ha planteado de forma básica, siendo necesario el desarrollo de herramientas más avanzadas para su explotación completa.
-
-\end{itemize}
+Además, el sistema de análisis todavía es bastante básico. Aunque ya permite estudiar información importante, todavía se podrían crear herramientas mucho más avanzadas para analizar mejor todos los datos recogidos.
 
 \section{Líneas de trabajo futuras}
 
-A partir del trabajo realizado, se plantean diversas líneas de mejora y desarrollo futuro:
+Este proyecto puede seguir creciendo en el futuro y ofrece muchas posibilidades de mejora.
 
-\begin{itemize}
+Una de las mejores ideas sería mejorar el sistema de análisis usando técnicas avanzadas como minería de datos o inteligencia artificial. Esto le permitirá comprender mejor el comportamiento del usuario e identificar patrones en el modelo.
 
-    \item \textbf{Mejora del sistema de análisis}: desarrollo de herramientas avanzadas para el análisis de los datos recogidos, incluyendo técnicas de minería de datos, aprendizaje automático o visualización interactiva en 3D.
+Además, se podría diseñar una nueva forma de presentar la información. Por ejemplo, mostrar gráficos, mapas o animaciones directamente en la visión 3D actual.
 
-    \item \textbf{Visualización de métricas}: implementación de sistemas que permitan representar los datos directamente dentro del entorno tridimensional, facilitando su interpretación mediante gráficos, mapas o animaciones.
+Se podría adaptar el sistema a otros programas de modelado 3D u otras aplicaciones de CAD. Así, podrían compararse distintas herramientas y diferentes procesos de diseño.
 
-    \item \textbf{Extensión a otros entornos}: adaptación del sistema a otras herramientas de modelado 3D o CAD, permitiendo comparar procesos de diseño entre diferentes plataformas.
+Así mismo, se debería seguir optimizando el rendimiento para minimizar la carga sobre Blender, sobre todo cuando se trabaja con escenas grandes o a lo largo de una sesión.
 
-    \item \textbf{Optimización del rendimiento}: mejora de la eficiencia del sistema para reducir el impacto en el rendimiento en escenas complejas o sesiones prolongadas.
+La inteligencia artificial puede integrarse directamente con la información recopilada. Esto podría hacer que los sistemas propongan acciones, predigan operaciones o ayuden a usuarios mientras modelan dentro de Blender.
 
-    \item \textbf{Análisis del comportamiento del usuario}: aplicación del sistema para estudiar patrones de diseño, diferencias entre usuarios o evolución del aprendizaje en contextos educativos.
+Por último, también sería útil utilizar inteligencia artificial junto a los datos para construir sistemas capaces de ofrecer sugerencias. El objetivo es facilitar la enseñanza al analizar cómo aprenden los estudiantes a modelar en 3D y qué cambios observa durante el curso de la educación.
 
-    \item \textbf{Integración con inteligencia artificial}: utilización de los datos recopilados para entrenar modelos capaces de predecir acciones del usuario, sugerir operaciones o asistir en el proceso de modelado.
-
-\end{itemize}
-
-En conjunto, estas líneas de trabajo abren nuevas posibilidades para el estudio del proceso de diseño y el desarrollo de herramientas inteligentes que mejoren la interacción entre el usuario y los entornos de modelado tridimensional.
-
-Todo proyecto debe incluir las conclusiones que se derivan de su desarrollo. Éstas pueden ser de diferente índole, dependiendo de la tipología del proyecto, pero normalmente van a estar presentes un conjunto de conclusiones relacionadas con los resultados del proyecto y un conjunto de conclusiones técnicas. 
-Además, resulta muy útil realizar un informe crítico indicando cómo se puede mejorar el proyecto, o cómo se puede continuar trabajando en la línea del proyecto realizado. 
-
+En resumen, este proyecto demuestra que es posible registrar y analizar automáticamente la interacción del usuario dentro de Blender. Además, abre muchas posibilidades para seguir investigando y desarrollar herramientas más inteligentes relacionadas con el modelado 3D.

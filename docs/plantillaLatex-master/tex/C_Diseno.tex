@@ -2,28 +2,61 @@
 
 \section{Introducción}
 
-En este apartado se describe el diseño del sistema desarrollado, abordando su organización interna, la estructura de los datos gestionados y el comportamiento de los distintos módulos que componen los addons implementados para Blender.
+En este apartado se describe el diseño general del sistema desarrollado, explicando cómo se organizan internamente los distintos componentes y cómo se gestionan los datos dentro de Blender.
 
-El sistema está constituido por dos addons independientes pero complementarios:
+El sistema se divide en dos addons que trabajan conjuntamente:
 
 \begin{itemize}
-    \item Un addon de recopilación de datos, responsable de la detección y registro de eventos durante la interacción del usuario con Blender.
-    \item Un addon de análisis y visualización, encargado de procesar los datos generados y representar métricas de forma gráfica y tridimensional.
+    \item Un addon de captura de datos, encargado de detectar y registrar eventos mientras el usuario trabaja dentro de Blender.
+    
+    \item Un addon de análisis y visualización, utilizado para procesar la información registrada y generar métricas y representaciones visuales.
 \end{itemize}
 
-Ambos componentes se comunican mediante archivos intermedios en formato CSV, lo que permite mantener una arquitectura desacoplada, flexible y fácilmente extensible.
+La comunicación de ambos add-ons se efectúa mediante archivos CSV lo que implica que la etapa de registro puede estar ajena a la fase de evaluación. Esta organización proporciona mayor flexibilidad en cuanto a mantenimiento y simplifica el crecimiento futurista en la creación de nuevas versiones.
 
-El diseño del sistema se ha realizado siguiendo principios clásicos de ingeniería del software, como la modularidad, la separación de responsabilidades, el bajo acoplamiento y la alta cohesión. Estos criterios permiten mejorar la mantenibilidad del sistema, facilitar su evolución futura y asegurar la coherencia entre los requisitos definidos, la implementación realizada y los resultados obtenidos.
-
-Con el fin de estructurar la descripción del sistema de manera clara y completa, este apartado se organiza en tres niveles: diseño de datos, diseño arquitectónico y diseño procedimental.
+El diseño consideró tanto los principios del modularismo como la separación de funciones para asegurar que cada parte del software tuviera su propósito específico dentro del sistema. La sección estuvo dividida en tres aspectos fundamentales: diseño de información, diseño arquitectónico y diseño procedimental.
 
 \section{Diseño de datos}
 
-El sistema utiliza archivos CSV como mecanismo principal de persistencia de datos. En estos archivos se almacenan los eventos capturados durante la interacción del usuario con Blender, permitiendo su posterior procesamiento por el addon de análisis.
+El sistema persiste los datos en archivos CSV como medio principal. Estos archivos albergan las transacciones registradas durante la interacción del usuario con Blender, lo que permite que se procesen posteriormente por el addon analítico.
 
-La estructura de los datos se ha diseñado siguiendo un modelo semiestructurado orientado a eventos, en el que cada registro representa una acción significativa realizada por el usuario en el entorno de modelado.
+Se ha elegido un enfoque orientado a eventos para la gestión de datos, ya que cada registro refleja un hecho significativo ejecutado por el usuario en el ámbito de la modelización.
 
-Cada fila del archivo corresponde a un evento detectado por el sistema. La información almacenada combina datos temporales, identificativos, espaciales y geométricos, proporcionando una visión completa del estado de la escena en el momento de la interacción.
+Cada registro en la base de datos es equivalente a un evento identificado por el sistema. La base de datos contiene datos temporales, identificativos, espaciales y geométricos; esta información proporciona un completo vistazo del estado de la escena a la hora del evento.
+
+Un ejemplo sencillo de registro producido por el sistema sería:
+
+\begin{verbatim}
+USER_ID,TimeStamp,UserX,UserY,UserZ,
+VertexDelta,ModeChanged,ShiftD,Merge
+
+b3cef250,1777534745.32,7.51,-2.6,3.96,
+-8,0,0,0
+\end{verbatim}
+
+Cada registro almacena información temporal, espacial y geométrica relacionada con el estado de la escena y las acciones realizadas por el usuario durante la sesión de modelado.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{l l}
+\hline
+\textbf{Campo} & \textbf{Descripción} \\
+\hline
+USER\_ID & Identificador del usuario \\
+TimeStamp & Marca temporal del evento \\
+UserX,Y,Z & Posición del usuario en la escena \\
+VertexDelta & Cambio en el número de vértices \\
+ModeChanged & Cambio de modo en Blender \\
+ShiftD & Detección de duplicado \\
+Merge & Operación de unión de geometría \\
+\hline
+\end{tabular}
+\caption{Ejemplo de campos registrados en los archivos CSV.}
+\label{tab:csv_fields}
+\end{table}
+
+Esta estructura facilita tanto el análisis automatizado como la evaluación manual de los registros de información.
 
 La Figura~\ref{fig:diseno_datos} muestra la estructura lógica de los datos gestionados por el sistema.
 
@@ -56,20 +89,7 @@ Entre los datos procesados por el sistema de análisis se incluyen:
     \item Coordenadas para generación de geometría visual.
 \end{itemize}
 
-La elección del formato CSV responde a criterios de simplicidad, interoperabilidad y facilidad de procesamiento, permitiendo tanto el análisis automático como la inspección manual de los datos.
-
-\section{Diseño arquitectónico}
-
-La arquitectura del sistema se basa en un modelo modular orientado a la separación de responsabilidades.
-
-La Figura~\ref{fig:diseno_arquitectura} presenta la arquitectura general del sistema, mostrando el flujo de información desde la interacción del usuario hasta la generación de métricas y visualizaciones.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[height=0.85\textheight, keepaspectratio]{diagramas/diseno_arquitectura_vertical.png}
-    \caption{Arquitectura general del sistema.}
-    \label{fig:diseno_arquitectura}
-\end{figure}
+El formato CSV respeta los parámetros de sencillez, compatibilidad y capacidad de procesamiento para obtener datos mediante análisis automático o verificación directa.
 
 Asimismo, la Figura~\ref{fig:diseno_componentes} representa el sistema desde el punto de vista de componentes software.
 
@@ -87,13 +107,38 @@ El primer addon se encarga de monitorizar la interacción del usuario dentro de 
 Sus principales responsabilidades son:
 
 \begin{itemize}
-    \item Detectar eventos mediante handlers.
+    \item Detectar eventos mediante \textit{handlers}.
     \item Identificar operaciones realizadas sobre objetos.
     \item Capturar información geométrica y contextual.
     \item Registrar eventos en archivos CSV.
 \end{itemize}
 
-Este componente funciona de manera transparente para el usuario y está optimizado para minimizar el impacto sobre el rendimiento del entorno de modelado.
+El sistema hace uso de los \textit{handlers} de Blender para ejecutar funciones automático al detectar modificaciones en la escena.
+
+\begin{verbatim}
+bpy.app.handlers.depsgraph_update_post.append(operator_tracker)
+\end{verbatim}
+
+Este enfoque facilita un seguimiento constante del estado de la escena sin la intervención del usuario necesario.
+
+Este componente opera de forma invisible para el usuario y está diseñado para optimizar la performance del entorno de modelado.
+
+Para reducir la carga informativa guardada, el sistema evita recoger datos durante las sesiones en las que no se registran cambios pertinentes.
+
+\begin{verbatim}
+if not state_changed and not any_operator_flag:
+    return None
+\end{verbatim}
+
+Gracias a esta estrategia se disminuye considerablemente la cantidad de datos redundantes generados durante las sesiones de modelado.
+
+Además, el sistema genera firmas simplificadas del estado de la escena para detectar modificaciones importantes entre actualizaciones consecutivas.
+
+\begin{verbatim}
+signature = (verts, ngons, tris, mode, uv_hash)
+\end{verbatim}
+
+Estas firmas permiten comprobar rápidamente si el estado de la escena ha cambiado antes de registrar nueva información.
 
 \subsection{Addon de análisis y visualización}
 
@@ -103,11 +148,71 @@ Sus funciones principales incluyen:
 
 \begin{itemize}
     \item Lectura y procesamiento de archivos CSV.
+    
     \item Cálculo de métricas temporales, espaciales y estructurales.
+    
     \item Generación de gráficos estadísticos.
+    
     \item Creación de visualizaciones tridimensionales dentro de Blender.
+    
     \item Integración de herramientas externas como \textit{matplotlib}.
 \end{itemize}
+
+El sistema se organizó en distintos módulos para separar las responsabilidades principales y facilitar el mantenimiento del código.
+
+La Figura~\ref{fig:interna} muestra los distintos componentes internos del addon.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.85\textheight, keepaspectratio]{diagramas/interna.png}
+    \caption{Diagrama de componentes del sistema.}
+    \label{fig:interna}
+\end{figure}
+
+Algunos de los archivos más importantes utilizados durante el desarrollo fueron:
+
+\begin{itemize}
+    \item \texttt{metrics\_ui.py}: controla la interfaz principal y las opciones de análisis.
+    
+    \item \texttt{graphs.py}: genera gráficos y representaciones visuales dentro de Blender.
+    
+    \item \texttt{utils.py}: incluye funciones auxiliares relacionadas con el cálculo y procesamiento de métricas.
+    
+    \item \texttt{\_\_init\_\_.py}: registra y conecta los distintos componentes internos del addon.
+\end{itemize}
+
+Las métricas se generan automáticamente en base a los datos que se capturan durante la sesión de modelado.
+
+\begin{verbatim}
+ANALYSIS[metric_id]["label"]
+\end{verbatim}
+
+Esto permite organizar las métricas de forma más flexible y agruparlas según el tipo de análisis que se quiera realizar.
+
+Para generar gráficos temporales y representaciones estadísticas se utilizaron librerías externas como \textit{matplotlib}.
+
+\begin{verbatim}
+plt.plot(x, y)
+plt.show()
+\end{verbatim}
+
+Este tipo de representaciones facilita analizar visualmente la evolución de distintas métricas durante el modelado.
+
+Se generan parte de las visualizaciones del sistema dentro del entorno 3D de Blender mediante geometría procedurales.
+
+\begin{verbatim}
+bpy.ops.mesh.primitive_cube_add(location=(x, y, z))
+\end{verbatim}
+
+Esto también permite mostrar las métricas como objetos tridimensionales dentro de la escena original, lo que facilita un mejor análisis y comprensión de los datos de manera visual.||copia|Una parte de
+
+El sistema también puede modificar propiedades visuales de los objetos en función de los valores calculados durante el análisis.
+
+\begin{verbatim}
+obj.scale = (value, value, value)
+\end{verbatim}
+
+Esto permite representar visualmente diferencias entre métricas utilizando tamaño, posición u otras propiedades espaciales.
 
 Este componente permite representar la información analítica directamente dentro del entorno tridimensional, facilitando la interpretación de los datos.
 
@@ -115,22 +220,15 @@ Este componente permite representar la información analítica directamente dent
 
 La comunicación entre ambos addons se realiza mediante archivos CSV intermedios.
 
-Este enfoque presenta varias ventajas:
-
-\begin{itemize}
-    \item Desacoplamiento entre captura y análisis.
-    \item Facilidad de depuración.
-    \item Compatibilidad con herramientas externas.
-    \item Reutilización de los datos en distintos contextos.
-\end{itemize}
+Utilizar archivos CSV como punto de conexión entre ambos addons permitió simplificar bastante el flujo de trabajo del sistema y facilitó las tareas de depuración y análisis.
 
 La arquitectura modular permite que ambos componentes evolucionen de forma independiente, manteniendo una integración coherente dentro del sistema global.
 
-\section{Diseño procedimental}
+\section{Diseño procedural}
 
-El diseño procedimental describe la secuencia de operaciones ejecutadas por el sistema en respuesta a las acciones del usuario.
+El diseño procedural explica la secuencia de pasos realizados por el sistema en respuesta al acto del usuario.
 
-La Figura~\ref{fig:diseno_procedimental} muestra el flujo general de funcionamiento del sistema.
+Figura~\ref{fig:diseno_procedimental} ilustra la secuencia fundamental del funcionamiento del sistema.
 
 \begin{figure}[H]
     \centering
@@ -148,11 +246,13 @@ La Figura~\ref{fig:diseno_secuencia} representa la interacción temporal entre l
     \label{fig:diseno_secuencia}
 \end{figure}
 
+Todo el funcionamiento del sistema se ejecuta automáticamente mientras el usuario trabaja de manera habitual dentro de Blender.
+
 El flujo general de ejecución es el siguiente:
 
 \begin{enumerate}
     \item El usuario realiza una acción en Blender.
-    \item El sistema detecta el evento mediante handlers registrados.
+    \item El sistema detecta el evento mediante \textit{handlers} registrados.
     \item Se identifican el tipo de acción y el objeto afectado.
     \item Se capturan las propiedades relevantes del estado de la escena.
     \item Se genera un registro estructurado del evento.
@@ -183,17 +283,17 @@ Durante el desarrollo del sistema se adoptaron diversas decisiones clave que con
 
     \item \textbf{Visualización integrada en Blender}: permite representar métricas directamente dentro del entorno de modelado.
 
-    \item \textbf{Uso de librerías externas}: facilita la generación de gráficos y análisis estadístico avanzado mediante herramientas como \textit{matplotlib}.
+    \item \textbf{Uso de librerías externas}: permitió incorporar gráficos y representaciones estadísticas utilizando herramientas como \textit{matplotlib}.
 
 \end{itemize}
 
-Estas decisiones permiten construir un sistema robusto, modular y eficiente, alineado con los requisitos definidos para el proyecto.
+Todas estas decisiones ayudaron a desarrollar un sistema más organizado, flexible y fácil de ampliar en futuras versiones del proyecto.
 
-Por último, la Figura~\ref{fig:arquitectura} presenta una visión global del sistema completo, integrando ambos addons y mostrando el flujo general de información.
+Por último, la Figura~\ref{fig:arquitectura} muestra una visión general del sistema completo, integrando ambos addons y el flujo de información entre ellos.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[height=0.85\textheight, keepaspectratio]{diagramas/diseno_arquitectura_vertical.png}
-    \caption{Arquitectura global del sistema basada en dos addons complementarios.}
-    \label{fig:arquitectura}
+ \centering
+ \includegraphics[height=0.85\textheight, keepaspectratio]{diagramas/diseno_arquitectura_vertical.png}
+ \caption{Arquitectura global del sistema basada en dos addons complementarios.}
+ \label{fig:arquitectura}
 \end{figure}

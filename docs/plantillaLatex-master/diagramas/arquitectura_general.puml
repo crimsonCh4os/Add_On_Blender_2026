@@ -1,0 +1,13 @@
+@startuml
+skinparam componentStyle rectangle
+actor Usuario
+component "Blender" {
+  component "Addon de captura" as Captura
+  component "Addon de análisis" as Analisis
+}
+database "CSV / persistencia" as CSV
+Usuario --> Captura : interacción
+Captura --> CSV : escribe eventos y métricas
+Analisis --> CSV : lee datos
+Analisis --> Usuario : visualizaciones 2D/3D
+@enduml

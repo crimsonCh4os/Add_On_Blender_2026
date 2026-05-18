@@ -1,164 +1,230 @@
 \capitulo{3}{Conceptos teóricos}
 
+En este capítulo se explican los conceptos teóricos indispensables para comprender la implementación del sistema.
 
-Para el desarrollo del sistema propuesto es necesario comprender diversos conceptos relacionados con el análisis de datos, el formato CSV, la visualización de información y el funcionamiento de los addons en Blender. En este capítulo se presentan los fundamentos teóricos que permiten entender el contexto tecnológico del proyecto y las bases sobre las que se ha desarrollado la aplicación.
+\section{Blender y modelado 3D}
 
-El proyecto se centra en la recopilación, análisis y visualización de datos generados durante el proceso de modelado tridimensional. Este enfoque se enmarca dentro del ámbito del análisis de interacción en entornos 3D, donde el estudio de la actividad del usuario permite mejorar la comprensión del proceso de modelado y optimizar herramientas existentes \cite{jankowski2014,lavioila2017}.
+Blender es un programa de edición de gráficos que se emplea para diseñar y crear objetos 3D. El software se usa en videojuegos, animación, arquitectura o fabricación 3D.
 
-\section{Formato de datos CSV}
-
-El formato CSV (Comma-Separated Values) es un estándar ampliamente utilizado para el almacenamiento de datos estructurados en forma tabular. Su simplicidad y compatibilidad lo convierten en una opción adecuada para la exportación y procesamiento de datos en múltiples entornos \cite{data_analysis}.
-
-En este proyecto, los archivos CSV se utilizan para almacenar información generada durante las sesiones de modelado, incluyendo datos temporales, espaciales y estructurales. Este tipo de formato permite una integración sencilla con herramientas de análisis y facilita la posterior visualización de los datos.
-
-\section{Análisis y procesamiento de datos}
-
-El análisis de datos consiste en la extracción de información significativa a partir de conjuntos de datos estructurados. En el contexto de este trabajo, el análisis se centra en identificar patrones de uso, evolución de la escena y comportamiento del usuario durante el modelado.
-
-Para ello, es necesario aplicar procesos de preprocesamiento, como la limpieza, normalización y estructuración de los datos. Estas etapas permiten garantizar la coherencia de la información y facilitan su tratamiento posterior mediante herramientas de análisis \cite{data_analysis}.
-
-El análisis de interacción en entornos tridimensionales es un campo relevante dentro de la interacción persona-computador, ya que permite estudiar cómo los usuarios manipulan objetos en espacios virtuales y qué estrategias utilizan durante el proceso de modelado \cite{bimanual2012}.
-
-\section{Visualización de datos en entornos tridimensionales}
-
-La visualización de datos es un elemento clave para interpretar la información obtenida a partir del análisis. En este proyecto, se plantea la representación de datos dentro de un entorno tridimensional, lo que permite explorar la información de forma más intuitiva y contextualizada.
-
-La integración de datos en espacios 3D facilita la comprensión de relaciones espaciales y temporales, y permite representar la evolución del proceso de modelado de forma visual. Este tipo de enfoques se relaciona con las tendencias actuales en sistemas interactivos y visualización avanzada de datos \cite{malik2023}.
-
-\section{Desarrollo de addons en Blender}
-
-Blender permite ampliar sus funcionalidades mediante el uso de addons desarrollados en Python. Estos addons proporcionan acceso a la API interna del software, lo que permite interactuar con la escena, los objetos y las operaciones realizadas por el usuario.
-
-El desarrollo de addons constituye una herramienta clave para la automatización y extensión de Blender, permitiendo implementar sistemas personalizados adaptados a necesidades específicas. En este proyecto, se utiliza este mecanismo para capturar información del entorno y registrar eventos de modelado de forma no intrusiva.
-
-\section{Tipos de datos utilizados}
-
-En el contexto del proyecto, los datos recopilados pueden clasificarse en diferentes categorías:
+El modelado 3D se refiere al desarrollo de modelos dentro un entorno 3D. Los objetos son formados mediante vértices, aristas y caras. A través de estas estructuras, los modelos pueden ser de simple o gran complejidad.
 
 \begin{itemize}
-    \item \textbf{Datos temporales}: permiten analizar la evolución del proceso de modelado a lo largo del tiempo.
-    \item \textbf{Datos espaciales}: representan la posición y transformación de objetos dentro del entorno tridimensional.
-    \item \textbf{Datos estructurales}: describen la geometría de los modelos, como número de vértices, caras o modificadores.
+\item Los vértices son como los puntos que marcan algo en el espacio.
+\item Las aristas unen esos puntos.
+\item Y las caras son las superficies que podemos ver del modelo.
 \end{itemize}
 
-El tratamiento adecuado de estos datos es fundamental para garantizar una correcta interpretación y análisis de la información.
+La Figura~\ref{fig:blender_interface} muestra un cubo en un espacio 3D dentro de la interfaz de Blender.
 
-\section{Resumen}
+% 3.1 Blender y modelado 3D
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{diagramas/3.1blender_interface.png}
+    \caption{Interfaz general de Blender durante una sesión de modelado.}
+    \label{fig:blender_interface}
+\end{figure}
 
-Los conceptos presentados en este capítulo constituyen la base teórica del proyecto, abarcando desde el almacenamiento y procesamiento de datos hasta su visualización en entornos tridimensionales. Estos fundamentos permiten comprender el funcionamiento del sistema desarrollado y justifican las decisiones técnicas adoptadas durante su implementación.
-
-
-Para el desarrollo del addon \textit{Addon Blender 1.0} es necesario comprender diversos conceptos relacionados con el análisis de datos, el formato CSV y el funcionamiento de los complementos en Blender. En este capítulo se presentan los fundamentos teóricos que permiten entender el contexto tecnológico del proyecto y las bases sobre las que se ha desarrollado la aplicación.
-
-El objetivo principal del proyecto es permitir el análisis y la visualización de datos almacenados en archivos CSV dentro del entorno tridimensional de Blender. Para ello se utilizan diferentes herramientas de procesamiento de datos y mecanismos de extensión del propio software mediante addons.
-
-\section{Secciones}
-
-Las secciones permiten estructurar la información dentro de un documento. En el contexto de una memoria técnica, las secciones ayudan a organizar los conceptos teóricos necesarios para comprender el desarrollo del proyecto.
-
-En este capítulo se presentan distintos conceptos relacionados con:
+Cuando estás modelando, el usuario hace cosas como:
 
 \begin{itemize}
-	\item El formato de archivos CSV.
-	\item El análisis y procesamiento de datos.
-	\item La visualización de datos en entornos tridimensionales.
-	\item El desarrollo de addons para Blender mediante Python.
+\item mover objetos,
+\item añadir piezas,
+\item cambiar vértices,
+\item aplicar cambios (como rotar o escalar),
+\item pasar de un modo de edición a otro,
+\item usar modificadores,
+\item o ajustar las coordenadas UV, que es para colocar las texturas sobre el modelo 3D.
 \end{itemize}
 
-Cada uno de estos aspectos constituye una parte fundamental para el funcionamiento del addon desarrollado.
+Todo esto que haces va generando cambios dentro de la escena. Nuestro sistema justamente se aprovecha de esos cambios para ir recogiendo datos sobre cómo se está desarrollando el modelado.
 
-\subsection{Subsecciones}
+\section{Addons}
 
-Además de secciones, es posible organizar la información mediante subsecciones. Estas permiten profundizar en determinados conceptos concretos dentro de un mismo apartado.
+Un \textit{addon} es como un pequeño extra que le puedes añadir a Blender para que haga más cosas, y se hace con código Python.
 
-En el desarrollo del proyecto se han tenido en cuenta distintos tipos de datos que pueden encontrarse en los archivos CSV, como por ejemplo:
+Gracias a esto, podemos crear herramientas a medida sin tener que tocar el programa principal de Blender.
+
+Los \textit{addons} sirven para que Blender pueda tener, por ejemplo:
 
 \begin{itemize}
-	\item Datos temporales, que permiten analizar la evolución de un fenómeno a lo largo del tiempo.
-	\item Datos espaciales, que pueden representarse mediante coordenadas dentro de un espacio tridimensional.
-	\item Datos numéricos, que pueden utilizarse para realizar cálculos estadísticos o generar representaciones visuales.
+\item herramientas para automatizar tareas,
+\item sistemas de animación,
+\item formas de exportar modelos,
+\item herramientas para renderizar,
+\item o sistemas para analizar datos.
 \end{itemize}
 
-El tratamiento adecuado de estos datos es fundamental para garantizar la correcta interpretación de la información.
-
-\subsubsection{Subsubsecciones}
-
-Las subsubsecciones permiten desglosar todavía más la información dentro de una subsección. En este caso se pueden utilizar para describir aspectos específicos relacionados con el tratamiento de datos.
-
-Uno de los procesos más importantes en el análisis de datos es la normalización. La normalización consiste en preparar los datos antes de su análisis para asegurar que todos los valores siguen una estructura coherente.
-
-Entre las tareas más habituales dentro de este proceso se encuentran:
+Para este proyecto, hemos creado dos \textit{addons}:
 
 \begin{itemize}
-	\item Eliminación de registros incompletos o inconsistentes.
-	\item Conversión de cadenas de texto a valores numéricos cuando sea necesario.
-	\item Homogeneización de formatos de fecha y hora.
-	\item Verificación de la estructura de las columnas del archivo CSV.
+\item uno para capturar datos,
+\item y otro para analizarlos y verlos de forma gráfica.
 \end{itemize}
 
-Este proceso facilita posteriormente el análisis automático de los datos dentro del addon.
-
-\section{Referencias}
-
-En el desarrollo del proyecto se han consultado diferentes fuentes relacionadas con el análisis de datos, el desarrollo de software y el funcionamiento del software Blender.
-
-Las referencias se incluyen en el texto usando cite~\cite{wiki:latex}. Para citar webs, artículos o libros~\cite{koza92}, si se desean citar más de uno en el mismo lugar~\cite{bortolot2005, koza92}.
-
-El uso de referencias bibliográficas permite fundamentar teóricamente las decisiones tomadas durante el desarrollo del proyecto, así como situar el trabajo dentro del contexto de las tecnologías actuales.
-
-\section{Imágenes}
-
-La documentación técnica suele incluir imágenes que facilitan la comprensión de determinados procesos o interfaces. En el caso de este proyecto, las imágenes pueden utilizarse para mostrar el funcionamiento del addon dentro de Blender o ejemplos de visualización de datos generados a partir de archivos CSV.
-
-Se pueden incluir imágenes con los comandos estándar de \LaTeX, pero esta plantilla dispone de comandos propios como por ejemplo el siguiente:
-
-\imagen{escudoInfor}{Ejemplo de representación visual de datos en el entorno 3D de Blender}{.5}
-
-Estas representaciones permiten observar cómo los datos almacenados en archivos CSV pueden transformarse en objetos o elementos visuales dentro de una escena tridimensional.
-
-\section{Listas de items}
-
-Las listas permiten organizar información de forma clara y estructurada. Existen tres tipos principales de listas en \LaTeX.
+Aparte de los \textit{addons} que hemos hecho aquí, Blender ya viene con muchos otros que se usan mucho en el ámbito profesional. Aqui hay algunos ejemplos:
 
 \begin{itemize}
-	\item Importación de archivos CSV desde el sistema.
-	\item Procesamiento y normalización de los datos.
+\item Node Wrangler: te hace la vida más fácil cuando trabajas con materiales y nodos.
+\item LoopTools: añade algunas herramientas más avanzadas para editar la geometría.
+\item Rigify: te ayuda a crear esqueletos para animar de forma automática.
+\item Archimesh: sirve para generar elementos de arquitectura de manera automática.
 \end{itemize}
 
-Estas funcionalidades forman parte del flujo básico de funcionamiento del addon.
+La Figura~\ref{fig:addons_menu} muestra el menú de \textit{addons} dentro de Blender.
+% 3.2 Addons
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{diagramas/3.2addons_menu.png}
+    \caption{Menú de \textit{addons} de Blender con extensiones instaladas.}
+    \label{fig:addons_menu}
+\end{figure}
+
+Cada vez que haces algo en Blender, la escena cambia.
+
+Blender tiene unos mecanismos internos, que se llaman \textit{handlers}, que detectan estos cambios de forma automática.
+
+El sistema que hemos creado usa estos \textit{handlers} para registrar solo los cambios que realmente nos interesan.
+
+Por ejemplo, cosas como:
+
+\begin{itemize}
+\item cuando creas objetos,
+\item cuando borras partes de la geometría,
+\item cuando cambias de modo (de edición, por ejemplo),
+\item cuando modificas la geometría,
+\item cuando mueves o rotas cosas en el espacio,
+\item o cuando cambias las coordenadas UV (\textit{sistema utilizado para mapear texturas 2D sobre superficies 3D}).
+\end{itemize}
+
+Así es como funciona el proceso general para capturar estos datos:
 
 \begin{enumerate}
-	\item Lectura del archivo CSV.
-	\item Procesamiento de la información contenida en el archivo.
+\item Tú, como usuario, haces algo en Blender.
+\item Blender actualiza lo que ves en la escena.
+\item Nuestro sistema se da cuenta de que algo ha cambiado.
+\item Se mira si ese cambio es importante para nosotros.
+\item Si lo es, se guarda la información.
+\item Después, podemos analizar y ver esos datos.
 \end{enumerate}
 
-Estos pasos constituyen las fases principales del tratamiento de datos dentro del proyecto.
+La Figura~\ref{fig:flujo_eventos} muestra de forma resumida el flujo de eventos de detección y registro de datos.
 
-\begin{description}
-	\item[Archivo CSV] Formato de archivo utilizado para almacenar datos estructurados en forma de tabla.
-	\item[Addon] Extensión que permite ampliar las funcionalidades de Blender mediante código Python.
-\end{description}
-	
+%3.3
+\begin{figure}[H]
+    \hfill
+    \includegraphics[width=0.5\textwidth]{diagramas/3.3flujo_eventos.png}
+    \caption{Proceso general de detección y registro de eventos en Blender.}
+    \label{fig:flujo_eventos}
+\end{figure}
+
+\section{Registro de eventos}
+
+\section{Formato CSV}
+
+Los datos que recopila el sistema se almacenan en archivos con formato CSV.
+
+Este formato es conveniente dividir los datos entre filas y columnas, lo que simplifica el trabajar con esa información, además de ser un formato más accesible tanto desde Blender como a través de otras herramientas externas.
+
+En esta tarea, los archivos CSV albergan datos diversos vinculados con el trabajo de modelado, como el tiempo transcurrido, la ubicación de los objetos, sus transformaciones o ciertos ajustes efectuados en el modelo durante el curso del trabajo del usuario.
+
+La Figura~\ref{fig:csv_example} muestra un ejemplo de los datos generados por el addon de captura.
+
+% 3.4 Formato CSV
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{diagramas/csv_example.png}
+    \caption{Ejemplo de archivo CSV generado automáticamente durante una sesión de modelado.}
+    \label{fig:csv_example}
+\end{figure}
+
+\section{Tipos de datos recopilados}
+
+El sistema guarda diferentes tipos de datos para entender cómo va cambiando el modelo y cómo el usuario trabaja en la escena.
+
+\subsection{Datos temporales}
+
+Son datos relacionados con el tiempo que se dedica a modelar, como:
+
 \begin{itemize}
-\item Representación visual de datos dentro del espacio tridimensional.
+\item cuánto duran las sesiones,
+\item las pausas,
+\item el tiempo entre una acción y otra,
+\item o la frecuencia con la que ocurren las cosas.
 \end{itemize}
 
-\section{Tablas}
+Con esta información podemos ver cómo es el ritmo de trabajo del usuario y encontrar patrones de tiempo mientras modela.
 
-Las tablas permiten mostrar información de forma organizada y comparativa. En el desarrollo del proyecto se han utilizado diferentes herramientas y tecnologías que intervienen en distintas partes del sistema.
+\subsection{Datos espaciales}
 
-Igualmente se pueden usar los comandos específicos de \LaTeX o bien usar alguno de los comandos de la plantilla.
+Tienen que ver con la posición y el movimiento de los objetos, por ejemplo:
 
-\tablaSmall{Herramientas y tecnologías utilizadas en cada parte del proyecto}{l c c c c}{herramientasportipodeuso}
-{ \multicolumn{1}{l}{Herramientas} & Desarrollo & Procesamiento de datos & Visualización 3D & Memoria \\}{ 
-Python & X & X & X &\\
-Blender API & X & & X &\\
-CSV & & X & &\\
-NumPy & & X & &\\
-Pandas & & X & &\\
-Visual Studio Code & X & & &\\
-Git & X & X & X & X\\
-GitHub & X & X & X & X\\
-Blender & X & & X &\\
-\LaTeX{} & & & & X\\
-}
+\begin{itemize}
+\item coordenadas,
+\item transformaciones (rotaciones, escalas),
+\item desplazamientos,
+\item o cómo se mueven los objetos por la escena.
+\end{itemize}
+
+Estos datos nos ayudan a entender cómo se organizan las acciones dentro del espacio 3D.
+
+\subsection{Datos estructurales}
+
+Están relacionados con la geometría del modelo, cosas como:
+
+\begin{itemize}
+\item el número de vértices,
+\item caras,
+\item modificadores que se aplican,
+\item cómo cambia la malla,
+\item o cualquier otro cambio en la geometría.
+\end{itemize}
+
+Con estos datos podemos ver cómo de complejo se vuelve el modelo a medida que se va diseñando.
+
+\section{Definición de métricas}
+
+Las métricas son valores que calculamos usando los datos que hemos registrado. La idea es que nos ayuden a entender mejor lo que hace el usuario y cómo evoluciona el modelo.
+
+Algunas de las métricas que usa nuestro sistema son:
+
+\begin{itemize}
+\item el tiempo total que se dedica a modelar,
+\item la velocidad con la que se modifica la geometría,
+\item cuántas operaciones se han hecho,
+\item con qué frecuencia se cambia de modo,
+\item lo compleja que es la geometría de la escena,
+\item o la cantidad de vértices que se han creado o borrado.
+\end{itemize}
+
+Estas métricas sirven para convertir los datos que recogemos en información que nos ayuda mucho a analizar cómo ha sido todo el proceso de modelado.
+
+\section{Visualización de datos y gráficos}
+
+Cuando ya tenemos los datos guardados y procesados, el sistema puede crear diferentes gráficos y dibujos para que sea más fácil entenderlos.
+
+Por ejemplo, podemos ver:
+
+\begin{itemize}
+\item gráficas que muestran el tiempo,
+\item gráficos que representan los cambios entre las distintas metricas,
+\item gráficos que enseñan cómo ha cambiado la geometría,
+\item y también podemos ver visualizaciones en 3D directamente dentro de Blender.
+\end{itemize}
+
+Esta figura muestra una representación de cuatro criterios relevantes para identificar patrones en la forma de operar del usuario y facilitar una comprensión más profunda de la evolución del proceso de modelado al transcurrir el tiempo.
+
+Figura \ref{fig:radar_plot} ilustra una gráfica radar creada basándose en cuatro parámetros distintos.
+
+\begin{figure}[H]
+\centering
+\includegraphics[
+    width=\textwidth,
+    height=0.7\textheight,
+    keepaspectratio
+]{diagramas/radar.png}
+\caption{Ejemplo de visualización de datos dentro del sistema.}
+\label{fig:radar_plot}
+\end{figure}
+
+
+
