@@ -1,223 +1,121 @@
 \capitulo{4}{Técnicas y herramientas}
 
-Aquí vamos a ver las tecnologías y herramientas más importantes que usamos para hacer este sistema, y por qué las elegimos para el proyecto. También explicaré cómo está montado todo en general y cómo se comunican las diferentes partes del sistema.
+En este capítulo se describen las metodologías, técnicas y herramientas tecnológicas utilizadas durante el desarrollo del trabajo, justificando los motivos principales de su selección y su aplicación dentro del proyecto. Asimismo, se presentan los entornos de desarrollo, sistemas de control de versiones y herramientas de documentación empleados durante la implementación del sistema.
 
-Diseñamos el sistema usando Blender, un programa de modelado 3D. Para programarlo, usamos Python y nos apoyamos mucho en la API 'bpy' de Blender, que nos ayuda a vigilar lo que pasa y a automatizar cosas. Juntas, estas herramientas nos permiten recoger, guardar y estudiar lo que hace el usuario mientras modela.
+\section{Metodologías de desarrollo}
 
-\section{Blender como entorno de desarrollo}
+Durante el desarrollo del proyecto se ha seguido un enfoque iterativo e incremental inspirado en metodologías ágiles. Este planteamiento ha permitido organizar el trabajo en diferentes fases de desarrollo, facilitando la planificación, evaluación y mejora continua de las funcionalidades implementadas.
 
-Elegimos Blender como nuestro programa principal de desarrollo porque nos deja acceder a la información de las escenas 3D desde código y es muy fácil de extender.
+\subsection{Scrum}
 
-Una de las cosas buenas de Blender es que es software libre. Eso significa que podemos crear soluciones a medida sin los problemas que suelen tener los programas de pago. Además, tiene una API pública, con mucha documentación, que nos deja llegar a muchas cosas de dentro del programa, como objetos, geometrías, materiales, cámaras, luces o cómo se mueven las cosas en el espacio.
+Scrum constituye un marco de trabajo ágil orientado a la gestión y desarrollo de proyectos software. Su funcionamiento se basa en iteraciones temporales denominadas \textit{sprints}, dentro de las cuales se desarrollan funcionalidades concretas del sistema.
 
-También es importante que podemos añadirle más funciones haciendo \textit{addons} (complementos) con Python. Así, podemos meter herramientas específicas justo donde el usuario las necesita, sin tocar el código principal de Blender. Esto hace que el sistema sea más flexible y fácil de organizar.
+En el contexto de este trabajo, se ha adoptado una adaptación simplificada de Scrum, organizando el desarrollo en ciclos de trabajo de corta duración y realizando revisiones periódicas del progreso alcanzado. Este enfoque ha permitido gestionar de forma estructurada la implementación de nuevas funcionalidades y la corrección de incidencias detectadas durante el desarrollo.
 
-Y no menos importante es su gran comunidad de desarrolladores y la cantidad de documentación técnica que hay. Esto nos ayuda mucho para mantener el proyecto, hacerlo crecer si hace falta y solucionar cualquier problema que surja.
+\subsection{Kanban}
 
-\section{Python como lenguaje de implementación}
+Kanban es una metodología de gestión visual del trabajo orientada a optimizar el flujo de tareas y facilitar el seguimiento del estado del proyecto. Para ello, utiliza tableros organizados en columnas que representan las diferentes fases del desarrollo.
 
-Una vez que decidimos usar Blender, necesitábamos un lenguaje que pudiera integrarse bien con su API interna.
-
-Para este proyecto usamos Python, ya que es el lenguaje oficial de Blender para crear scripts y desarrollar \textit{addons}.
-
-Elegimos Python porque es fácil de leer, se integra muy bien con Blender y permite automatizar tareas y procesar datos de forma sencilla. Además, cuenta con muchas librerías útiles para análisis de información y generación de gráficos.
-
-Gracias a esta integración, el sistema puede acceder al estado de la escena en tiempo real y registrar automáticamente las acciones que realiza el usuario mientras modela.
-
-\section{API bpy}
-
-Blender tiene algo que se llama 'bpy', que es como una interfaz de programación. Con ella, podemos meternos en los distintos componentes internos del programa de modelado usando código.
-
-La API 'bpy' es la forma principal en que nuestro sistema se comunica con Blender. Nos permite ver y cambiar cosas de la escena activa al momento.
-
-Para acceder a estos componentes, la API nos proporciona información sobre ellos: la escena, los objetos de la escena, las formas de las mallas, los materiales y texturas, las cámaras y las luces, la movilidad de los objetos en el espacio, las relaciones entre todos ellos, y algunas propiedades internas del programa.
-
-No solo podemos conocer la estructura de la escena; la API nos permite llevar a cabo tareas automatizadas y estar siempre al tanto de los eventos dentro del programa.
-
-Con todo esto, nuestro sistema puede detectar automáticamente muchas cosas que hace el usuario, como cuando crea o borra objetos, cambia de modo de edición, modifica puntos, líneas o caras, mueve cosas en el espacio o cambia la forma de las mallas.
-
-Usar 'bpy' es clave para poder registrar y analizar datos sin tener que tocar cómo funciona Blender por dentro.
-
-\section{Sistema de monitorización mediante handlers}
-
-El sistema que creamos para recoger información funciona con  \textit{handlers} . Estos son como unos mecanismos internos de Blender que se activan cuando pasa algo.
-
-Los  \textit{handlers}  nos permiten vigilar automáticamente los cambios en la escena y ejecutar funciones concretas cuando el usuario hace algo. Así, podemos tener un sistema que reacciona a los eventos, guardando información al momento sin molestar al usuario mientras modela.
-
-Cada vez que el usuario hace algo en Blender, el sistema puede darse cuenta de los cambios importantes en la escena y empezar a analizar y guardar la información.
-
-Nuestro sistema de vigilancia funciona detectando eventos sin parar mientras se está modelando. Cada vez que el usuario hace algo en Blender, los  \textit{handlers}  que hemos puesto en marcha detectan esos cambios importantes en la escena y, sin más, se ponen a recoger y guardar la información.
-
-La Figura~\ref{fig:handlers_flow} muestra de forma resumida el funcionamiento de los \textit{handlers} dentro del sistema.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.75\textwidth]{diagramas/handler.png}
-\caption{Proceso general de captura y almacenamiento de eventos dentro del sistema.}
-\label{fig:handlers_flow}
-\end{figure}
-
-Gracias a esto, tenemos un sistema que vigila sin molestar, guardando información al momento sin interrumpir al usuario ni cambiar cómo funciona Blender por dentro.
-
-
-\section{Persistencia de datos mediante archivos CSV}
-
-Para guardar la información que recogemos durante el modelado, el sistema usa archivos CSV (del inglés 'valores separados por comas').
-
-Elegimos este formato porque es muy simple de entender, no gasta muchos recursos y funciona muy bien con otros programas que usamos para analizar y procesar datos.
-
-Los archivos CSV sirven para organizar la información en tablas, con filas y columnas. Así es más fácil tanto guardarla como procesar después los eventos que el sistema ha capturado.
-
-Las principales ventajas de usar CSV son:
-
-\begin{itemize}
-\item es fácil de crear y exportar,
-\item funciona con programas de estadística y análisis,
-\item es sencillo de leer y procesar,
-\item gasta pocos recursos,
-\item y se integra sin problemas con otras aplicaciones.
-\end{itemize}
-
-Con esta forma de guardar los datos, podemos analizarlos más tarde, con otros procesos, sin que eso afecte al programa de modelado mientras se usa.
-
-
-\section{Arquitectura del sistema}
-
-El sistema está estructurado con un paradigma modular, alojado directamente dentro de Blender. Esta organizativa facilita la separación de las diversas responsabilidades del sistema, mejorando tanto la mantenibilidad como la expansión en el futuro.
-
-El diálogo con Blender se efectúa mediante la interfaz programática \texttt{bpy}, que brinda acceso al código interno de los diversos componentes del entorno 3D, incluyendo escenas, objetos, geometría, transformaciones, materiales, o modos de edición.
-
-A partir de esta API, el sistema utiliza distintos \textit{handlers} para monitorizar continuamente los cambios que ocurren mientras el usuario trabaja. Estos mecanismos funcionan como detectores de eventos que se ejecutan automáticamente cuando Blender actualiza la escena.
-
-Gracias a este sistema de monitorización, el proyecto puede detectar acciones relacionadas con:
-
-\begin{itemize}
-    \item creación y eliminación de objetos,
-    \item transformaciones espaciales,
-    \item modificaciones geométricas,
-    \item cambios de modo,
-    \item operaciones sobre coordenadas UV,
-    \item y uso de herramientas dentro del entorno de modelado.
-\end{itemize}
-
-Cuando se detecta un cambio relevante, la información pasa al \textit{addon} de captura de datos. Este módulo se encarga de analizar el evento, filtrar información innecesaria y organizar los datos registrados antes de almacenarlos.
-
-El sistema de captura fue desarrollado siguiendo una estructura modular interna. Para ello, se separaron distintos componentes especializados en tareas concretas, como:
-
-\begin{itemize}
-    \item monitorización de eventos,
-    \item análisis del estado de la escena,
-    \item detección de operadores ejecutados,
-    \item filtrado de cambios relevantes,
-    \item y persistencia de datos.
-\end{itemize}
-
-Una vez procesada, la información se almacena en archivos CSV estructurados. Este formato permite mantener los registros organizados y facilita posteriormente el análisis externo de los datos generados durante las sesiones de modelado.
-
-Después, el segundo \textit{addon} utiliza estos registros para realizar el análisis de métricas y generar representaciones visuales dentro del propio entorno de Blender.
-
-El sistema de análisis también se organizó de forma modular. Internamente se divide en varios componentes responsables de:
-
-\begin{itemize}
-    \item lectura y procesamiento de archivos CSV,
-    \item cálculo automático de métricas,
-    \item generación de gráficos,
-    \item representación tridimensional de datos,
-    \item y visualización interactiva dentro de Blender.
-\end{itemize}
-
-Para generar las visualizaciones se combinaron librerías externas, como \textit{matplotlib}, junto con generación procedural de geometría dentro del espacio 3D de Blender. Gracias a esto, el sistema puede representar métricas mediante gráficos temporales, diagramas radar y visualizaciones espaciales directamente integradas en la escena.
-
-La separación entre captura y análisis aporta varias ventajas importantes:
-
-\begin{itemize}
-    \item reduce el impacto sobre el rendimiento durante el modelado,
-    \item facilita la organización interna del sistema,
-    \item permite reutilizar los datos registrados posteriormente,
-    \item y hace más sencilla la ampliación futura de nuevas métricas o representaciones visuales.
-\end{itemize}
-
-La Figura~\ref{fig:architecture_system} muestra la arquitectura general del sistema y el flujo principal de captura, almacenamiento y análisis de datos dentro de Blender.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.95\textwidth]{diagramas/arquitecturaV2.png}
-\caption{Arquitectura general del sistema desarrollado.}
-\label{fig:architecture_system}
-\end{figure}
-
-\subsection{Addon de captura}
-
-El 'addon' de captura es la parte que se encarga de vigilar todo el tiempo lo que hace el usuario dentro de Blender.
-
-Este módulo funciona discretamente, por detrás, mientras el usuario modela. Usa los sistemas de vigilancia de Blender para encontrar los eventos importantes relacionados con lo que el usuario hace.
-
-Sus funciones principales son:
-
-\begin{itemize}
-\item detectar qué pasa en la escena,
-\item ver cómo está el programa de modelado,
-\item identificar los cambios importantes,
-\item guardar la información de esos eventos que detecta,
-\item y almacenar los datos en archivos CSV.
-\end{itemize}
-
-Al diseñar este 'addon', queríamos que afectara lo mínimo posible al rendimiento general del sistema. Así, puede recoger información sin parar y de forma totalmente transparente para el usuario.
-
-La Figura~\ref{fig:data_logger_sin_debug} muestra la interfaz del \textit{addon} de captura de datos.
-
-\begin{figure}[H]
-\centering
-\includegraphics[
-    width=0.8\textwidth,
-    height=0.65\textheight,
-    keepaspectratio
-]{diagramas/data_logger_sin_debug.png}
-\caption{Interfaz del \textit{addon} de captura de datos desarrollado para Blender.}
-\label{fig:data_logger_sin_debug}
-\end{figure}
-
-\subsection{Addon de análisis}
-
-El 'addon' de análisis usa la información que ya hemos guardado para crear métricas y gráficos que nos muestran cómo se ha comportado el usuario al modelar.
-
-Este componente nos deja procesar los datos guardados y convertir esa información recogida en indicadores visuales y métricas fáciles de entender.
-
-Sus funciones más importantes son:
-
-\begin{itemize}
-\item leer y procesar los datos,
-\item crear métricas de forma automática,
-\item hacer gráficos y representaciones visuales,
-\item analizar cómo se comporta el usuario,
-\item y mostrar los resultados directamente en Blender.
-\end{itemize}
-
-Con este 'addon', podemos ver de forma visual cómo avanza el modelado y entender cómo el usuario interactúa con la escena a lo largo del tiempo.
-
-La Figura~\ref{fig:addon_analisis} muestra la interfaz del \textit{addon} de análisis.
+Durante el proyecto se ha empleado un sistema de organización basado en tableros Kanban mediante GitHub Projects, permitiendo gestionar tareas pendientes, funcionalidades en desarrollo y elementos completados de manera visual y estructurada.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.4\textwidth]{diagramas/capture_addon_panel.png}
-    \caption{Panel principal del addon de captura de datos dentro de Blender.}
-    \label{fig:addon_analisis}
+    \includegraphics[width=0.9\textwidth]{diagramas/kanban.png}
+    \caption{Tablero Kanban utilizado para la organización del desarrollo del proyecto.}
+    \label{fig:kanban_board}
 \end{figure}
 
-\subsection{Estructura interna del addon de análisis}
+\section{Tecnologías principales}
 
-El addon de análisis se organizó en distintos módulos independientes para separar las responsabilidades principales del sistema.
+\subsection{Blender}
 
-Algunos de los módulos más importantes son:
+Blender constituye el entorno principal utilizado para el desarrollo del sistema. Se trata de un software libre y de código abierto orientado al modelado, animación y procesamiento de gráficos tridimensionales.
 
+La elección de Blender se justifica por su arquitectura extensible y por la posibilidad de desarrollar funcionalidades personalizadas mediante \textit{add-ons}. Además, proporciona acceso programático a los elementos internos de la escena tridimensional, permitiendo monitorizar eventos y capturar información relacionada con el proceso de modelado.
+
+\subsection{Python}
+
+Python~\cite{pythonlang} ha sido utilizado como lenguaje principal de desarrollo debido a su integración nativa con Blender y a su amplio ecosistema de bibliotecas orientadas al análisis de datos y automatización de procesos.
+
+La utilización de Python facilita la implementación de sistemas de captura de eventos, procesamiento de datos y generación de visualizaciones analíticas dentro del entorno tridimensional. Asimismo, su flexibilidad permite estructurar entornos portables mediante directorios internos de paquetes (\textit{site-packages}), asegurando la distribución del sistema sin alterar las dependencias globales del software anfitrión.
+
+\subsection{Blender Python API (\texttt{bpy})}
+
+La API oficial de Blender, accesible mediante el módulo \texttt{bpy}~\cite{blenderapi}, permite interactuar con la escena tridimensional, los objetos y las operaciones ejecutadas por el usuario.
+
+A través de esta interfaz se accede a información relacionada con:
 \begin{itemize}
-    \item \texttt{metrics\_ui.py}: controla la interfaz principal y la interacción con el usuario.
-    
-    \item \texttt{graphs.py}: genera las representaciones visuales y geometría utilizada para visualizar métricas dentro de Blender.
-    
-    \item \texttt{utils.py}: contiene funciones auxiliares relacionadas con el cálculo y procesamiento de métricas.
-    
-    \item \texttt{\_\_init\_\_.py}: registra el addon y conecta los distintos componentes internos del sistema.
+\item Objetos y jerarquías de la escena activa.
+\item Matrices de transformación espacial de coordenadas mundiales y locales.
+\item Topología estructural de mallas mediante punteros nativos y submodelos \textit{BMesh}.
+\item Modos de trabajo y conmutación de la interfaz gráfica.
+\item Eventos y operadores ejecutados en el flujo de ejecución del usuario.
 \end{itemize}
 
-Este enfoque modular simplifica el mantenimiento del código y facilita el desarrollo de nuevas funciones sin necesidad de alterar los otros componentes del sistema.
+Asimismo, la API permite implementar sistemas de monitorización mediante la suscripción de funciones a los \textit{handlers} de la aplicación, utilizados para detectar automáticamente modificaciones analíticas durante las sesiones de modelado.
+
+\subsection{Persistencia de datos en formato CSV}
+
+El formato CSV (\textit{Comma-Separated Values}) se ha utilizado como mecanismo principal de almacenamiento de datos estructurados para el registro secuencial de interacciones.
+
+La utilización de este formato se justifica por su simplicidad, compatibilidad técnica, nula sobrecarga en la memoria volátil y facilidad de integración con herramientas externas de análisis. Con el objetivo de optimizar la velocidad de acceso y la persistencia sin comprometer el rendimiento en tiempo real del visor 3D, el procesamiento de estos archivos tabulares se realiza mediante flujos lineales orientados a diccionarios empleando el módulo nativo \texttt{csv.DictReader}, evitando así la carga excesiva en memoria de bibliotecas de análisis masivo de datos.
+
+La Figura~\ref{fig:csv} muestra de forma resumida un archivo csv generado por el \textit{add-on} de detección de datos.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{diagramas/csv_example.png}
+    \caption{Ejemplo de estructura de datos en formato CSV generada de forma automatizada por el sistema.}
+    \label{fig:csv}
+}
+
+\subsection{NumPy}
+
+NumPy constituye una biblioteca especializada en computación numérica y procesamiento eficiente de estructuras matriciales en Python. Su utilización es crítica en este sistema para realizar operaciones vectoriales de alto rendimiento, el cálculo de las posiciones espaciales de los vértices evaluados y las transformaciones numéricas necesarias para proyectar los datos estadísticos sobre el espacio geométrico bidimensional y tridimensional.
+
+\subsection{Matplotlib y Renderizado en Memoria por Canales}
+
+Matplotlib~\cite{matplotlib} se ha empleado para la generación de las representaciones gráficas y visualizaciones de carácter inferencial y descriptivo.
+
+A diferencia de los entornos de ejecución tradicionales de análisis científico, donde los gráficos se despliegan en ventanas independientes del sistema operativo a través de interfaces de usuario bloqueantes, en esta solución se implementa una técnica de desacoplamiento basada en el motor de renderizado abstracto de la biblioteca (\texttt{FigureCanvasAgg}). Esto permite generar los diagramas estadísticos y las matrices de correlación directamente en un espacio de memoria volátil como matrices de píxeles (\textit{raw buffers}), las cuales son inyectadas dinámicamente como texturas en tiempo de ejecución sobre mallas poligonales procedurales en el visor 3D de Blender.
+
+\section{Herramientas de desarrollo}
+
+\subsection{Visual Studio Code}
+
+Visual Studio Code ha sido utilizado como entorno de desarrollo principal durante la implementación del proyecto. Este editor proporciona herramientas avanzadas de depuración de hilos, autocompletado sintáctico y gestión de extensiones, facilitando el desarrollo de código en Python y la integración con sistemas de control de versiones.
+
+\subsection{Git y GitHub}
+
+Git ha sido utilizado como sistema de control de versiones para gestionar el historial de cambios realizado durante el desarrollo del proyecto. Complementariamente, GitHub se ha utilizado como plataforma de alojamiento remoto del repositorio, permitiendo almacenar versiones del código, gestionar ramas de desarrollo y mantener un seguimiento organizado de la evolución del sistema.
+
+\subsection{GitHub Projects}
+
+GitHub Projects se ha empleado como herramienta de organización y planificación de tareas mediante tableros Kanban. Su utilización ha permitido estructurar el flujo de trabajo y mantener un seguimiento visual del estado de desarrollo de cada funcionalidad implementada.
+
+\subsection{Overleaf y entornos locales de LaTeX}
+
+La memoria del proyecto ha sido desarrollada utilizando \LaTeX{}, un sistema de composición tipográfica ampliamente utilizado en documentación científica y técnica. Inicialmente, se empleó la plataforma web Overleaf para la maquetación y edición colaborativa del documento. Posteriormente, debido al incremento en el volumen de imágenes y a la complejidad técnica de la compilación de bibliografías complejas, el flujo de trabajo principal se trasladó a un entorno local de compilación tipográfica, optimizando los tiempos de generación del documento final.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Herramientas} & \textbf{Desarrollo} & \textbf{Procesamiento} & \textbf{Visualización 3D} & \textbf{Memoria} \\
+\midrule
+Python             & X & X & X &   \\
+Blender API (\texttt{bpy}) & X &   & X &   \\
+Formatos CSV       &   & X &   &   \\
+NumPy              &   & X & X &   \\
+Matplotlib         &   & X & X &   \\
+Visual Studio Code & X &   &   &   \\
+Git                & X & X & X & X \\
+GitHub             & X & X & X & X \\
+Blender            & X &   & X &   \\
+Overleaf           &   &   &   & X \\
+LaTeX              &   &   &   & X \\
+\bottomrule
+\end{tabular}
+\caption{Herramientas y tecnologías utilizadas en el desarrollo del proyecto.}
+\label{tab:herramientas}
+\end{table}

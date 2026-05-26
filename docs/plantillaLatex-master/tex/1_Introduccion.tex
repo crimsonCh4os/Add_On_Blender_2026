@@ -1,57 +1,47 @@
 \capitulo{1}{Introducción}
 
-Blender es un programa gratis que sirve para hacer objetos tridimensionales en 3D. Se usa mucho en diferentes campos, como para videojuegos, animaciones, para diseñar edificios o para la impresión 3D.
+El modelado tridimensional se ha convertido en una herramienta fundamental en múltiples ámbitos como los videojuegos, la animación, el diseño industrial, la arquitectura o la visualización científica. En estos contextos, las herramientas de modelado 3D permiten crear, modificar y analizar modelos mediante una amplia variedad de técnicas y flujos de trabajo~\cite{lavioila2017}.
 
-Cuando alguien está trabajando en Blender realiza muchas acciones, mueve objetos, cambia formas, usa distintas herramientas o ajusta materiales. Pero el programa no tiene ninguna función para ver automáticamente cómo trabaja la persona mientras modela.
+A pesar de la evolución de este tipo de herramientas, el proceso de modelado 3D continúa siendo complejo y altamente dependiente de la experiencia del usuario. Diversos estudios han demostrado que la interacción en entornos tridimensionales presenta dificultades asociadas a la manipulación espacial, la comprensión geométrica y la gestión simultánea de múltiples operaciones~\cite{jankowski2014}.
 
-Por eso, es difícil saber, por ejemplo:
+Además, plataformas de uso extendido en la industria como Blender no incorporan mecanismos nativos orientados al registro estructurado de la interacción del usuario ni al análisis del estado interno de la escena durante el proceso de diseño. Esta limitación dificulta la obtención de métricas objetivas y el análisis sistemático del flujo de trabajo, reduciendo las posibilidades de optimización, automatización y evaluación del rendimiento.
 
-\begin{itemize}
-\item Cuáles son las herramientas que más se utilizan.
-\item Cómo va cambiando la escena a medida que se modela.
-\item Qué operaciones se realizan más a menudo.
-\item Cómo se transforma la geometría del modelo con el tiempo.
-\end{itemize}
+La comprensión de cómo interactúan los usuarios con los entornos virtuales constituye un aspecto relevante dentro del ámbito de la interacción persona-computador, especialmente en sistemas tridimensionales~\cite{lavioila2017}. La recopilación de información sobre las acciones realizadas permite identificar patrones de uso, operaciones frecuentes y estrategias de modelado. En los últimos años, se han propuesto distintos enfoques para la captura y análisis de datos en entornos 3D, incluyendo sistemas basados en realidad mixta y herramientas asistidas mediante inteligencia artificial~\cite{3description2024,malik2023}. Sin embargo, sigue existiendo una brecha metodológica en la monitorización analítica no intrusiva dentro de los entornos de producción tradicionales.
 
-Para solucionar este problema, en este trabajo final de carrera hemos creado un sistema que funciona con \textit{addons} de Blender. Este sistema graba automáticamente lo que se hace al modelar y luego nos deja analizar esos datos.
+La motivación principal de la presente investigación radica en solventar dicha carencia, ofreciendo un marco analítico que permita tanto a instituciones educativas como a profesionales evaluar cuantitativamente el progreso y la destreza técnica en tareas de modelado. De este modo, la recopilación de datos se transforma en una base útil para el desarrollo de metodologías de aprendizaje supervisado, optimización de interfaces y auditoría de flujos de trabajo.
 
-El sistema tiene dos partes clave:
+En este contexto, surge la necesidad de desarrollar soluciones de software capaces de registrar y analizar la interacción en tiempo real. Por ello, el objetivo principal de este trabajo consiste en diseñar e implementar una herramienta automatizada capaz de capturar, estructurar y analizar los datos generados durante las sesiones de modelado en Blender. Para lograrlo, se propone el desarrollo de un sistema modular basado en \textit{add-ons} que registre de forma no intrusiva los eventos de modelado, así como variables estructurales del entorno —tales como el estado de la escena, la topología de los objetos o la configuración de los modificadores—.
 
-\begin{itemize}
-\item Un \textit{addon} que se encarga de guardar la información mientras se modela.
-\item Otro \textit{addon} que sirve para analizar y mostrar esos datos de forma visual.
-\end{itemize}
-
-La idea principal de este proyecto es que sea más fácil entender cómo se realiza el proceso de modelado en Blender, porque el sistema recoge los datos automáticamente.
+La solución desarrollada permite recopilar datos temporales, espaciales y estratégicos que posteriormente son procesados y visualizados mediante geometría procedural y componentes estadísticos integrados. De este modo, se proporciona una plataforma funcional que facilita el diagnóstico del proceso de modelado y abre la posibilidad de establecer futuras líneas de optimización o automatización en entornos de diseño tridimensional.
 
 \section{Estructura de este trabajo}
 
-Este trabajo está organizado en varios capítulos, donde explicamos todo el desarrollo del proyecto.
+Este documento se organiza en varios capítulos que describen las diferentes fases del proyecto, desde el análisis inicial y la fundamentación teórica hasta el desarrollo y la validación final del sistema:
 
 \begin{itemize}
 
 \item \hyperref[cap:introduccion]{\textbf{Capítulo 1. Introducción}}\\
-En el Capítulo 1, la Introducción, contamos de qué va el trabajo, qué problema queremos resolver y por qué nos interesó.
+Presenta el contexto general del proyecto, la problemática identificada, la motivación y el enfoque de la solución propuesta.
 
 \item \hyperref[cap:objetivos]{\textbf{Capítulo 2. Objetivos del proyecto}}\\
-En el Capítulo 2, los Objetivos del proyecto, hablamos de lo que queremos lograr con este sistema, tanto de forma general como más específica.
+Define las metas generales y los requerimientos específicos planteados para el diseño del sistema.
 
-\item \hyperref[cap:conceptos]{\textbf{Capítulo 3. Conceptos teóricos}}\\
-En el Capítulo 3, los Conceptos teóricos, explicamos algunas ideas importantes para entender bien el proyecto, como qué es Blender, los \textit{addons}, el análisis de datos o el formato CSV.
+\item \hyperref[cap:relacionados]{\textbf{Capítulo 3. Estado del arte y trabajos relacionados}}\\
+Recoge y evalúa las soluciones existentes en la literatura científica respecto al análisis de interacción y la monitorización en entornos virtuales.
 
-\item \hyperref[cap:tecnicas]{\textbf{Capítulo 4. Técnicas y herramientas}}\\
-En el Capítulo 4, las Técnicas y herramientas, contamos qué tecnologías hemos usado, cómo está hecho el sistema por dentro y qué herramientas nos ayudaron a crearlo.
+\item \hyperref[cap:conceptos]{\textbf{Capítulo 4. Conceptos teóricos}}\\
+Explica los fundamentos teóricos necesarios para comprender el proyecto, incluyendo la arquitectura interna de Blender, su API gráfica, la gestión del grafo de dependencias y las métricas de similitud geométrica.
 
-\item \hyperref[cap:desarrollo]{\textbf{Capítulo 5. Aspectos relevantes del desarrollo del proyecto}}\\
-En el Capítulo 5, los Aspectos relevantes del desarrollo del proyecto, hablamos de las decisiones que tomamos al diseñar, los problemas que nos surgieron y cómo los resolvimos mientras hacíamos el sistema.
+\item \hyperref[cap:tecnicas]{\textbf{Capítulo 5. Técnicas y herramientas}}\\
+Describe el ecosistema tecnológico, los lenguajes y las bibliotecas utilizadas durante el desarrollo, así como la arquitectura modular del sistema.
 
-\item \hyperref[cap:relacionados]{\textbf{Capítulo 6. Trabajos relacionados}}\\
-En el Capítulo 6, los Trabajos relacionados, mostramos otros trabajos e investigaciones que tienen que ver con estudiar cómo interactúa la gente en entornos 3D.
+\item \hyperref[cap:desarrollo]{\textbf{Capítulo 6. Aspectos relevantes del desarrollo del proyecto}}\\
+Detalla el proceso de implementación del software, el cálculo algorítmico de las métricas, las decisiones técnicas adoptadas y la resolución de los problemas de rendimiento.
 
-\item \hyperref[cap:conclusiones]{\textbf{Capítulo 7. Conclusiones y líneas de trabajo futuras}}\\
-En el Capítulo 7, las Conclusiones y líneas de trabajo futuras, resumimos a qué conclusiones llegamos y proponemos qué se podría mejorar o hacer en el futuro.
+\item \hyperref[cap:conclusiones]{\textbf{Capítulo 7. Conclusiones y líneas futuras}}\\
+Sintetiza los resultados y validaciones obtenidas tras las pruebas experimentales del sistema y plantea posibles mejoras o ampliaciones para futuras investigaciones.
 
 \item \hyperref[cap:anexos]{\textbf{Anexos}}\\
-En los Anexos hay más información que completa el proyecto.
+Incluye la documentación técnica adicional, los manuales de usuario de los \textit{add-ons} y el material complementario de las pruebas realizadas.
 
 \end{itemize}

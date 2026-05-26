@@ -5,112 +5,85 @@
 \selectlanguage{spanish}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern} % Scalable font
+\usepackage{lmodern}
 \usepackage{microtype}
+\setlength{\headheight}{30pt}
+
+% Paquetes generales
+\usepackage{graphicx}
+\usepackage{float}
 \usepackage{placeins}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
 \usepackage{longtable}
 \usepackage{tabularx}
-\usepackage{booktabs}
-\usepackage{float}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{xtab}
+\usepackage{multirow}
+\usepackage{pdflscape}
+\usepackage{fancybox}
 \usepackage{tikz}
-\usepackage{tikz}
-\usepackage{float}
-\usepackage{graphicx}
 \usetikzlibrary{positioning,arrows.meta}
-\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X} 
-
-\RequirePackage{booktabs}
-\RequirePackage[table]{xcolor}
-\RequirePackage{xtab}
-\RequirePackage{multirow}
 
 % Links
-\PassOptionsToPackage{hyphens}{url}\usepackage[colorlinks]{hyperref}
-\hypersetup{
-	allcolors = {red}
-}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[colorlinks]{hyperref}
+\hypersetup{allcolors={red}}
 
 % Ecuaciones
 \usepackage{amsmath}
 
-% Rutas de fichero / paquete
-\newcommand{\ruta}[1]{{\sffamily #1}}
+% Columnas
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
 
-% Párrafos
-\nonzeroparskip
+% Longitudes para figuras con marco
+\newlength{\anchoFloat}
+\newlength{\anchoFigura}
 
-% Huérfanas y viudas
-\widowpenalty100000
-\clubpenalty100000
+% Rutas
+\graphicspath{{./img/}{./diagramas/}}
 
-% Imágenes
-
-% Comando para insertar una imagen en un lugar concreto.
-% Los parámetros son:
-% 1 --> Ruta absoluta/relativa de la figura
-% 2 --> Texto a pie de figura
-% 3 --> Tamaño en tanto por uno relativo al ancho de página
-\usepackage{graphicx}
-\newcommand{\imagen}[3]{
-	\begin{figure}[!h]
+% Comando imagen normal
+\newcommand{\imagen}[3]{%
+	\begin{figure}[H]%
 		\centering
-		\includegraphics[width=#3\textwidth]{#1}
-		\caption{#2}\label{fig:#1}
-	\end{figure}
-	\FloatBarrier
+		\includegraphics[width=#3\textwidth]{#1}%
+		\caption{#2}%
+		\label{fig:#1}%
+	\end{figure}%
+	\FloatBarrier%
 }
 
-% Comando para insertar una imagen sin posición.
-% Los parámetros son:
-% 1 --> Ruta absoluta/relativa de la figura
-% 2 --> Texto a pie de figura
-% 3 --> Tamaño en tanto por uno relativo al ancho de página
-\newcommand{\imagenflotante}[3]{
-	\begin{figure}
-		\centering
+% Comando imagen flotante
+\newcommand{\imagenflotante}[3]{%
+	\begin{center}
 		\includegraphics[width=#3\textwidth]{#1}
-		\caption{#2}\label{fig:#1}
-	\end{figure}
+	\end{center}
 }
 
-% El comando \figura nos permite insertar figuras comodamente, y utilizando
-% siempre el mismo formato. Los parametros son:
-% 1 --> Porcentaje del ancho de página que ocupará la figura (de 0 a 1)
-% 2 --> Fichero de la imagen
-% 3 --> Texto a pie de imagen
-% 4 --> Etiqueta (label) para referencias
-% 5 --> Opciones que queramos pasarle al \includegraphics
-% 6 --> Opciones de posicionamiento a pasarle a \begin{figure}
+% Figura con marco
 \newcommand{\figuraConPosicion}[6]{%
-  \setlength{\anchoFloat}{#1\textwidth}%
-  \addtolength{\anchoFloat}{-4\fboxsep}%
-  \setlength{\anchoFigura}{\anchoFloat}%
-  \begin{figure}[#6]
-    \begin{center}%
-      \Ovalbox{%
-        \begin{minipage}{\anchoFloat}%
-          \begin{center}%
-            \includegraphics[width=\anchoFigura,#5]{#2}%
-            \caption{#3}%
-            \label{#4}%
-          \end{center}%
-        \end{minipage}
-      }%
-    \end{center}%
-  \end{figure}%
+  \begin{center}
+    \includegraphics[width=#1\textwidth,#5]{#2}
+    
+    \textbf{Figura:} #3
+  \end{center}
 }
 
-%
-% Comando para incluir imágenes en formato apaisado (sin marco).
+% Figura apaisada
 \newcommand{\figuraApaisadaSinMarco}[5]{%
-  \begin{figure}%
-    \begin{center}%
+  \begin{figure}[H]%
+    \centering%
     \includegraphics[angle=90,height=#1\textheight,#5]{#2}%
     \caption{#3}%
     \label{#4}%
-    \end{center}%
   \end{figure}%
 }
+
+
+
+
 % Para las tablas
 \newcommand{\otoprule}{\midrule [\heavyrulewidth]}
 %
@@ -298,14 +271,8 @@
 \graphicspath{ {./img/} }
 
 % Capítulos
-\chapterstyle{bianchi}
 \newcommand{\capitulo}[2]{
-	\setcounter{chapter}{#1}
-	\addtocounter{chapter}{-1}
-	\setcounter{section}{0}
-	\setcounter{figure}{0}
-	\setcounter{table}{0}
-	\chapter{\thechapter.\ #2}
+	\chapter{#2}
 }
 
 % Apéndices
@@ -367,13 +334,12 @@
 
 % Datos de portada
 
-\title{AddOn Blender 1.0}
+\title{
+\Huge Herramientas para la monitorización y análisis de procesos de modelado 3D en Blender\\[1em]
+\Large Add-on Blender 1.0
+}
 \author{\nombre}
-\tutor{Bruno Rodrígez García y Raúl Marticorena Sánchez}
-
-\title{Addon Blender 1.0}
-\author{\nombre}
-\tutor{Bruno Rodríguez García y Raúl Marticorena Sánchez}
+\tutor{Dr. Bruno Rodríguez García y Dr. Raúl Marticorena Sánchez}
 
 \date{\today}
 
@@ -392,11 +358,11 @@
 \noindent\includegraphics[width=\textwidth]{cabecera}\vspace{1cm}
 
 
-\noindent D. Bruno Rodrígez García y  D. Raúl Marticorena Sánchez, profesores del departamento de Ingeniería Informática, área Lenguajes y Sistemas Informáticos.
+\noindent Dr. Bruno Rodríguez García y  Dr. Raúl Marticorena Sánchez, profesores del departamento de Ingeniería Informática, área Lenguajes y Sistemas Informáticos.
 
 \noindent Exponen:
 
-\noindent Que la alumna Dª. María Molina Goyena, con DNI 72906146X, ha realizado el Trabajo de final de Grado en Ingeniería Informática titulado AddOn Blender 1.0. 
+\noindent Que la alumna Dª. María Molina Goyena, con DNI 72906146X, ha realizado el Trabajo de final de Grado en Ingeniería Informática titulado Add-on Blender 1.0. 
 
 \noindent Y que dicho trabajo ha sido realizado por la alumna bajo la dirección de los que suscriben, en virtud de lo cual se autoriza su presentación y defensa.
 
@@ -412,8 +378,8 @@ En Burgos, {\large \today}
 \begin{minipage}{0.45\textwidth}
 \begin{flushleft} %\large
 
-Vº. Bº. del Tutor:\\[2cm]
-D. Bruno Rodríguez García
+V\textsuperscript{º}. B\textsuperscript{º}. del Tutor:\\[2cm]
+Dr. Bruno Rodríguez García
 
 \end{flushleft}
 \end{minipage}
@@ -421,8 +387,8 @@ D. Bruno Rodríguez García
 \begin{minipage}{0.45\textwidth}
 \begin{flushleft} %\large
 
-Vº. Bº. del Tutor:\\[2cm]
-D. Raúl Marticorena Sánchez
+V\textsuperscript{º}. B\textsuperscript{º}. del Tutor:\\[2cm]
+Dr. Raúl Marticorena Sánchez
 
 \end{flushleft}
 \end{minipage}
@@ -451,17 +417,23 @@ D. Raúl Marticorena Sánchez
 \renewcommand*\abstractname{Resumen}
 \begin{abstract}
 
-La actividad del usuario y el estado interno de una escena de modelado 3D no puede registrarse ni analizarse en términos estructurados por medio de herramientas que permiten obtener métricas objetivas que ayuden a evaluar el flujo de trabajo en entornos de modelado 3D. 
-Este proyecto plantea el desarrollo de un sistema integrado con dos \textit{addons} para Blender, con el fin de recopilar y analizar datos provenientes de sesiones de modelado tridimensional. El primer \textit{addon} registra las actividades del usuario y la evolución interna del modelo, como la creación, modificación y eliminación de objetos, los cambios de modo y los atributos geométricos. 
-El segundo \textit{addon} ofrece herramientas de análisis con métricas temporales, espaciales e estadísticas, lo que permite evaluar el proceso de modelado y representarlo en tres dimensiones, incluyendo su exploración en entornos tridimensionales.
-El trabajo trata sobre la implementación, prueba y uso de ambos addons para obtener datos reales en procesos de modelado 3D.
+El proceso de modelado en Blender carece de herramientas que permitan registrar y analizar de forma estructurada la actividad del usuario y el estado interno de la escena. Esto dificulta la obtención de métricas objetivas para evaluar, automatizar o mejorar el flujo de trabajo en entornos de modelado 3D.
+
+
+Este proyecto presenta el desarrollo de un sistema compuesto por dos \textit{add-ons} para Blender, orientado a la recopilación y análisis de datos generados durante sesiones de modelado tridimensional. El primer \textit{add-on} permite registrar de forma no intrusiva eventos de modelado, como la creación, modificación o eliminación de objetos, cambios de modo y propiedades geométricas.
+
+
+El segundo \textit{add-on} proporciona herramientas de análisis de métricas temporales, espaciales y estadísticas, facilitando la evaluación del proceso de modelado, así como la visualización de estos datos mediante representaciones gráficas, incluyendo su exploración en entornos tridimensionales.
+
+
+El trabajo incluye la implementación, validación y utilización de los \textit{add-ons} para la obtención de datos reales relacionados con el proceso de modelado 3D.
 
 \end{abstract}
 
 \renewcommand*\abstractname{Descriptores}
 \begin{abstract}
 
-Modelado 3D, addon, recopilación de datos, análisis de métricas, visualización, Blender, Python, métricas espaciales, temporales y estratégicas.
+Modelado 3D, Add-on, recopilación de datos, análisis de métricas, visualización, Blender, Python, métricas espaciales, temporales y estratégicas.
 
 
 \end{abstract}
@@ -469,26 +441,27 @@ Modelado 3D, addon, recopilación de datos, análisis de métricas, visualizaci�
 \clearpage
 
 
-% Abstract en inglés (por ahora no lo toques)
-
-% Abstract in English
+% Abstract en inglés
 \renewcommand*\abstractname{Abstract}
 \begin{abstract}
 
-User activity and the internal state of a 3D modeling scene cannot usually be recorded or analyzed in a structured way using tools capable of obtaining objective metrics to evaluate workflows in 3D modeling environments.
+The 3D modeling process in Blender lacks tools capable of recording and analyzing user activity and the internal state of the scene in a structured way. This makes it difficult to obtain objective metrics that could be used to evaluate, automate or improve workflows in 3D modeling environments.
 
-This project proposes the development of an integrated system composed of two Blender \textit{addons} aimed at collecting and analyzing data generated during 3D modeling sessions. The first \textit{addon} records user activity and the internal evolution of the model, including object creation, modification and deletion, mode changes, and geometric attributes.
 
-The second \textit{addon} provides analysis tools based on temporal, spatial and statistical metrics, allowing the evaluation of the modeling process and its representation through three-dimensional visualizations integrated within Blender.
+This project presents the development of a system composed of two \textit{add-ons} for Blender, focused on the collection and analysis of data generated during 3D modeling sessions. The first \textit{add-on} records modeling events in a non-intrusive way, including object creation, modification and deletion, mode changes, and geometric properties.
 
-This work focuses on the implementation, testing and practical use of both addons in order to obtain real data from 3D modeling processes.
+
+The second \textit{add-on} provides tools for analyzing temporal, spatial and statistical metrics, facilitating the evaluation of the modeling process as well as the visualization of data through graphical representations, including their exploration in three-dimensional environments.
+
+
+The project includes the implementation, validation and use of these \textit{add-ons} to obtain real data related to the 3D modeling process.
 
 \end{abstract}
 
 \renewcommand*\abstractname{Keywords}
 \begin{abstract}
 
-3D modeling, addon, data collection, metric analysis, visualization, Blender, Python, spatial metrics, temporal metrics, strategic metrics.
+3D modeling, add-on, data collection, metrics analysis, visualization, Blender, Python, spatial metrics, temporal metrics, strategic metrics.
 
 \end{abstract}
 

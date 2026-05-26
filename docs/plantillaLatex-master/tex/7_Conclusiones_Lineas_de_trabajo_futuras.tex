@@ -2,62 +2,46 @@
 
 \section{Conclusiones}
 
-En este Trabajo de Final de Grado se ha desarrollado un sistema para almacenar y analizar qué hace un usuario durante la creación 3D en Blender. Para ello se creó un controlador que registra la información necesaria para poder hacerlo sin perturbar al usuario mientras usa el programa.
+En el presente proyecto se ha diseñado, implementado y validado con éxito el sistema denominado \textit{Add-on 1.0}, una infraestructura de software modular concebida para la captura automática, el almacenamiento estructurado y la posterior analítica visual de la interacción del usuario en entornos de modelado tridimensional, tomando Blender como plataforma tecnológica de referencia.
 
-Se constató durante el desarrollo del proyecto que Blender puede acceder a mucha información sobre las diferentes secuencias en él mismo. Por tanto, el sistema puede grabar todo lo referente a los objetos, los cambios de la geometría, los cambios en el modelado, y otros elementos significativos que ocurren mientras el usuario trabaja en él.
+Durante la fase de investigación y desarrollo, se ha constatado la viabilidad técnica de interceptar los flujos de ejecución internos de Blender de manera no intrusiva. La solución desarrollada opera de forma transparente en segundo plano, lo que garantiza que los datos recopilados reflejen fielmente el comportamiento conductual y las estrategias de diseño del usuario en escenarios de producción reales, evitando los sesgos metodológicos característicos de los experimentos controlados en entornos de laboratorio.
 
-Uno de los aspectos más importantes de nuestro trabajo fue encontrar una manera de registrar todo esto de forma continua y estructurada. El controlador almacena los datos para poder analizarlos más fácilmente después. Esto permite examinar la evolución de la escena y cómo interactúa el usuario con las herramientas que Blender ofrece.
+El sistema implementado ha demostrado una alta eficacia en la categorización y registro estructurado de métricas temporales, espaciales y estratégicas. Al abstraer información crítica sobre mutaciones en las mallas poligonales, transformaciones de matrices de coordenadas mundiales y la manipulación de herramientas, el sistema es capaz de transformar un flujo masivo de eventos aislados en un histórico indexado y legible.
 
-También se consiguió integrar el sistema directamente dentro de Blender mediante un \textit{addon}. Esto hace que el usuario pueda trabajar de forma normal mientras el sistema registra información en segundo plano. Gracias a esto, los datos recogidos se parecen más a situaciones reales de trabajo y no solo a pruebas preparadas en laboratorio.
+Un hito fundamental de este trabajo radica en la capacidad de la herramienta para realizar un análisis geométrico avanzado de las mallas y los submodelos topológicos. A través del cómputo analítico de algoritmos de inundación (\textit{flood fill}) para el conteo de islas UV y la integración matemática de la distancia de Hausdorff, el \textbf{Add-on 1.0} trasciende el mero registro de comandos superficiales, permitiendo auditar con rigor matemático la evolución morfológica de los modelos tridimensionales y el nivel de pericia técnica del usuario.
 
-Otro aspecto importante fue la detección de algunos eventos concretos durante el modelado. Por ejemplo, el sistema puede detectar cuándo se duplican objetos, cuándo se modifica geometría, cuándo se cambia de modo dentro de Blender o cuándo se realizan ciertos cambios sobre coordenadas UV. Toda esta información ayuda a entender mejor cómo trabaja el usuario durante el proceso de diseño.
-
-Además, el sistema desarrollado permite guardar los datos dentro de los propios archivos \textit{.blend}. De esta forma, la información no se pierde cuando se cierra el programa y puede seguir utilizándose más adelante.
-
-En general, este proyecto sirve como una base bastante útil para estudiar el proceso de modelado 3D y analizar cómo trabaja una persona dentro de Blender.
+Finalmente, la arquitectura modular adoptada —basada en dos complementos independientes coordinados mediante flujos de persistencia externa en formatos CSV— ha demostrado ser un enfoque óptimo. Esta estructura no solo mitiga el acoplamiento del software, sino que garantiza la portabilidad, integridad y trazabilidad de los datos analíticos entre diferentes sesiones de trabajo de forma independiente, proporcionando una base empírica sólida para el estudio de la Interacción Persona-Computador (HCI) en el ámbito del diseño digital.
 
 \section{Conclusiones técnicas}
 
-A nivel técnico, el proyecto también permitió aprender muchas cosas sobre Blender y sobre el desarrollo de sistemas de captura de datos.
+A nivel de ingeniería de software, el desarrollo del proyecto ha aportado valiosas certezas técnicas respecto al comportamiento de las API de gráficos en tiempo real y la gestión de la carga computacional en hilos de interfaz:
 
-Se comprobó que la API de Blender permite acceder fácilmente a información interna del programa, como objetos, geometría o estados de la escena. Esto facilitó mucho el desarrollo del sistema.
-
-También se utilizaron \textit{handlers} y temporizadores para detectar cambios mientras el usuario trabajaba en tiempo real. Gracias a esto, el sistema puede registrar eventos continuamente sin necesidad de que el usuario haga nada especial.
-
-Otra parte importante fue el uso de comparaciones entre estados de la escena. Esto permitió evitar guardar información repetida y ayudó a reducir la cantidad de datos generados.
-
-Durante el proyecto también se vio que guardar demasiada información puede afectar al rendimiento del programa. Por eso fue necesario buscar un equilibrio entre capturar suficientes datos y mantener Blender funcionando de forma fluida.
-
-Además, algunos eventos complejos fueron más difíciles de detectar. Por ejemplo, ciertos cambios en geometría o en coordenadas UV necesitan técnicas más avanzadas porque no siempre basta con registrar comandos simples.
-
-Todo esto demuestra que crear un sistema de captura de datos dentro de Blender es un trabajo bastante complejo y que requiere adaptarse al funcionamiento interno del programa.
+\begin{itemize}
+    \item \textbf{Aprovechamiento del Grafo de Dependencias}: Se ha verificado que la suscripción de funciones analíticas a los disparadores pos-evaluación del grafo (\texttt{depsgraph\_update\_post}) permite una captura exhaustiva de las modificaciones estructurales de la escena, requiriendo un control estricto de cortocircuitos lógicos para discriminar eventos redundantes.
+    \item \textbf{Mitigación del impacto algorítmico}: Uno de los mayores desafíos técnicos consistió en preservar la tasa de refresco gráfica (\textit{framerate}) del visor 3D. Se determinó que el uso combinado de firmas de estado compactas y la limitación de la frecuencia de muestreo mediante temporizadores asíncronos a intervalos de $0.25$ segundos reduce drásticamente la sobrecarga de la CPU, manteniendo la fluidez del entorno.
+    \item \textbf{Desacoplamiento del renderizado analítico}: Se comprobó la eficiencia de aislar los cálculos estadísticos pesados de las librerías gráficas. Mediante el uso del motor abstracto \texttt{FigureCanvasAgg} de \textit{matplotlib}, el sistema procesa los diagramas en un búfer de memoria volátil e inyecta los resultados como matrices de píxeles puros en texturas procedurales. Este enfoque bajo demanda evita bloqueos síncronos en el hilo principal de la interfaz de usuario.
+    \item \textbf{Gestión de materiales dinámicos}: La instanciación en tiempo de ejecución de mallas poligonales mediante estructuras \texttt{bmesh} y la configuración automática de materiales translúcidos basados en nodos de emisión y mezclas (\textit{Mix Shader}) han demostrado ser soluciones idóneas para garantizar la legibilidad y coherencia espacial de las analíticas visuales superpuestas en el espacio de trabajo.
+\end{itemize}
 
 \section{Limitaciones del sistema}
 
-Aunque el sistema opera adecuadamente y cumple con los fines principales del proyecto, aún hay ciertas incompatibilidades.
+A pesar de que el \textbf{Add-on 1.0} cumple rigurosamente con los requisitos funcionales planteados en los objetivos, se han identificado las siguientes limitaciones técnicas que delimitan su alcance actual:
 
-El mayor problema surge porque el software ha sido diseñado exclusivamente para Blender; como tal, no funciona directamente en otros programas de modelado 3D.
-
-También hay algunos eventos complejos que dependen mucho del estado interno del programa. Por eso, en ciertas situaciones pueden aparecer pequeñas imprecisiones en los datos recogidos.
-
-Otra limitación es que en sesiones largas de trabajo se genera una gran cantidad de información. Esto hace necesario aplicar filtros y optimizaciones para evitar almacenar demasiados datos.
-
-Además, el sistema de análisis todavía es bastante básico. Aunque ya permite estudiar información importante, todavía se podrían crear herramientas mucho más avanzadas para analizar mejor todos los datos recogidos.
+\begin{itemize}
+    \item \textbf{Dependencia de la plataforma anfitriona}: Debido a su estrecho acoplamiento con la API de Python de Blender (\texttt{bpy}), el núcleo del sistema no es directamente portable a otras suites de creación tridimensional o herramientas CAD de la industria (como Autodesk Maya o 3ds Max) sin una reingeniería completa de la capa de adquisición.
+    \item \textbf{Saturación de almacenamiento en sesiones extendidas}: El registro continuo de interacciones espaciales en sesiones de modelado de larga duración genera un volumen sustancial de datos tabulares, lo que puede ralentizar los tiempos de lectura secuencial si no se aplican políticas previas de archivado o compactación de archivos CSV.
+    \item \textbf{Sensibilidad a la escala jerárquica}: El cálculo de distancias de similitud geométrica mediante la distancia de Hausdorff muestra una alta dependencia de la correcta aplicación de las transformaciones de escala del objeto. La presencia de transformaciones no aplicadas en la matriz mundial puede introducir desviaciones marginales en las métricas si el usuario trabaja fuera del origen de coordenadas.
+\end{itemize}
 
 \section{Líneas de trabajo futuras}
 
-Este proyecto puede seguir creciendo en el futuro y ofrece muchas posibilidades de mejora.
+Partiendo de la base arquitectónica establecida por el \textbf{Add-on 1.0}, se proponen las siguientes líneas de investigación y desarrollo para la expansión del sistema:
 
-Una de las mejores ideas sería mejorar el sistema de análisis usando técnicas avanzadas como minería de datos o inteligencia artificial. Esto le permitirá comprender mejor el comportamiento del usuario e identificar patrones en el modelo.
+\begin{itemize}
+    \item \textbf{Integración de modelos de aprendizaje automático}: Incorporar algoritmos de minería de datos y aprendizaje no supervisado (\textit{clustering}) para agrupar automáticamente los históricos de interacción, permitiendo clasificar de forma predictiva los perfiles de los usuarios (experto, intermedio o novato) en función de sus patrones secuenciales de modelado.
+    \item \textbf{Optimización del motor de persistencia}: Sustituir la lectura secuencial en streaming de archivos CSV por un motor de base de datos relacional embebido y ligero (como SQLite) o sistemas de almacenamiento binario indexado, optimizando la velocidad de acceso y consulta en análisis comparativos masivos.
+    \item \textbf{Abstracción de una capa de API universal}: Rediseñar el módulo de captura de datos mediante un patrón de diseño abstracto que independice la lógica analítica del software anfitrión, facilitando la creación de conectores homólogos para otras herramientas estándares del sector como Unity, Unreal Engine o Maya.
+    \item \textbf{Sistemas de asistencia interactiva y tutorización inteligente}: Desarrollar un motor de inferencia en tiempo real que, a partir de las métricas de errores geométricos frecuentes (como vértices duplicados o normales invertidas), actúe como un tutor proactivo. Este módulo podrá predecir fallos topológicos inminentes y ofrecer sugerencias contextuales al estudiante, maximizando el valor pedagógico del sistema en entornos educativos técnicos.
+\end{itemize}
 
-Además, se podría diseñar una nueva forma de presentar la información. Por ejemplo, mostrar gráficos, mapas o animaciones directamente en la visión 3D actual.
-
-Se podría adaptar el sistema a otros programas de modelado 3D u otras aplicaciones de CAD. Así, podrían compararse distintas herramientas y diferentes procesos de diseño.
-
-Así mismo, se debería seguir optimizando el rendimiento para minimizar la carga sobre Blender, sobre todo cuando se trabaja con escenas grandes o a lo largo de una sesión.
-
-La inteligencia artificial puede integrarse directamente con la información recopilada. Esto podría hacer que los sistemas propongan acciones, predigan operaciones o ayuden a usuarios mientras modelan dentro de Blender.
-
-Por último, también sería útil utilizar inteligencia artificial junto a los datos para construir sistemas capaces de ofrecer sugerencias. El objetivo es facilitar la enseñanza al analizar cómo aprenden los estudiantes a modelar en 3D y qué cambios observa durante el curso de la educación.
-
-En resumen, este proyecto demuestra que es posible registrar y analizar automáticamente la interacción del usuario dentro de Blender. Además, abre muchas posibilidades para seguir investigando y desarrollar herramientas más inteligentes relacionadas con el modelado 3D.
+En conclusión, el presente proyecto demuestra la viabilidad de unificar la adquisición no intrusiva y la visualización analítica avanzada en el espacio tridimensional. El \textbf{Add-on 1.0} no solo se consolida como una solución funcional y eficiente para la auditoría del comportamiento de diseño en Blender, sino que abre un prometedor horizonte para el desarrollo de herramientas de asistencia digital inteligente y metodologías de evaluación educativa adaptadas a las demandas de la industria de los gráficos por computador.

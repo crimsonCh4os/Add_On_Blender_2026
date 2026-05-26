@@ -1,95 +1,90 @@
 \capitulo{6}{Trabajos relacionados}
 
-Los programas de modelado 3D han sido estudiados durante los últimos años para comprender cómo utilizan las personas estos programas. Los mismos permiten a los usuarios guardar en ellos su trabajo para posteriormente hacer un análisis.
+El análisis del proceso de diseño en entornos de modelado tridimensional ha despertado un interés creciente durante los últimos años, especialmente en ámbitos como la arquitectura, la ingeniería, la educación y la interacción persona-computador. Este interés se fundamenta en la posibilidad de registrar automáticamente las interacciones del usuario con herramientas digitales, generando conjuntos de datos que permiten estudiar el comportamiento de diseño desde una perspectiva objetiva, empírica y cuantificable~\cite{gao2021,gao2023,jankowski2014}.
 
-En este capítulo se explican algunos trabajos parecidos a este proyecto. Para organizar mejor la información, se han dividido en cuatro partes: análisis de eventos, estudios sobre cómo trabajan los diseñadores, entornos virtuales y uso educativo del modelado 3D.
+Con el objetivo de estructurar de forma sistemática el estado del arte, las investigaciones analizadas se han agrupado en cuatro líneas fundamentales:
+\begin{enumerate}
+    \item Análisis basado en registros de eventos (\textit{event logs}) y minería de procesos (\textit{process mining}).
+    \item Estudios empíricos sobre el comportamiento y la pericia del diseñador.
+    \item Adquisición de datos en entornos virtuales e inmersivos.
+    \item Aplicaciones pedagógicas y educativas del modelado 3D.
+\end{enumerate}
 
 \section{Análisis del proceso de diseño mediante \textit{event logs}}
 
-Una de las formas más utilizadas es guardar automáticamente las acciones que hace el usuario mientras trabaja en un programa 3D.
+Una de las líneas de investigación más relevantes se centra en el uso de registros de eventos generados automáticamente por herramientas de modelado 3D~\cite{gao2021,liu2022}. Estos registros permiten capturar de forma automatizada las acciones realizadas por el usuario durante el proceso de diseño.
 
-Por ejemplo, Gao et al. crearon un sistema para estudiar la relación entre las acciones y los objetos dentro del modelado \cite{gao2021}. Más adelante, también utilizaron técnicas de análisis para detectar patrones de comportamiento y estudiar la creatividad durante el diseño \cite{gao2023}.
+Gao et al.~\cite{gao2021} proponen una estructura de datos basada en grafos para modelar la relación entre comandos y objetos durante el proceso de modelado. Este enfoque permite analizar secuencias de acciones y comprender la lógica subyacente del proceso de diseño. Posteriormente, Gao et al.~\cite{gao2023} amplían esta línea mediante técnicas de \textit{process mining}, demostrando que es posible identificar patrones de comportamiento y relacionarlos con la creatividad del diseño.
 
-Otros trabajos hacen algo parecido. Liu et al. utilizan estos sistemas en educación para estudiar cómo trabajan los estudiantes \cite{liu2022}. Xie et al. también analizan datos de programas CAD para detectar patrones repetidos durante el trabajo \cite{xie2014}.
+De forma complementaria, Liu et al.~\cite{liu2022} aplican estos principios en contextos educativos, mostrando que los \textit{event logs} permiten reconstruir el proceso de diseño de los estudiantes y analizar su evolución. Asimismo, Xie et al.~\cite{xie2014} utilizan análisis de series temporales sobre datos de diseño asistido por computador para evaluar el comportamiento del diseñador y detectar patrones iterativos durante el proceso de modelado.
 
-\textbf{Limitación:} la mayoría de estos trabajos analizan los datos después de recogerlos y suelen centrarse en programas muy concretos.
+\textbf{Limitación:} La mayoría de estos trabajos se centran principalmente en el análisis estadístico diferido (\textit{a posteriori}) de los datos y en entornos específicos y rígidos como BIM o CAD, careciendo de herramientas integradas en entornos de modelado generalistas que permitan la recopilación analítica no intrusiva.
 
 \section{Estudios sobre comportamiento del diseñador}
 
-Otros estudios intentan entender cómo trabajan los diseñadores y cómo cambia su forma de trabajar según su experiencia.
+Otra línea de investigación se orienta a comprender cómo trabajan los diseñadores y cómo varía su comportamiento en función de su experiencia y nivel de pericia~\cite{casakin2023,chen2022,welch}.
 
-Chen et al. comparan usuarios expertos y principiantes y muestran que trabajan de formas diferentes \cite{chen2022}. Casakin y Levy también estudian el comportamiento de diseñadores expertos \cite{casakin2023}.
+Chen et al.~\cite{chen2022} analizan las diferencias entre diseñadores expertos y novatos, identificando variaciones significativas en las estrategias jerárquicas utilizadas durante el proceso de diseño. En la misma línea, Casakin y Levy~\cite{casakin2023} proponen un marco formal para medir el comportamiento del diseñador experto, identificando factores correlacionados con la descomposición del problema y el uso de pensamiento conceptual. Por su parte, Welch y Lim~\cite{welch} demuestran que los diseñadores novatos suelen adoptar procesos más iterativos, erráticos y menos estructurados que los diseñadores con mayor experiencia técnica.
 
-Por otro lado, Welch y Lim explican que los principiantes suelen trabajar probando cosas poco a poco, en vez de seguir siempre un proceso fijo \cite{welch}.
-
-\textbf{Limitación:} muchos de estos estudios usan pocos participantes y métodos difíciles de aplicar en situaciones reales.
+\textbf{Limitación:} Estos trabajos se basan fundamentalmente en análisis experimentales controlados o estudios teóricos con muestras de datos reducidas y técnicas intrusivas de observación directa (como protocolos de pensamiento en voz alta), lo que limita su escalabilidad, automatización y aplicación en entornos reales de producción.
 
 \section{Entornos virtuales e inmersivos}
 
-La realidad virtual también se utiliza para estudiar cómo trabajan los usuarios.
+El avance de las tecnologías inmersivas ha abierto nuevas posibilidades para el análisis del comportamiento del usuario durante tareas de diseño tridimensional~\cite{krassmann2018,wang2024}.
 
-Wang et al. analizan el comportamiento de usuarios dentro de entornos de realidad virtual \cite{wang2024}. Krassmann et al. también estudian la interacción de usuarios en entornos virtuales \cite{krassmann2018}.
+Wang et al.~\cite{wang2024} presentan un análisis a gran escala del comportamiento de diseño en entornos de realidad virtual, utilizando datos de interacción y posicionamiento para modelar automáticamente el proceso de diseño. De forma similar, Krassmann et al.~\cite{krassmann2018} estudian el comportamiento de usuarios en entornos virtuales mediante técnicas de seguimiento óculo-manual y visualización interactiva.
 
-\textbf{Limitación:} estos sistemas dependen de tecnologías específicas como la realidad virtual, por lo que son más difíciles de usar en programas generales como Blender.
+\textbf{Limitación:} Estos enfoques dependen estrictamente de hardware dedicado y plataformas inmersivas de realidad mixta, lo que restringe su aplicabilidad directa en las herramientas de modelado de propósito general y pantallas tradicionales que dominan la industria actual.
 
 \section{Aplicaciones educativas del modelado 3D}
 
-El modelado 3D también se usa mucho en educación.
+El modelado 3D también constituye un recurso ampliamente extendido en contextos educativos y formativos de disciplinas técnicas y artísticas~\cite{koh2010,sosna2025}.
 
-Sosna et al. muestran que estas herramientas ayudan a desarrollar la creatividad \cite{sosna2025}. Koh et al. explican que las simulaciones 3D pueden mejorar la motivación y el aprendizaje \cite{koh2010}.
+Sosna et al.~\cite{sosna2025} demuestran que el uso de herramientas de modelado tridimensional favorece el desarrollo de la cognición espacial y la creatividad en estudiantes de diseño. Asimismo, Koh et al.~\cite{koh2010} evidencian que las simulaciones y la manipulación tridimensional mejoran la motivación intrínseca y el rendimiento académico durante los procesos de aprendizaje técnico complejo.
 
-\textbf{Limitación:} aunque estos trabajos estudian el uso educativo del modelado 3D, normalmente no explican cómo recoger y analizar los datos del proceso de diseño.
+\textbf{Limitación:} Aunque estas investigaciones demuestran los beneficios pedagógicos del modelado 3D, la mayoría de los enfoques abordados no profundizan en la captura estructurada de las mallas ni en el análisis analítico y geométrico detallado de la interacción del usuario.
 
-\section{Comparación con el presente trabajo}
+\section{Comparación y posicionamiento del presente trabajo}
 
-Después de revisar estos trabajos, se puede ver que existen ideas muy interesantes, aunque también tienen algunas limitaciones.
+A partir del análisis de la literatura científica, se observa que las soluciones existentes presentan avances significativos en la conceptualización del proceso de diseño, aunque persisten brechas metodológicas importantes en lo que respecta a la captura automatizada en tiempo real y la integración nativa dentro de herramientas de modelado generalistas.
 
+Las principales limitaciones identificadas en el estado del arte se sintetizan en los siguientes puntos:
 \begin{itemize}
-    \item Muchos estudios analizan los datos después de recogerlos.
-    
-    \item Algunos sistemas solo funcionan en programas o entornos concretos.
-    
-    \item En muchos casos es difícil integrar estos sistemas dentro de programas generales.
-    
-    \item Además, algunos métodos son complicados o molestos para el usuario.
+    \item Dependencia de análisis externos realizados de forma diferida, impidiendo una evaluación contextual inmediata.
+    \item Confinamiento a entornos propietarios de tipo CAD/BIM o plataformas inmersivas costosas.
+    \item Ausencia de integración con el flujo topológico interno (mallas y mapas UV) en software de propósito general.
+    \item Uso de metodologías de monitorización intrusivas que alteran la experiencia de usuario o degradan el rendimiento del sistema operativo.
 \end{itemize}
 
-En este proyecto se propone una solución diferente mediante un \textit{addon} para Blender que permite:
-
-\begin{itemize}
-    \item guardar automáticamente las acciones del usuario en tiempo real,
-    \item obtener información interna del entorno,
-    \item guardar los datos de forma organizada,
-    \item y analizarlos después sin interrumpir al usuario.
-\end{itemize}
-
-\textbf{Contribución clave:} El principal aporte de este proyecto se destaca en la capacidad para obtener información de manera autónoma, estructurada y silenciosa durante el uso de Blender por parte del usuario. 
+La Tabla~\ref{tab:comparativa_trabajos} resume comparativamente las características funcionales de los trabajos analizados frente a la solución propuesta en este proyecto.
 
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{l c c c c}
+\begin{tabular}{lcccc}
 \hline
-\textbf{Trabajo} & \textbf{Tiempo real} & \textbf{Generalista} & \textbf{No intrusivo} & \textbf{Análisis} \\
+\textbf{Trabajo} & \textbf{Adquisición TR} & \textbf{Generalista} & \textbf{No intrusivo} & \textbf{Análisis geométrico} \\
 \hline
-Gao et al. (2021) &  &  & X & X \\
-Gao et al. (2023) &  &  & X & X \\
-Liu et al. (2022) &  &  & X & X \\
-Xie et al. (2014) &  &  & X & X \\
-Chen et al. (2022) &  & X &  & X \\
-Casakin et al. (2023) &  & X &  & X \\
-Wang et al. (2024) &  &  &  & X \\
-Krassmann et al. (2018) &  &  &  & X \\
-Sosna et al. (2025) &  & X & X &  \\
-Koh et al. (2010) &  & X & X &  \\
-\textbf{Este trabajo} & \textbf{X} & \textbf{X} & \textbf{X} & \textbf{X} \\
+Gao et al. (2021)       &   &   & X & X \\
+Gao et al. (2023)       &   &   & X & X \\
+Liu et al. (2022)       &   &   & X & X \\
+Xie et al. (2014)       &   &   & X & X \\
+Chen et al. (2022)      & X &   &   & X \\
+Casakin et al. (2023)   & X &   &   & X \\
+Wang et al. (2024)      &   &   &   & X \\
+Krassmann et al. (2018) &   &   &   & X \\
+Sosna et al. (2025)     & X & X &   &   \\
+Koh et al. (2010)       & X & X &   &   \\
+\textbf{Add-on Blender 1.0} & \textbf{X} & \textbf{X} & \textbf{X} & \textbf{X} \\
 \hline
 \end{tabular}
-\caption{Comparativa de trabajos relacionados.}
-\label{tab:comparativa_estado_arte}
+\caption{Comparativa entre trabajos relacionados y el sistema desarrollado en el presente proyecto.}
+\label{tab:comparativa_trabajos}
 \end{table}
 
-La Figura~\ref{fig:estado_arte_posicionamiento} muestra de forma resumida cómo se posiciona este trabajo respecto a los demás estudios analizados.
+\textit{Nota aclaratoria sobre la Tabla~\ref{tab:comparativa_trabajos}:} El sistema desarrollado garantiza la adquisición de eventos en tiempo real (TR) mediante \textit{handlers} asíncronos de fondo, mientras que la generación de visualizaciones estadísticas complejas se ejecuta bajo demanda para preservar la tasa de refresco gráfica del entorno.
+
+La Figura~\ref{fig:estado_arte_posicionamiento} representa el espacio tridimensional conceptual en el que se posiciona esta investigación con respecto a las soluciones previas de la literatura.
 
 \begin{figure}[H]
 \centering
@@ -98,12 +93,8 @@ La Figura~\ref{fig:estado_arte_posicionamiento} muestra de forma resumida cómo 
     height=0.65\textheight,
     keepaspectratio
 ]{diagramas/arte.png}
-\caption{Resumen del estado del arte y posicionamiento del trabajo.}
+\caption{Resumen del estado del arte y posicionamiento del trabajo desarrollado.}
 \label{fig:estado_arte_posicionamiento}
 \end{figure}
 
-La principal aportación de este proyecto es crear un sistema capaz de guardar automáticamente las acciones del usuario dentro de Blender sin molestar mientras trabaja.
-
-A diferencia de otros trabajos, este sistema puede recoger información en tiempo real directamente dentro de un programa de modelado general como Blender.
-
-Gracias a esto, el proyecto une tanto la recogida de datos como su análisis dentro del propio entorno de trabajo.
+La principal aportación del sistema integrado \textit{Add-on Blender 1.0} radica en su capacidad para unificar la adquisición no intrusiva de interacciones y el análisis topológico avanzado directamente dentro de una plataforma de uso extendido en la industria como Blender. Al mitigar las limitaciones de los enfoques tradicionales, este proyecto proporciona un marco funcional que extrae variables de mallas estructurales, calcula índices complejos como la distancia de Hausdorff y proyecta analíticas visuales en el propio espacio tridimensional, constituyendo una herramienta versátil tanto para la auditoría profesional como para la investigación educativa.
