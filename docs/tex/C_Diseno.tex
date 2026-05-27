@@ -1,0 +1,274 @@
+\apendice{Especificación de Diseño}
+\label{apendice:especificacion_diseno}
+
+\section{Introducción}
+\label{sec:c-introduccion}
+
+Este apéndice describe el diseño de la suite de monitorización, análisis y visualización desarrollada para Blender. La solución se organiza en dos add-ons complementarios. El primero, \textit{Data Logger 3D}, se ejecuta durante la sesión de modelado y registra eventos, estados y variaciones relevantes en formato CSV. El segundo add-on trabaja de forma posterior sobre esos CSV, valida los datos, calcula métricas estadísticas A1--A17, métricas geométricas y UV, y presenta los resultados mediante paneles y visualizaciones integradas en Blender.
+
+La información de este anexo se ordena desde los elementos más estables del diseño hasta los aspectos más próximos a la interfaz. En primer lugar se define el modelo de datos; después se describe la arquitectura general; a continuación se detallan los dos add-ons; finalmente se documentan las métricas, la interfaz y las decisiones de diseño. Esta organización evita mezclar decisiones de arquitectura con instrucciones de uso o detalles de programación, que quedan desarrollados en los anexos D y E.
+
+\section{Diseño de datos}
+\label{sec:c-diseno-datos}
+
+\subsection{Campos completos del CSV}
+\label{subsec:c-campos-csv}
+
+El CSV constituye el contrato de intercambio entre el add-on de captura y el add-on de análisis. Cada fila representa un cambio significativo de la sesión, no una muestra periódica indiferenciada. La generación de filas se basa en la comparación entre un \textit{snapshot} actual y una línea base anterior, de forma que solo se registran deltas cuando se detecta una variación relevante.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{3.1cm}p{3.2cm}X}
+\toprule
+\textbf{Grupo} & \textbf{Campo} & \textbf{Descripción de diseño} \\
+\midrule
+Identificación & \texttt{USER\_ID} & Identificador seudonimizado de la sesión o equipo. No almacena nombre real del usuario. \\
+Tiempo & \texttt{TimeStamp} & Marca temporal absoluta utilizada para ordenar registros. \\
+Tiempo & \texttt{Minute}, \texttt{Second} & Tiempo relativo desde el inicio de la captura. Facilita el análisis temporal de la sesión. \\
+Vista del usuario & \texttt{UserX}, \texttt{UserY}, \texttt{UserZ} & Posición estimada de la cámara o vista 3D del usuario. \\
+Escena & \texttt{SceneRadius} & Radio aproximado de la escena calculado a partir de objetos de tipo malla. \\
+Objeto activo & \texttt{ObjX}, \texttt{ObjY}, \texttt{ObjZ} & Centro del objeto activo en coordenadas de mundo. \\
+Objeto activo & \texttt{ObjRadius} & Radio aproximado del objeto activo a partir de su caja envolvente. \\
+Deltas espaciales & \texttt{ObjDeltaX}, \texttt{ObjDeltaY}, \texttt{ObjDeltaZ} & Variación espacial del objeto activo respecto al estado anterior. \\
+Deltas espaciales & \texttt{ObjDeltaRadius} & Cambio del radio del objeto activo. Se utiliza como indicio de transformación o escala. \\
+Topología & \texttt{VertexDelta} & Variación en el número de vértices. \\
+Topología & \texttt{NgonDelta} & Variación en el número de caras con más de cuatro lados. \\
+Topología & \texttt{TriDelta} & Variación en el número de triángulos. \\
+Topología & \texttt{NormalDelta} & Variación de normales potencialmente invertidas. \\
+Modo & \texttt{ObjModeState} & Indica si el contexto se encuentra en \textit{Object Mode}. \\
+Modo & \texttt{EditModeState} & Indica si el contexto se encuentra en \textit{Edit Mode}. \\
+Modo & \texttt{ModeChanged} & Marca transiciones entre modos de trabajo. \\
+UV & \texttt{UV} & Marca eventos o cambios detectados en coordenadas UV. \\
+Escena & \texttt{ObjectDelta} & Cambio en el número de objetos de la escena. \\
+Escena & \texttt{ModifierDelta} & Cambio en el número total de modificadores. \\
+Operadores & \texttt{CtrlV}, \texttt{ShiftD}, \texttt{AltD}, \texttt{Merge} & Banderas de operadores relevantes para el proceso de modelado. \\
+Visualización & \texttt{Occlusion} & Estado asociado a modos de visualización como \textit{wireframe} o \textit{x-ray}. \\
+\bottomrule
+\end{tabularx}
+\caption{Campos completos del CSV utilizado como formato intermedio entre captura y análisis.}
+\label{tab:c-campos-csv}
+\end{table}
+
+\subsection{Variables derivadas del análisis}
+\label{subsec:c-variables-derivadas}
+
+El add-on de análisis conserva los datos originales y calcula variables derivadas únicamente en memoria. Estas variables permiten obtener métricas agregadas sin alterar el CSV fuente. Las derivaciones principales son: duración total de sesión, diferencias temporales entre filas, velocidad de movimiento de la vista, distancia a objeto, actividad de edición por fila, cambios de modo, eventos UV, evolución de vértices, evolución de errores topológicos, métricas de \textit{Object Mode}, métricas geométricas del objeto activo y métricas UV.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{4cm}X}
+\toprule
+\textbf{Variable derivada} & \textbf{Origen y finalidad} \\
+\midrule
+Tiempo transcurrido & Se obtiene a partir de \texttt{TimeStamp} o de \texttt{Minute}/\texttt{Second}; permite calcular duración y pausas. \\
+Velocidad de vista & Se calcula con posiciones \texttt{UserX}, \texttt{UserY}, \texttt{UserZ} y diferencias temporales; sirve para métricas espaciales. \\
+Distancia a objeto & Relaciona la posición de la vista con \texttt{ObjX}, \texttt{ObjY}, \texttt{ObjZ}; permite estudiar proximidad. \\
+Actividad de edición & Agrega deltas topológicos, cambios de objeto, modificadores, UV y operadores; permite distinguir actividad e inactividad. \\
+Tamaño local del objeto & Se aproxima con dimensiones, escala, tamaño disponible o \texttt{ObjRadius}; se usa en métricas de relación espacial. \\
+Distribuciones por métrica & Generan mínimo, máximo, media y cuartiles solo cuando la métrica tiene distribución significativa. \\
+\bottomrule
+\end{tabularx}
+\caption{Variables derivadas principales calculadas por el add-on de análisis.}
+\label{tab:c-variables-derivadas}
+\end{table}
+
+\section{Diseño arquitectónico}
+\label{sec:c-diseno-arquitectonico}
+
+La arquitectura se estructura en dos add-ons conectados por CSV. Esta separación permite que la captura sea ligera y que el análisis se ejecute bajo demanda. El primer add-on no necesita conocer las métricas finales; el segundo add-on no necesita intervenir durante la sesión de modelado.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{diagramas/flujo_suite.png}
+    \caption{Flujo general de la suite: captura, exportación CSV, análisis de métricas y visualización en Blender.}
+    \label{fig:c-flujo-arquitectura}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{3.5cm}X}
+\toprule
+\textbf{Componente} & \textbf{Responsabilidad de diseño} \\
+\midrule
+\textit{Data Logger 3D} & Captura estados, operadores y deltas durante el modelado. Debe ser no intrusivo y robusto ante cambios de contexto. \\
+CSV intermedio & Actúa como contrato estable, auditable y portable entre captura y análisis. \\
+Add-on de análisis & Lee, valida, calcula métricas y genera visualizaciones sin modificar los datos originales. \\
+Paneles de Blender & Proporcionan acceso a captura, exportación, selección de CSV, cálculo e interpretación de resultados. \\
+\bottomrule
+\end{tabularx}
+\caption{Responsabilidades principales de la arquitectura.}
+\label{tab:c-arquitectura-componentes}
+\end{table}
+
+\section{Diseño del primer add-on: Data Logger 3D}
+\label{sec:c-diseno-logger}
+
+El primer add-on se encarga de registrar los cambios relevantes que se producen durante la sesión de modelado. Su prioridad es registrar información útil sin ralentizar la interacción del usuario. Para ello, se organizan varios subsistemas que comparten un estado global mínimo.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{3.6cm}X}
+\toprule
+\textbf{Subsistema} & \textbf{Criterio de diseño} \\
+\midrule
+Estado global & Mantiene temporizador, línea base anterior, modo previo, objeto activo previo, hash UV y banderas de operadores. \\
+Captura espacial & Obtiene posición de la vista, centro del objeto activo, radio del objeto y radio de escena mediante matrices y cajas envolventes. \\
+Captura topológica & Cuenta vértices, triángulos, n-gons y normales potencialmente invertidas. Usa \texttt{bmesh} cuando el objeto está en edición. \\
+Operadores & Detecta \texttt{Ctrl+V}, \texttt{Shift+D}, \texttt{Alt+D} y \texttt{Merge} mediante operadores recientes, normalización de identificadores y banderas. \\
+UV & Combina operadores UV conocidos con un hash global de coordenadas UV para detectar cambios que no aparecen en contadores topológicos. \\
+Snapshots y deltas & Compara firma actual y firma previa; solo registra si existe cambio relevante o una bandera forzada. \\
+Temporizador & Ejecuta la comprobación de forma periódica y devuelve un intervalo corto mientras el logger está activo. \\
+Consentimiento & Exige aceptación antes de iniciar la captura y recuerda el estado mediante un bloque de texto interno. \\
+Paneles & Ofrecen control básico de inicio/parada, exportación y depuración. \\
+Exportación & Incrusta el CSV en el archivo \texttt{.blend} y permite exportarlo junto al proyecto. \\
+\bottomrule
+\end{tabularx}
+\caption{Diseño interno del add-on Data Logger 3D.}
+\label{tab:c-diseno-logger}
+\end{table}
+
+\section{Diseño del segundo add-on: análisis y visualización}
+\label{sec:c-diseno-analisis}
+
+El segundo add-on se diseña como una capa de procesamiento posterior. La lectura CSV, la validación, el cálculo estadístico, el cálculo geométrico y la interfaz se mantienen separados para reducir dependencias cruzadas y facilitar el mantenimiento.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{3.7cm}X}
+\toprule
+\textbf{Bloque} & \textbf{Responsabilidad de diseño} \\
+\midrule
+Lectura CSV & Localiza archivos individuales o carpetas y convierte las filas a estructuras procesables. \\
+Validación & Comprueba cabeceras, valores numéricos, ausencia de infinitos y tratamiento de datos no disponibles. \\
+Cálculo estadístico & Calcula A1--A17 a partir de posiciones, tiempos, deltas, modos y operadores. \\
+Cálculo geométrico & Evalúa propiedades de malla, similitud, distancia de Hausdorff, normales, ángulos y topología. \\
+Cálculo UV & Calcula área UV, islas, estiramiento y densidad de texeles(Resolución de la textura). \\
+Visualización & Genera gráficos, objetos procedurales y representaciones comparativas dentro de Blender. \\
+Interfaz & Presenta resultados en paneles compactos, con etiquetas breves y tooltips explicativos. \\
+\bottomrule
+\end{tabularx}
+\caption{Diseño interno del add-on de análisis y visualización.}
+\label{tab:c-diseno-analisis}
+\end{table}
+
+\section{Diseño procedimental}
+\label{sec:c-diseno-procedimental}
+
+El procedimiento general se divide en captura, persistencia, análisis y visualización. Esta secuencia permite reproducir el proceso y facilita la depuración cuando una métrica presenta valores inesperados.
+
+\begin{enumerate}
+    \item Se abre Blender y se activa el add-on \textit{Data Logger 3D}.
+    \item El sistema comprueba Auto Run y solicita consentimiento si procede.
+    \item Se inicializa o restaura el CSV asociado a la sesión.
+    \item El temporizador construye snapshots y detecta cambios significativos.
+    \item Las filas se escriben, se depuran duplicados y se incrustan en el \texttt{.blend}.
+    \item El CSV se exporta cuando el usuario lo solicita.
+    \item El add-on de análisis lee uno o varios CSV y valida sus datos.
+    \item Se calculan métricas A1--A17, métricas geométricas y métricas UV.
+    \item Los resultados se presentan en paneles y visualizaciones dentro de Blender.
+\end{enumerate}
+
+\section{Diseño de métricas A1--A17}
+\label{sec:c-diseno-a1-a17}
+
+Las métricas A1--A17 se organizan por tipología para mejorar su lectura. La interfaz no debe repetir valores equivalentes ni mostrar cuartiles cuando no aportan información interpretativa. Por ello, se agrupan A2--A3 y A6--A9, mientras que A12, A13 y A16 conservan distribución propia.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{p{1.3cm}p{3.8cm}p{2.5cm}X}
+\toprule
+\textbf{ID} & \textbf{Etiqueta} & \textbf{Tipo} & \textbf{Diseño de presentación} \\
+\midrule
+A1 & Total time & Temporal & Duración total, sin cuartiles. \\
+A2 & Breaks & Temporal & Agrupada con A3 por compartir interpretación temporal. \\
+A3 & Breaks by phase & Temporal & Agrupada con A2; resume distribución de pausas por fase. \\
+A4 & Movement speed & Spatial & Muestra resumen estadístico de velocidad. \\
+A5 & Proximity to object & Spatial & Muestra relación espacial con el objeto activo. \\
+A6 & View manipulation & Spatial & Agrupada con A7--A9 para evitar bloques redundantes. \\
+A7 & Speed during inactivity & Spatial & Interpretación conjunta con actividad/inactividad. \\
+A8 & Speed during activity & Spatial & Comparación frente a velocidad en inactividad. \\
+A9 & Distance travelled & Spatial & Completa el bloque de desplazamiento. \\
+A10 & Acceleration strategy 1 & Strategy & Bloque independiente de estrategia. \\
+A11 & Acceleration strategy 2 & Strategy & Bloque independiente de estrategia. \\
+A12 & Vertex evolution & Strategy & Mantiene distribución propia y cuartiles. \\
+A13 & Error evolution & Strategy & Mantiene distribución propia y cuartiles. \\
+A14 & Object Mode & Strategy & Se etiqueta explícitamente como métrica de \textit{Object Mode}. \\
+A15 & UV work & Strategy & Se vincula a eventos o cambios UV. \\
+A16 & Mesh evolution & Strategy & Mantiene distribución propia. \\
+A17 & Object change delta & Strategy & Resume variaciones de objeto en \textit{Object Mode}. \\
+\bottomrule
+\end{tabularx}
+\caption{Diseño de presentación de las métricas A1--A17.}
+\label{tab:c-diseno-a1-a17}
+\end{table}
+
+\section{Diseño de métricas geométricas y UV}
+\label{sec:c-diseno-geom-uv}
+
+Las métricas geométricas y UV se calculan directamente sobre objetos de Blender. Su diseño se separa de las métricas CSV porque dependen del estado de la malla, de capas UV y, en algunos casos, de un objeto de referencia.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{3.2cm}X}
+\toprule
+\textbf{Métrica} & \textbf{Diseño de cálculo} \\
+\midrule
+\texttt{UV area} & Área ocupada en el espacio UV mediante triangulación o fórmula poligonal sobre coordenadas UV. \\
+\texttt{UV islands} & Conteo de componentes conexas en el mapa UV. \\
+\texttt{UV stretch} & Relación entre proporciones 3D y proporciones UV para estimar deformación. \\
+\texttt{UV texel density} & Relación entre área geométrica y área UV. \\
+\texttt{Normal percentage} & Porcentaje de caras con orientación anómala o potencialmente invertida. \\
+\texttt{Angle} & Mediana o resumen de ángulos entre caras adyacentes conectadas por aristas. \\
+\texttt{Non-quads} & Recuento o porcentaje de caras que no son cuadrangulares. \\
+\texttt{Vertex duplicate} & Detección de vértices coincidentes o muy próximos. \\
+\texttt{Similarity} & Comparación geométrica y topológica frente a un objeto de referencia. \\
+\texttt{Hausdorff distance} & Máxima distancia mínima entre conjuntos de vértices cuando existe referencia válida. \\
+\bottomrule
+\end{tabularx}
+\caption{Diseño de métricas geométricas y UV.}
+\label{tab:c-diseno-geom-uv}
+\end{table}
+
+\section{Decisiones de diseño relevantes}
+\label{sec:c-decisiones-diseno}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{4cm}X}
+\toprule
+\textbf{Decisión} & \textbf{Justificación} \\
+\midrule
+Separación en dos add-ons & Evita que el análisis pesado interfiera con el modelado y permite evolucionar cada parte por separado. \\
+CSV como formato intermedio & Facilita trazabilidad, revisión manual, portabilidad y compatibilidad con herramientas externas. \\
+Captura basada en snapshots & Reduce registros redundantes y permite calcular deltas de forma controlada. \\
+Uso de \texttt{bmesh} & Permite leer topología y UV con mayor precisión en \textit{Edit Mode}. \\
+Hash UV & Detecta cambios de coordenadas UV aunque no cambien los contadores topológicos. \\
+Uso de KDTree & Se incorpora en las métricas geométricas que requieren búsquedas de proximidad entre puntos, especialmente en comparaciones entre mallas. Su uso permite reducir el coste de cálculo frente a comparaciones exhaustivas y mejora el rendimiento en modelos con mayor número de vértices. \\
+Separación lógica/interfaz & Mejora mantenibilidad y permite probar cálculo y validación sin depender del panel gráfico. \\
+Tooltips y bloques compactos & Conservan información contextual sin saturar la interfaz lateral de Blender. \\
+\bottomrule
+\end{tabularx}
+\caption{Decisiones de diseño relevantes de la suite.}
+\label{tab:c-decisiones-diseno}
+\end{table}
+
+\section{Síntesis del diseño}
+\label{sec:c-sintesis}
+
+El diseño propuesto combina una fase de captura ligera con una fase de análisis flexible. La estructura de datos CSV actúa como punto de unión entre los dos add-ons, mientras que la separación de responsabilidades permite ampliar operadores, métricas o visualizaciones sin modificar todo el sistema. Esta organización proporciona una base técnica coherente para la documentación de programación del anexo D y para las instrucciones de uso del anexo E.

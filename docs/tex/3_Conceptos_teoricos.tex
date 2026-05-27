@@ -1,0 +1,151 @@
+\capitulo{3}{Conceptos teóricos}
+
+En el desarrollo del sistema propuesto es necesario entender varios conceptos relativos al análisis de datos, el formato CSV (\textit{Comma-Separated Values}, valores separados por comas), la representación de datos e introducción de los \textit{add-ons} en Blender. Este capítulo introduce los principios teóricos que respaldan el proyecto y las bases a las que se refiere la solución.
+
+El trabajo se concentra en la recolección, análisis y representación de datos procedentes de la etapa de creación tridimensional. De esta manera, se sitúa el modelo dentro del contexto de analítica de la interacción en entornos 3D. El estudio de la actividad del usuario permite una mayor comprensión del procedimiento de modelado y facilitar el ahorro de tiempo en la optimización de herramientas existentes~\cite{gao2023,gao2021,jankowski2014,lavioila2017}.
+
+\section{Blender y modelado 3D}
+
+El modelado tridimensional implica la generación de representaciones digitales de objetos y superficies en un espacio virtual. Tales representaciones se crean mayoritariamente mediante mallas poligonales compuestas por vértices, aristas y caras. La relación de estas partes determina la complejidad geométrica y topológica de los modelos creados.
+
+En una simulación física, el sistema gráfico funciona como una capa de representación visual vinculada al modelo físico subyacente. Los objetos gráficos, normalmente definidos mediante mallas, superficies o volúmenes, se asocian a propiedades físicas como masa, elasticidad, rigidez, densidad, fricción o deformabilidad. A partir de estas propiedades, el motor de simulación calcula la evolución del sistema y el modelo gráfico permite visualizar sus efectos sobre la escena.
+
+Esta interacción resulta especialmente útil en física computacional y simulaciones científicas, ya que permite representar fenómenos biológicos y materiales complejos. Por ejemplo, una malla puede emplearse para simular la deformación de un tejido, el comportamiento de un órgano, la respuesta de un material ante una fuerza o la colisión entre estructuras. Así, el modelo físico calcula los cambios mediante métodos numéricos, mientras que el modelo gráfico los muestra de forma comprensible para facilitar su análisis e interpretación.
+
+\begin{itemize}
+\item \textbf{Vértices}: puntos definidos mediante coordenadas espaciales ($X, Y, Z$).
+\item \textbf{Aristas}: segmentos que conectan dos vértices consecutivos.
+\item \textbf{Caras}: superficies delimitadas por conjuntos de aristas.
+\end{itemize}
+
+El proceso de modelado implica la ejecución continua de operaciones sobre la escena tridimensional, entre las que destacan:
+
+\begin{itemize}
+\item Transformación espacial de objetos.
+\item Creación y eliminación de primitivas geométricas.
+\item Modificación topológica de mallas.
+\item Escalado y rotación de elementos.
+\item Cambios entre modos de trabajo.
+\item Configuración de modificadores procedimentales.
+\item Manipulación de coordenadas UV (coordenadas de textura U y V) para el mapeado de texturas.
+\end{itemize}
+
+Cada una de estas operaciones cambia el estado interno del escenario. Por tanto, las acciones del usuario producen datos que pueden registrarse y analizarse posteriormente. El análisis así realizado ha sido utilizado en investigaciones recientes para estudiar patrones de comportamiento, procesos creativos y estrategias de diseño durante la manipulación de objetos virtuales en modelado 3D~\cite{casakin2023,chen2022,gao2021,liu2022,wang2024}.
+
+El uso de ambientes 3D interactivos ha demostrado su aplicación relevante en entornos educativos y de aprendizaje, sobre todo en actividades enfocadas en la creatividad, simulación y diseño digital~\cite{koh2010,krassmann2018,sosna2025}.
+
+\subsection{Estructuras de datos geométricos: Mesh frente a BMesh}
+
+Para la monitorización de operaciones geométricas en tiempo real, es crucial diferenciar las dos estructuras fundamentales de representación de mallas que gestiona el núcleo de Blender:
+
+\begin{itemize}
+    \item \textbf{Estructura Mesh (Datos evaluados)}: Representa una disposición indexada de matrices estáticas optimizada para el renderizado. El acceso a sus elementos ($V$ vértices, $E$ aristas, $F$ caras) resulta eficiente para operaciones de lectura, pero no permite mutaciones topológicas dinámicas en tiempo real ni inspecciones directas de vecindad compleja.
+    \item \textbf{Estructura BMesh (Datos de edición)}: Constituye una estructura de datos basada en listas doblemente enlazadas de tipo \textit{radial-edge} y representación de fronteras (\textit{B-rep}). Esta disposición permite realizar consultas de conectividad complejas en tiempo constante $O(1)$ a través de bucles de caras (\textit{loops}). 
+\end{itemize}
+
+El análisis de eventos que alteran la topología exige la conversión o acceso a estructuras \textit{BMesh} durante el modo de edición, permitiendo evaluar propiedades avanzadas como las islas de coordenadas UV mediante algoritmos de inundación de mallas (\textit{mesh flood-fill}).
+
+\section{Análisis y procesamiento de datos}
+
+El análisis de datos implica la obtención de información valiosa a partir de conjuntos de datos no estructurados. El propósito de la evaluación dentro del marco de esta investigación es la detección de patrones en el comportamiento del usuario, las variaciones del entorno y las acciones realizadas por el individuo al crear un modelo tridimensional.
+
+Para ello, resulta necesario aplicar diferentes etapas de preprocesamiento, entre las que destacan:
+
+\begin{itemize}
+\item Limpieza de datos inconsistentes o incompletos.
+\item Normalización de valores y formatos.
+\item Estructuración y organización de la información.
+\item Filtrado de eventos irrelevantes.
+\item Conversión de datos temporales y espaciales.
+\end{itemize}
+
+Las operaciones permiten asegurar la coherencia de los datos y facilitan su procesamiento posterior con la ayuda de herramientas de cálculo computacional~\cite{data_analysis}.
+
+El análisis interactivo para entornos tridimensionales es una área importante del persona-computadora-interacción, porque permite observar cómo los usuarios manejan los objetos en espacios virtuales y qué tipos de estrategias utilizan en la tarea de diseño~\cite{jankowski2014,lavioila2017}.
+
+Hasta ahora, diversas investigaciones han abordado la detección del comportamiento del usuario durante las tareas de modelado 3D mediante la recopilación de registros de eventos y el análisis de flujos de procesos. Estos métodos ofrecen la oportunidad de evaluar secuencias de acciones, tiempos de interacción y cambios en las vistas virtuales~\cite{gao2021,gao2023,liu2022,xie2014}.
+
+Además, se han estudiado las diferencias en el comportamiento de diseñadores principiantes y avanzados, lo que ha permitido detectar desigualdades significativas en las estrategias de modelado, el análisis de los resultados, y las soluciones de problemas~\cite{casakin2023,chen2022,welch}.
+
+\subsection{Métricas de similitud geométrica y topológica}
+
+Para medir cuantitativamente el aprendizaje o la eficiencia del usuario, es esencial evaluar si el modelo tridimensional actual coincide con un modelo estándar o de referencia. La discrepancia espacial en la geometría computacional no se puede determinar por medio de conjuntos de puntos:
+
+\begin{itemize}
+    \item \textbf{Distancia de Hausdorff}: Mide el grado de desemejanza entre dos subconjuntos de un espacio métrico. Dados un conjunto de vértices de referencia $A$ y un conjunto objetivo $B$, la distancia de Hausdorff bidireccional se define formalmente como:
+    $$H(A, B) = \max(h(A, B), h(B, A))$$
+    donde $h(A, B) = \max_{a \in A} \min_{b \in B} \lVert a - b \rVert$ representa la distancia de Hausdorff unidireccional.
+    \item \textbf{Métricas de distribución de normales}: Permiten evaluar la suavidad y consistencia de la superficie mediante el cálculo del producto escalar de los vectores normales pertenecientes a las caras concurrentes de la geometría.
+\end{itemize}
+
+\section{Visualización de datos en entornos tridimensionales}
+
+La visualización de datos constituye un elemento fundamental para interpretar la información obtenida a partir del análisis computacional. La representación gráfica facilita la detección de patrones, tendencias y relaciones entre variables complejas.
+
+La solución propuesta integra la información analítica en un entorno tridimensional, lo que permite mostrar gráficamente datos relacionados con la actividad de modelado. Este enfoque ayuda a entender mejor el contexto de los datos y facilita la interpretación espacial y temporal de los eventos.
+
+El uso de representaciones tridimensionales es parte de las últimas tendencias en visualización avanzada y interactividad total~\cite{jankowski2014,wang2024}. Los espacios 3D permiten acceder intuitivamente a información compleja, especialmente en sistemas donde la dimensión espacial es importante.
+
+Además, la representación gráfica de datos temporales y estructurales puede proporcionar una vista de los procesos de modelado, así como ayudar a identificar patrones de comportamiento del usuario~\cite{gao2023,xie2014}.
+
+Para crear representaciones gráficas y realizar análisis estadísticos, se utiliza herramientas como \textit{Matplotlib}~\cite{matplotlib}, popular entre expertos en matemáticas y científico y dentro de las comunidades de análisis de datos basadas en el lenguaje Python.
+
+\section{Desarrollo de \textit{add-ons} en Blender}
+
+Blender extiende sus capacidades a través de la creación de \textit{add-ons} desarrollados en Python, que trabajan con la API oficial para acceder al escenario, los elementos y las acciones del usuario. 
+
+La arquitectura modular basada en \textit{add-ons} permite integrar instrumentos especiales sin alterar la parte principal de Blender. Esta estrategia beneficia el uso de funciones compartidas, fomenta la mantenibilidad y facilita el crecimiento de las nuevas capacidades~\cite{gamma1994,pressman2005}.
+
+La Figura~\ref{fig:addons_menu} muestra el menú de \textit{addons} dentro de Blender.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{diagramas/add-on.png}
+    \caption{Menú de \textit{addons} de Blender con extensiones instaladas.}
+    \label{fig:addons_menu}
+\end{figure}
+
+Los \textit{add-ons} desarrollados para Blender permiten implementar funcionalidades relacionadas con:
+
+\begin{itemize}
+\item Automatización de tareas repetitivas.
+\item Sistemas de análisis y monitorización.
+\item Herramientas de importación y exportación de datos.
+\item Integración con motores de renderizado.
+\item Extensiones orientadas al modelado y animación.
+\end{itemize}
+
+Además de las soluciones implementadas de forma específica para este sistema, Blender incorpora extensiones nativas orientadas a optimizar los flujos de edición geométrica en entornos profesionales. Entre las herramientas más destacadas se incluyen:
+
+\begin{itemize}
+\item \textbf{Node Wrangler}: facilita la gestión de materiales y sistemas de nodos en el editor de sombreado.
+\item \textbf{LoopTools}: incorpora herramientas avanzadas para la edición y regularización geométrica de mallas.
+\item \textbf{Rigify}: permite generar automáticamente esqueletos y sistemas de control para animación.
+\item \textbf{Archimesh}: proporciona herramientas procedurales orientadas al modelado arquitectónico técnico.
+\end{itemize}
+
+En el marco de la solución propuesta, se han desarrollado módulos orientados tanto a la adquisición automática de eventos como al posterior procesamiento y visualización tridimensional de la información recopilada.
+
+\subsection{Infraestructura de monitorización y Grafo de Dependencias}
+
+El subsistema de monitorización implementado se fundamenta en el Grafo de Dependencias (\textit{Dependency Graph} o \textit{Depsgraph}) de Blender. El \textit{Depsgraph} constituye el motor interno encargado de evaluar y sincronizar las relaciones de dependencia existentes entre los distintos bloques de datos de la escena, tales como animaciones, mallas modificadas y restricciones de objetos.
+
+La API de Python permite asociar funciones de retrollamada (\textit{callback functions}) a disparadores específicos del sistema mediante el espacio de nombres de la plataforma (\texttt{bpy.app.handlers}). Para un registro analítico continuo del comportamiento del usuario, el evento crítico monitorizado es \texttt{depsgraph\_update\_post}, el cual se ejecuta inmediatamente después de que el grafo de dependencias haya reevaluado la escena debido a una acción o mutación geométrica. A través de este mecanismo se capturan de forma asíncrona alteraciones relativas a:
+
+\begin{itemize}
+\item Creación, aislamiento y eliminación de objetos.
+\item Cambios estructurales entre modos de edición y objeto.
+\item Transformaciones espaciales de traslación, rotación y escala.
+\item Modificaciones topológicas operadas sobre la malla.
+\item Alteraciones y redistribuciones en las coordenadas cartesianas UV.
+\item Cambios jerárquicos en la estructura general de la escena.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{diagramas/flujo_deteccion.png}
+    \caption{Flujo general de captura y procesamiento de eventos dentro del sistema de monitorización.}
+    \label{fig:flujo_eventos}
+\end{figure}
+
+Debido a que el \textit{handler} del grafo de dependencias funciona de manera síncrona y se dispara iterativamente ante cualquier cambio infinitesimal del entorno o de la interfaz gráfica, el diseño del software exige desacoplar temporalmente los procesos analíticos más pesados. Por ello, la información recogida es filtrada e integrada con controladores de frecuencia basados en temporizadores asíncronos (\textit{Timers}), mitigando así la sobrecarga de procesamiento en el hilo principal de la aplicación y garantizando la persistencia ordenada en archivos de datos.

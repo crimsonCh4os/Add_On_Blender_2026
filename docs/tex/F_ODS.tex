@@ -1,0 +1,89 @@
+\apendice{Anexo de sostenibilización curricular}
+\label{apendice:sostenibilizacion_curricular}
+
+\section{Introducción}
+
+El anexo refleja la conexión entre el Trabajo de Fin de Grado y la sostenibilidad académica. El proyecto implica una suite compuesta por dos complementos para Blender: uno orientado a documentar la ejecución durante sesiones de modelado 3D y otro destinado a analizar dichos registros, calcular indicadores y presentar resultados dentro del entorno laboral.
+
+La sostenibilidad comprendida en este sentido va más allá del impacto ecológico directo. En realidad, implica prácticas responsables de uso de recursos digitales, el escogimiento de herramientas accesibles, la protección de los datos de los usuarios y la aplicación de dicho sistema en ambientes educativos. A partir de esta óptica, el proyecto tiene conexiones con diversas competencias que la CRUE promueve, sobre todo aquellas relacionadas con el desarrollo de soluciones tecnológicas apropiadas, fiables y amigables con el usuario humano.
+
+\section{Relación con los Objetivos de Desarrollo Sostenible}
+
+El proyecto no aborda los Objetivos de Desarrollo Sostenible de forma directa como finalidad principal, ya que su objetivo central es técnico. Sin embargo, algunas decisiones tomadas durante el desarrollo sí guardan relación con varios ODS. La Tabla~\ref{tab:ods_relacion} resume esta vinculación.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{2.4cm}X}
+\toprule
+\textbf{ODS} & \textbf{Relación con el proyecto} \\
+\midrule
+ODS 4: Educación de calidad & La herramienta puede ayudar a analizar procesos de aprendizaje en modelado 3D, no solo el resultado final. Esto permite observar ritmos de trabajo, pausas, cambios de modo y evolución de la escena. \\
+ODS 9: Industria, innovación e infraestructura & Se desarrolla una solución tecnológica modular, basada en add-ons, que puede ampliarse o adaptarse a otros usos relacionados con creación digital, docencia o investigación. \\
+ODS 10: Reducción de las desigualdades & El uso de Blender, Python y bibliotecas abiertas reduce la dependencia de licencias comerciales y facilita que el sistema pueda utilizarse en entornos con recursos limitados. \\
+ODS 12: Producción y consumo responsables & El registro por cambios evita almacenar información repetida de forma innecesaria y reduce el volumen de datos generado durante la captura. \\
+ODS 16: Paz, justicia e instituciones sólidas & El sistema incorpora consentimiento previo y seudonimización del identificador de usuario, lo que refuerza una gestión más transparente de los datos recogidos. \\
+\bottomrule
+\end{tabularx}
+\caption{Relación del proyecto con distintos Objetivos de Desarrollo Sostenible.}
+\label{tab:ods_relacion}
+\end{table}
+
+\section{Sostenibilidad tecnológica}
+
+Desde el punto de vista tecnológico, una de las decisiones más importantes ha sido evitar un registro continuo e indiscriminado de información. El add-on \textit{Data Logger 3D} almacena datos cuando detecta cambios relevantes en la escena, en el objeto activo, en el modo de trabajo o en determinadas operaciones del usuario. Este enfoque basado en deltas reduce la cantidad de filas generadas y hace que los archivos resultantes sean más manejables.
+
+También resulta relevante la separación entre captura y análisis. El primer add-on se centra en registrar la actividad de forma no intrusiva, mientras que el segundo procesa los archivos CSV cuando el usuario decide analizarlos. Esta división ayuda a no sobrecargar Blender durante el modelado y facilita que cada parte pueda evolucionar de forma independiente.
+
+El uso de CSV como formato intermedio responde a una decisión sencilla pero práctica. Aunque no es el formato más avanzado, permite revisar los datos con herramientas comunes, compartirlos fácilmente y reutilizarlos fuera de Blender si fuera necesario. Para el alcance del proyecto, esta solución resulta suficiente y evita introducir dependencias más complejas.
+
+Por último, el proyecto se apoya en tecnologías abiertas como Blender, Python, NumPy y Matplotlib. Esta elección favorece la continuidad del trabajo, ya que se trata de herramientas gratuitas, documentadas y utilizadas por comunidades amplias.
+
+\section{Sostenibilidad educativa}
+
+El proyecto tiene una aplicación clara en contextos de enseñanza del modelado 3D. En este tipo de tareas suele evaluarse principalmente el resultado final: la calidad del modelo, la limpieza de la geometría o el cumplimiento de una entrega. Sin embargo, el proceso seguido por el estudiante queda normalmente menos documentado.
+
+La herramienta desarrollada permite acercarse a ese proceso mediante registros temporales, cambios de modo, operaciones realizadas, evolución topológica y métricas calculadas a partir de los datos. Esta información puede servir como apoyo para detectar hábitos de trabajo, momentos de inactividad, uso de determinadas operaciones o formas de abordar una escena.
+
+No se pretende sustituir la evaluación docente ni automatizar la interpretación del rendimiento. Las métricas deben entenderse como información complementaria, útil para apoyar la observación y la reflexión. En este sentido, el sistema puede ayudar a que el profesorado disponga de más evidencias sobre cómo se ha desarrollado una práctica, especialmente en actividades donde el proceso creativo tiene tanta importancia como el resultado.
+
+La interfaz del segundo add-on también se ha diseñado teniendo en cuenta esta idea. La organización en bloques, el uso de etiquetas breves y la incorporación de \textit{tooltips} buscan facilitar la lectura de resultados sin exigir conocimientos avanzados de análisis de datos. De este modo, las métricas se integran en el propio entorno de Blender y resultan más accesibles para perfiles vinculados al diseño, la animación o la creación 3D.
+
+\section{Sostenibilidad social y ética}
+
+El uso de software libre aporta una dimensión social relevante. Al no depender de licencias de pago, la solución puede utilizarse en centros educativos, talleres o proyectos personales con menos barreras económicas. Esto facilita que otros estudiantes o docentes puedan probar, adaptar o ampliar el trabajo.
+
+Además, el sistema se ha planteado de forma modular. Esta característica permite reutilizar partes concretas del proyecto, por ejemplo el registro de actividad, el análisis de CSV o las visualizaciones, sin necesidad de rehacer toda la herramienta. Esta reutilización es importante desde una perspectiva sostenible, ya que evita duplicar esfuerzos y facilita futuras mejoras.
+
+En cuanto a la gestión de datos, el proyecto incorpora consentimiento explícito antes de iniciar la captura y utiliza un identificador seudonimizado. Esta medida no elimina todas las cuestiones éticas asociadas al análisis de comportamiento, pero sí introduce una base mínima de transparencia y control por parte de la persona usuaria. Para usos futuros en grupos amplios o estudios formales, sería necesario revisar con más detalle la normativa aplicable y los protocolos de información y almacenamiento.
+
+\section{Sostenibilidad económica}
+
+El proyecto también presenta ventajas económicas. La solución no requiere servidores, plataformas externas ni licencias comerciales. El funcionamiento se apoya en Blender y en archivos locales, lo que reduce el coste de instalación y mantenimiento.
+
+Esta característica es especialmente útil en entornos educativos, donde no siempre es viable incorporar herramientas propietarias o infraestructuras complejas. Además, al tratarse de una suite de add-ons, las mejoras futuras pueden incorporarse de manera progresiva: nuevas métricas, nuevos gráficos, cambios en la interfaz o adaptación a otras versiones de Blender.
+
+La reutilización del sistema en prácticas docentes, proyectos de investigación o futuros trabajos académicos podría aumentar su valor a medio plazo. No obstante, esta posibilidad dependerá de que se mantenga una documentación clara y de que el código siga una organización comprensible para otras personas desarrolladoras.
+
+\section{Limitaciones desde la perspectiva de sostenibilidad}
+
+Aunque el proyecto incorpora decisiones coherentes con la sostenibilidad, también presenta limitaciones. La primera tiene que ver con la interpretación de los datos. Las métricas pueden describir actividad, pausas, cambios o características geométricas, pero no explican por sí solas la calidad del aprendizaje ni las razones detrás de cada acción del usuario.
+
+Otra limitación está relacionada con el formato CSV. Para sesiones individuales o conjuntos moderados de datos funciona correctamente, pero podría quedarse corto si se quisiera analizar un número elevado de usuarios o sesiones muy largas. En ese caso sería recomendable valorar formatos más compactos o una base de datos ligera.
+
+También debe tenerse en cuenta que el sistema depende del contexto de Blender y de sus mecanismos internos de eventos, modos y operadores. Cambios en futuras versiones del software podrían requerir ajustes en los add-ons para mantener la compatibilidad.
+
+\section{Reflexión personal}
+
+La realización del proyecto ha permitido comprobar que la sostenibilidad en informática no solo está relacionada con reducir consumo energético o utilizar menos recursos físicos. También tiene que ver con diseñar herramientas que puedan mantenerse, entenderse, reutilizarse y adaptarse a nuevas necesidades.
+
+En este trabajo, la sostenibilidad aparece en decisiones concretas: usar software libre, separar la captura del análisis, registrar solo cambios relevantes, evitar dependencias innecesarias y tratar los datos del usuario con cierta precaución. Son decisiones técnicas, pero tienen consecuencias prácticas sobre la accesibilidad, la privacidad y la continuidad del sistema.
+
+También ha sido importante observar el valor educativo del análisis de procesos. En modelado 3D, muchas decisiones ocurren durante la construcción del modelo y no quedan reflejadas en la entrega final. Registrar parte de esa actividad puede ayudar a entender mejor cómo se trabaja y cómo se aprende, siempre que los datos se interpreten con cuidado y dentro de su contexto.
+
+\section{Conclusión}
+
+En conjunto, el proyecto se relaciona con la sostenibilidad a través de una herramienta abierta, modular y de bajo coste, orientada a registrar y analizar procesos de modelado 3D. Su aportación principal no consiste en resolver de forma directa un problema ambiental o social amplio, sino en aplicar criterios sostenibles dentro del diseño de una solución tecnológica concreta.
+
+El uso de herramientas libres, la captura diferencial de datos, la separación entre módulos, la atención a la privacidad y la posible aplicación educativa del sistema son los aspectos más relevantes desde esta perspectiva. Estas decisiones muestran que incluso en un proyecto técnico y acotado es posible incorporar criterios de sostenibilidad de manera práctica y razonable.
+

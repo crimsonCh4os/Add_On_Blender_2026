@@ -1,0 +1,99 @@
+\capitulo{6}{Trabajos relacionados}
+
+El análisis de la metodología de diseño en entornos tridimensionales ha captado la atención de muchas instituciones recientemente, especialmente en áreas como la arquitectura, la ingeniería, la educación y la interacción persona-computador. Se ha creado gracias a su habilidad para registrar las interacciones entre los usuarios y las herramientas digitales de manera automatizada. Estos datos crean conjuntos de información que facilitan un estudio objetivo, empírico y cuantitativo del comportamiento del modelo diseñador de los usuarios~\cite{gao2021,gao2023,jankowski2014}
+
+De cara a organizar un estudio sistemático del estado actual, se han agrupado las investigaciones en las siguientes categorías básicas: 
+\begin{enumerate}
+ \item Análisis mediante archivos registros de eventos y minería de procesos (\textit{event logs} y \textit{process mining}).
+ \item Investigaciones empíricas sobre el comportamiento y pericia del diseñador.
+ \item Recolección de datos en entornos virtuales e inmersivos.
+ \item Aplicaciones educativas y pedagógicas del modelado 3D.
+\end{enumerate}
+
+El estudio de casos más relevante en este aspecto es el empleo de registros de eventos generados automáticamente por las herramientas de modelado 3D. Se menciona al trabajo de Gao et al. \cite{gao2021}, quienes presentan un sistema basado en gráficos para representar la relación entre los comandos y los objetos en el modelado; esta representación ayuda en el análisis secuencial de las acciones para obtener una explicación de la lógica que dirige la ejecución de los pasos en el diseño.
+
+Posteriormente, Gao et al.~\cite{gao2023} expandieron las líneas de investigación presentándolas a través de técnicas de minería del proceso, demostrando la posibilidad de identificar patrones y vincularlos con la creatividad.
+
+A su vez, en contexto educativo, se aplica la teoría de logs de eventos a partir de la obra de Liu et al.~\cite{liu2022}. De igual manera, se observa que los \textit{logs de eventos} pueden reconstruir el curso de trabajo realizado por los alumnos, además de analizar sus avances en el mismo. Xie et al.~\cite{xie2014} aplicaron análisis de series temporales sobre datos asociados a las tareas de diseño asistidas por el computador para analizar el comportamiento del diseñador e identificar patrones iterativos dentro del proceso de modelado.
+
+La limitación es que la mayoría de estos estudios se concentran en el análisis estadístico diferido (posterior) de los datos y en entornos bien definidos y rigurosos como BIM o CAD, y no disponen de una integración de herramientas para la recopilación analítica de datos no intrusivos en entornos modeladores generales.
+
+\section{Estudios sobre el comportamiento del diseñador}
+
+Otra línea de investigación se orienta para entender cómo trabaja el diseñador y cómo cambia su comportamiento según su experiencia y nivel de especialización~\cite{casakin2023,chen2022,welch}.
+
+Chen et al.~\cite{chen2022} analizan las diferencias entre diseñadores expertos y novatos, identificando variaciones significativas en las estrategias jerárquicas utilizadas durante el proceso de diseño. En la misma línea, Casakin y Levy~\cite{casakin2023} proponen un marco formal para medir el comportamiento del diseñador experto, identificando factores correlacionados con la descomposición del problema y el uso de pensamiento conceptual. Por su parte, Welch y Lim~\cite{welch} demuestran que los diseñadores novatos suelen adoptar procesos más iterativos, erráticos y menos estructurados que los diseñadores con mayor experiencia técnica.
+
+\textbf{Limitación:} Estos trabajos se basan fundamentalmente en análisis experimentales controlados o estudios teóricos con muestras de datos reducidas y técnicas intrusivas de observación directa (como protocolos de pensamiento en voz alta), lo que limita su escalabilidad, automatización y aplicación en entornos reales de producción.
+
+\section{Entornos Virtuales e Inmersivos}
+
+El progreso en tecnologías inmersivas ha creado nuevas oportunidades para el análisis de cómo los usuarios realizan sus actividades de diseño en entornos tridimensionales \cite{krassmann2018,wang2024}.
+
+Wang et al. \cite{wang2024} describen un análisis a escala macro del comportamiento de diseño en entornos virtuales, combinando datos de interacción y posicionamiento para crear modelos automatizados del proceso de diseño. Krassmann et al. \cite{krassmann2018} también analizan cómo interactúan los usuarios en estos entornos mediante técnicas de seguimiento óculo-manual y visuales interactivas.
+
+\textbf{Limitación:} Los estudios mencionados dependen exclusivamente de dispositivos especializados y plataformas inmersivas de realidad mixta, lo que limita su aplicación práctica en software de modelado de uso común y pantallas tradicionales.
+
+\section{Aplicaciones educativas del modelado 3D}
+
+El modelado 3D es una recurso ampliamente empleado en campos técnicos y artísticos como parte del proceso de enseñanza-aprendizaje.
+
+Sosna et al. argumentan~\cite{sosna2025} que el empleo de modelos tridimensionales optimiza la percepción espacial de estudiantes de diseño, así como fomenta su creatividad. También, según Koh et al.~\cite{koh2010}, el modelo permite incrementar la motivación por el aprendizaje técnico mediante la simulación de experiencias y las simulaciones tridimensionales.
+
+\textbf{Limitación:} Al igual que lo hacen las investigaciones, se han comprobado tanto los beneficios pedagógicos del modelado 3D como sus efectos en la cognición espacial y la creatividad, pero se carece de trabajo que profundice en la representación y análisis de los archivos de malla, así como en la evaluación de las interacciones de los usuarios.
+
+\section{Comparación y posicionamiento del presente trabajo}
+
+A partir del análisis de la literatura científica, se observa un progreso notable en la definición del proceso de diseño, pero las faltas metodológicas son notables con respecto al proceso de captura automática en tiempo real y a la incorporación nativa dentro de las herramientas de modelado generalistas.
+
+Los hallazgos más relevantes del estado actual se pueden resumir en los siguientes apartados:
+\begin{itemize}
+    \item Dependencia de análisis externos realizados de forma diferida, impidiendo una evaluación contextual inmediata.
+    \item Confinamiento a entornos propietarios de tipo CAD/BIM o plataformas inmersivas costosas.
+    \item Ausencia de integración con el flujo topológico interno (mallas y mapas UV) en software de propósito general.
+    \item Uso de metodologías de monitorización intrusivas que alteran la experiencia de usuario o degradan el rendimiento del sistema operativo.
+\end{itemize}
+
+La Tabla~\ref{tab:comparativa_trabajos} resume comparativamente las características funcionales de los trabajos analizados frente a la solución propuesta en este proyecto.
+
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule  % Línea superior gruesa (cortesía de booktabs)
+\textbf{Trabajo} & \textbf{Adquisición TR} & \textbf{Generalista} & \textbf{No intrusivo} & \textbf{Análisis geométrico} \\
+\midrule  % Línea divisoria central
+Gao et al. (2021)       &   &   & X & X \\
+Gao et al. (2023)       &   &   & X & X \\
+Liu et al. (2022)       &   &   & X & X \\
+Xie et al. (2014)       &   &   & X & X \\
+Chen et al. (2022)      & X &   &   & X \\
+Casakin et al. (2023)   & X &   &   & X \\
+Wang et al. (2024)      &   &   &   & X \\
+Krassmann et al. (2018) &   &   &   & X \\
+Sosna et al. (2025)     & X & X &   &   \\
+Koh et al. (2010)       & X & X &   &   \\
+\textbf{Add-on 1.0}     & \textbf{X} & \textbf{X} & \textbf{X} & \textbf{X} \\
+\bottomrule % Línea inferior de cierre
+\end{tabular}
+\caption{Comparativa entre trabajos relacionados y el sistema desarrollado en el presente proyecto.}
+\label{tab:comparativa_trabajos}
+\end{table}
+
+\textit{Nota aclaratoria sobre la Tabla~\ref{tab:comparativa_trabajos}:} El sistema desarrollado garantiza la adquisición de eventos en tiempo real (TR) mediante \textit{handlers} asíncronos de fondo, mientras que la generación de visualizaciones estadísticas complejas se ejecuta bajo demanda para preservar la tasa de refresco gráfica del entorno.
+
+La Figura~\ref{fig:estado_arte_posicionamiento} representa el espacio tridimensional conceptual en el que se posiciona esta investigación con respecto a las soluciones previas de la literatura.
+
+\begin{figure}[H]
+\centering
+\includegraphics[
+    width=\textwidth,
+    height=0.65\textheight,
+    keepaspectratio
+]{diagramas/arte.png}
+\caption{Resumen del estado del arte y posicionamiento del trabajo desarrollado.}
+\label{fig:estado_arte_posicionamiento}
+\end{figure}
+
+La principal aportación del sistema integrado \textit{Add-on Blender 1.0} radica en su capacidad para unificar la adquisición no intrusiva de interacciones y el análisis topológico avanzado directamente dentro de una plataforma de uso extendido en la industria como Blender. Al mitigar las limitaciones de los enfoques tradicionales, este proyecto proporciona un marco funcional que extrae variables de mallas estructurales, calcula índices complejos como la distancia de Hausdorff y proyecta analíticas visuales en el propio espacio tridimensional, constituyendo una herramienta versátil tanto para la auditoría profesional como para la investigación educativa.

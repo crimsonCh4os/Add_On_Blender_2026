@@ -1,0 +1,275 @@
+\capitulo{5}{Aspectos importantes del desarrollo del proyecto}
+
+En este capítulo se describen los aspectos principales del desarrollo del sistema, manteniendo una visión de conjunto y reservando el detalle exhaustivo de requisitos, funciones y código fuente para los anexos. El proyecto se ha organizado en torno a dos complementos independientes para Blender: un primer \textit{add-on} de captura de datos y un segundo \textit{add-on} de análisis, cálculo de métricas y visualización. Esta separación permite reducir el acoplamiento entre la fase de registro y la fase de explotación de la información.
+
+\section{Ciclo de vida del desarrollo}
+
+El desarrollo se llevó a cabo mediante una aproximación iterativa e incremental. En una primera etapa se validó la posibilidad de monitorizar el estado interno de Blender mediante la API \texttt{bpy}~\cite{blenderapi}, prestando especial atención a la captura de cambios en la escena, transformaciones de objetos, cambios de modo y modificaciones topológicas.
+
+Cuando la viabilidad de la captura fue confirmada, se implementó un sistema de persistencia en formato CSV y se diseñó una estructura de datos compartida que permitiera trasladar la información del módulo de grabación a la fase de análisis. A continuación, los esfuerzos se concentraron en el procesamiento estadístico de dichos datos, así como en su medición geométrica y la creación de visualizaciones dentro del entorno tridimensional.
+
+Durante las fases finales se realizó un refinamiento de la interfaz para reducir la densidad de información visible. Este ajuste afectó especialmente al panel de análisis de métricas, donde se sustituyeron descripciones largas por ayudas contextuales, se agruparon métricas con valores equivalentes y se eliminaron cuartiles que no aportaban información adicional en determinados bloques. En la Figura~\ref{fig:Flujo} se resume el flujo general del sistema.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, height=0.62\textheight, keepaspectratio]{diagramas/ciclo_general.png}
+    \caption{Flujo general de análisis y visualización de datos de la plataforma.}
+    \label{fig:Flujo}
+\end{figure}
+
+\section{Arquitectura general del sistema}
+
+La solución desarrollada adopta una arquitectura modular compuesta por dos \textit{add-ons}. El primer complemento, denominado \textit{Data Logger 3D}, se encarga de la captura no intrusiva de datos durante la sesión de modelado. El segundo complemento procesa los registros generados, calcula métricas temporales, espaciales, estadísticas y geométricas, y presenta los resultados mediante paneles y visualizaciones dentro de Blender.
+
+La comunicación entre ambos módulos se realiza mediante ficheros CSV. Este formato se ha seleccionado por su simplicidad, portabilidad y facilidad de inspección externa. La elección de un archivo intermedio también permite ejecutar la captura y el análisis en momentos distintos, facilitando la comparación entre sesiones y la reutilización de los datos en herramientas externas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{diagramas/arquitecturaV2.png}
+\caption{Arquitectura general del sistema desarrollado y flujo de comunicación por ficheros.}
+\label{fig:architecture_system}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.28\textwidth}X}
+\toprule
+\textbf{Componente} & \textbf{Responsabilidad principal} \\
+\midrule
+\textit{Data Logger 3D} & Capturar eventos, cambios de estado, transformaciones, modificaciones topológicas y operaciones relevantes del usuario. \\
+\textit{Add-on} de análisis & Leer los CSV generados, validar los datos, calcular métricas y generar visualizaciones estadísticas y geométricas. \\
+CSV intermedio & Actuar como frontera de comunicación entre captura y análisis, manteniendo independencia entre ambos complementos. \\
+Interfaz de Blender & Proporcionar controles de ejecución, exportación, depuración, consulta de resultados y visualización contextual. \\
+\bottomrule
+\end{tabularx}
+\caption{Resumen de responsabilidades de los componentes principales del sistema.}
+\label{tab:componentes_sistema}
+\end{table}
+
+\section{Primer \textit{add-on}: Data Logger 3D}
+
+El primer \textit{add-on} desarrollado constituye la capa de adquisición de datos. Su finalidad es registrar de forma automática el comportamiento del usuario y la evolución de la escena durante una sesión de modelado. El complemento se integra en la barra lateral del visor 3D y ofrece controles para iniciar, detener y exportar la captura.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth, height=0.58\textheight, keepaspectratio]{diagramas/data_logger_sin_debug.png}
+\caption{Interfaz principal del \textit{add-on} de captura de datos.}
+\label{fig:data_logger_sin_debug}
+\end{figure}
+
+% IMAGEN RECOMENDADA: si se dispone de una captura actualizada del panel con la sección de depuración abierta, sustituir o complementar la figura anterior por una imagen del archivo data_logger_con_debug.png.
+
+\subsection{Captura diferencial de estados}
+
+El \textit{Data Logger 3D} no registra el estado de Blender de forma indiscriminada, sino que compara cada muestra con una línea base previa. Esta estrategia permite generar una nueva fila de datos únicamente cuando se produce una variación relevante. Para ello se construyen instantáneas o \textit{snapshots} de la escena que incluyen información sobre la vista del usuario, el objeto activo, el radio de escena, la topología de las mallas, el modo de trabajo, los modificadores y el estado de las coordenadas UV.
+
+Cuando la firma del estado actual coincide con la firma anterior y no existe ningún operador pendiente, no se escribe un nuevo registro. De esta forma se reduce la redundancia del CSV y se evita que sesiones prolongadas produzcan archivos innecesariamente grandes.
+
+\subsection{Datos registrados}
+
+El CSV generado por el primer complemento agrupa información temporal, espacial, topológica y operacional. Los datos temporales permiten ordenar la sesión y reconstruir su evolución. Los datos espaciales describen la posición de la vista del usuario y del objeto activo. Los datos topológicos reflejan cambios en vértices, triángulos, polígonos no cuadrangulares y normales. Finalmente, los campos operacionales registran acciones relevantes como pegado, duplicación, duplicación enlazada, fusión de geometría y cambios UV.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.24\textwidth}X}
+\toprule
+\textbf{Grupo de datos} & \textbf{Campos representativos} \\
+\midrule
+Temporales & \texttt{TimeStamp}, \texttt{Minute}, \texttt{Second}. \\
+Vista y escena & \texttt{UserX}, \texttt{UserY}, \texttt{UserZ}, \texttt{SceneRadius}. \\
+Objeto activo & \texttt{ObjX}, \texttt{ObjY}, \texttt{ObjZ}, \texttt{ObjRadius} y deltas espaciales. \\
+Topología & \texttt{VertexDelta}, \texttt{NgonDelta}, \texttt{TriDelta}, \texttt{NormalDelta}. \\
+Estado y modo & \texttt{ObjModeState}, \texttt{EditModeState}, \texttt{ModeChanged}. \\
+Operadores & \texttt{CtrlV}, \texttt{ShiftD}, \texttt{AltD}, \texttt{Merge}, \texttt{UV}. \\
+\bottomrule
+\end{tabularx}
+\caption{Agrupación resumida de los campos registrados por el \textit{Data Logger 3D}.}
+\label{tab:campos_csv_resumen}
+\end{table}
+
+\subsection{Detección de operadores y cambios UV}
+
+La captura no se limita a observar variaciones visibles en la malla. Algunas acciones, como el pegado de elementos, la duplicación o las operaciones de fusión, requieren identificar operadores concretos ejecutados por el usuario. Para ello, el sistema analiza la pila de operadores de Blender y marca banderas binarias asociadas a acciones como \texttt{Ctrl+V}, \texttt{Shift+D}, \texttt{Alt+D} y \texttt{Merge}.
+
+En el caso de las coordenadas UV, se emplea una estrategia doble. Por una parte, se reconocen operadores UV específicos, como despliegue, empaquetado o ajuste de islas. Por otra, se calcula una firma global de las coordenadas UV de los objetos de la escena. Esta combinación permite detectar tanto acciones explícitas como modificaciones indirectas en el mapeado.
+
+\subsection{Consentimiento, persistencia e interfaz}
+
+El complemento incorpora un mecanismo de consentimiento para que la recogida de datos sea explícita y transparente. La aceptación se almacena dentro del archivo \texttt{.blend}, evitando solicitarla repetidamente en sesiones posteriores sobre el mismo proyecto. También se comprueba la activación de \textit{Auto Run Python Scripts}, ya que Blender limita la ejecución automática de scripts por motivos de seguridad.
+
+Los registros se escriben inicialmente en un CSV temporal y se incrustan en el archivo \texttt{.blend} como bloque de texto interno. Al detener la captura o guardar el archivo, los datos quedan preservados dentro del proyecto y pueden exportarse posteriormente como un archivo CSV externo junto al documento de Blender.
+
+\section{Segundo \textit{add-on}: análisis y visualización}
+
+El segundo \textit{add-on} constituye la capa de explotación analítica. Su función es leer los CSV generados por el \textit{Data Logger 3D}, validar su contenido, calcular métricas y presentar los resultados de forma comprensible para el usuario. Este complemento permite trabajar con un archivo individual o con una carpeta de registros, facilitando la comparación entre sesiones.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.42\textwidth]{diagramas/capture_addon_panel.png}
+    \caption{Panel principal del \textit{add-on} de análisis dentro de Blender.}
+    \label{fig:add-on_analisis}
+\end{figure}
+
+% IMAGEN RECOMENDADA: añadir una captura actualizada del panel Calculate CSV Metric Stats con la interfaz compacta en inglés, incluyendo el bloque agrupado A6--A9 y los iconos de ayuda contextual.
+
+La lectura del CSV se realiza mediante funciones específicas de detección, apertura y validación. Durante esta etapa se descartan entradas inconsistentes y se impide que valores no finitos, como \texttt{NaN} o infinitos, lleguen al cálculo de métricas. Esta validación aumenta la robustez del sistema y evita resultados estadísticos alterados por datos corruptos.
+
+\section{Flujo completo de análisis de datos}
+
+El flujo completo comienza con la interacción del usuario en Blender. El primer complemento observa la escena, detecta cambios relevantes y escribe los registros en formato CSV. Posteriormente, el segundo complemento carga estos archivos, calcula métricas descriptivas, obtiene indicadores geométricos del modelo y genera visualizaciones integradas.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{diagramas/pipeline.png}
+    \caption{Pipeline general de captura, análisis y visualización de datos.}
+    \label{fig:pipeline_analisis}
+\end{figure}
+
+Este diseño permite separar el coste computacional de la captura y del análisis. Durante la sesión de modelado, la prioridad es no interferir en el trabajo del usuario. En cambio, el cálculo estadístico y la generación de gráficos pueden realizarse posteriormente, cuando el registro ya ha sido exportado.
+
+\section{Métricas estadísticas A1--A17}
+
+El módulo de análisis transforma las columnas del CSV en un conjunto de métricas identificadas como A1--A17. Esta nomenclatura permite mantener una correspondencia estable entre los datos registrados, las funciones de cálculo y la interfaz de usuario. Las métricas se agrupan en bloques temporales, espaciales, operacionales y geométricos.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.18\textwidth}p{0.30\textwidth}X}
+\toprule
+\textbf{Bloque} & \textbf{Contenido} & \textbf{Criterio de visualización} \\
+\midrule
+A1 & Duración de sesión & Se expresa en horas y no muestra cuartiles, al tratarse de una magnitud global. \\
+A2--A3 & Actividad general & Se presentan en un bloque conjunto para reducir repetición visual. \\
+A4--A5 & Pausas y eventos & Se mantienen como indicadores resumidos, sin cuartiles cuando no aportan información adicional. \\
+A6--A9 & \textit{Peaks}, velocidad y tamaño local & Se unifican en un único bloque porque comparten valores calculados. \\
+A12, A13, A16 & Métricas con distribución propia & Conservan cuartiles separados por bloque para facilitar la interpretación. \\
+A14, A15, A17 & Eventos en \textit{Object Mode} & Se presentan como eventos operacionales vinculados al modo objeto. \\
+\bottomrule
+\end{tabularx}
+\caption{Resumen de la organización visual de las métricas A1--A17.}
+\label{tab:metricas_a_resumen}
+\end{table}
+
+Durante el refinamiento de la interfaz se eliminaron cuartiles visibles de A1, A3, A4 y A5 por considerarse redundantes en esos casos. Asimismo, las métricas A6, A7, A8 y A9 se agruparon en un bloque común al observarse que mostraban los mismos valores de \textit{peaks}, velocidad asociada y tamaño del objeto en escala local. Esta decisión permitió reducir la repetición de información y mejorar la lectura del panel.
+
+\section{Métricas geométricas y UV}
+
+Además del análisis de los registros CSV, el sistema calcula métricas directamente sobre la malla seleccionada en Blender. Estas métricas permiten evaluar aspectos técnicos del modelo, tales como la distribución UV, la orientación de normales, la regularidad de caras y la similitud respecto a un objeto de referencia.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.28\textwidth}X}
+\toprule
+\textbf{Métrica} & \textbf{Finalidad} \\
+\midrule
+Área UV & Estimar la superficie ocupada por las coordenadas UV mediante triangulación de polígonos. \\
+Islas UV & Contabilizar grupos conectados de coordenadas UV. \\
+\textit{UV stretch} & Evaluar la deformación entre longitudes 3D y longitudes UV normalizadas. \\
+\textit{Texel density} & Relacionar el área UV con el área geométrica de la malla. \\
+Porcentaje de normales & Medir la proporción de caras con orientación anómala o invertida. \\
+Ángulos entre caras & Analizar la continuidad local de la superficie a partir de aristas compartidas. \\
+Similitud geométrica & Comparar un modelo objetivo con un objeto de referencia mediante distancias entre vértices. \\
+\bottomrule
+\end{tabularx}
+\caption{Métricas geométricas y UV calculadas por el sistema de análisis.}
+\label{tab:metricas_geometricas_resumen}
+\end{table}
+
+Para estas operaciones se emplean estructuras \texttt{bmesh}, ya que permiten recorrer caras, aristas y bucles UV con mayor control que la estructura \texttt{Mesh} evaluada. En el cálculo de similitud se utilizan distancias espaciales entre conjuntos de vértices y, cuando está disponible, una estructura \texttt{KDTree} para reducir el coste de búsqueda de vecinos cercanos.
+
+\section{Diseño de la interfaz de análisis}
+
+El diseño de la interfaz fue refinado de forma iterativa. En versiones iniciales, algunos bloques mostraban líneas de información demasiado largas, lo que dificultaba su consulta dentro del panel lateral de Blender. Para resolverlo, se adoptó una organización basada en bloques compactos, encabezados destacados y separadores visuales.
+
+Las descripciones extensas se trasladaron a ayudas contextuales al pasar el ratón sobre iconos de información. De este modo, el panel conserva una presentación limpia sin perder explicación técnica. También se limitó la longitud de los textos visibles y se reorganizaron valores que podían ocupar demasiado espacio en líneas independientes.
+
+La versión final del panel se unificó en inglés para mantener coherencia terminológica con Blender y con las unidades empleadas en las métricas, como \textit{peaks/min}, \textit{events/h} o \textit{Object Mode}.
+
+\section{Generación de visualizaciones}
+
+El sistema permite generar gráficos estadísticos tradicionales y representaciones tridimensionales integradas en la escena. Para ello se combinan bibliotecas de análisis, como \textit{Matplotlib}~\cite{matplotlib}, con la creación procedural de mallas y materiales dentro de Blender. Esta integración permite proyectar resultados analíticos en el propio contexto espacial del modelo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{diagramas/radar_experto_novato.png}
+    \caption{Ejemplo de comparación de métricas mediante visualización de radar en el \textit{viewport}.}
+    \label{fig:radar_experto_novato}
+\end{figure}
+
+% IMAGEN OPCIONAL: si se dispone de una captura actualizada de los gráficos generados en el visor 3D, puede añadirse en esta sección para sustituir o complementar la figura de radar.
+
+\section{Decisiones técnicas relevantes}
+
+Durante el desarrollo se adoptaron varias decisiones orientadas a mejorar la estabilidad, portabilidad y mantenibilidad del sistema. La separación en dos complementos redujo el acoplamiento entre captura y análisis. El uso de CSV permitió mantener un formato abierto y fácilmente inspeccionable. La captura diferencial evitó la generación de filas redundantes y la utilización de \texttt{bmesh} permitió analizar la topología de las mallas en modo edición.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.28\textwidth}X}
+\toprule
+\textbf{Decisión} & \textbf{Justificación} \\
+\midrule
+Dos \textit{add-ons} independientes & Separa la adquisición de datos del procesamiento analítico. \\
+CSV como formato intermedio & Facilita la portabilidad, depuración y reutilización externa. \\
+Captura basada en cambios & Reduce escrituras innecesarias y tamaño de los registros. \\
+Hash UV & Permite detectar modificaciones en coordenadas UV de forma compacta. \\
+\texttt{bmesh} & Proporciona acceso directo a la geometría editable. \\
+Tooltips contextuales & Mantienen la interfaz limpia sin eliminar información explicativa. \\
+Agrupación de métricas & Evita repetición de valores y mejora la legibilidad del panel. \\
+\bottomrule
+\end{tabularx}
+\caption{Principales decisiones técnicas adoptadas durante el desarrollo.}
+\label{tab:decisiones_tecnicas}
+\end{table}
+
+\section{Estrategias de eficiencia del sistema}
+
+La eficiencia se abordó tanto en la captura como en el análisis. En la fase de registro, el temporizador periódico limita la frecuencia de muestreo y evita bloquear el hilo principal de Blender. La comparación de firmas de estado impide escribir filas cuando no se han producido cambios relevantes. En la fase de análisis geométrico, las estructuras temporales se liberan explícitamente tras su uso y las búsquedas espaciales se optimizan mediante estructuras de consulta cuando están disponibles.
+
+En la interfaz, la eliminación de información duplicada también constituye una mejora de eficiencia cognitiva: el usuario recibe menos elementos repetidos y puede interpretar los resultados con mayor rapidez.
+
+\section{Problemas encontrados y soluciones}
+
+Durante el desarrollo se identificaron problemas técnicos relacionados con la captura de eventos, la interpretación de cambios en la malla, el tamaño del CSV y la legibilidad de la interfaz. La Tabla~\ref{tab:problemas_soluciones} resume las principales incidencias y las soluciones adoptadas.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.32\textwidth}X}
+\toprule
+\textbf{Problema} & \textbf{Solución aplicada} \\
+\midrule
+Diferencias entre \textit{Object Mode} y \textit{Edit Mode} & Uso combinado de \texttt{Mesh} y \texttt{BMesh} según el contexto activo. \\
+Eventos no reflejados directamente en la geometría & Detección de operadores mediante la pila del \textit{WindowManager} y banderas binarias. \\
+Cambios UV difíciles de identificar & Combinación de operadores UV conocidos y hash global de coordenadas. \\
+Crecimiento excesivo del CSV & Captura diferencial y eliminación de filas duplicadas. \\
+Interfaz con líneas demasiado largas & Bloques compactos, textos breves y tooltips contextuales. \\
+Repetición de valores en A6--A9 & Agrupación de los cuatro indicadores en un único bloque. \\
+Pruebas fuera de Blender & Validación parcial de sintaxis y pruebas funcionales dentro del entorno anfitrión. \\
+\bottomrule
+\end{tabularx}
+\caption{Problemas encontrados durante el desarrollo y soluciones adoptadas.}
+\label{tab:problemas_soluciones}
+\end{table}
+
+\section{Validación y recogida de datos}
+
+La validación del sistema se realizó mediante pruebas funcionales en Blender y mediante la utilización del sistema en una actividad práctica desarrollada en la Escuela de Arte y Superior de Diseño de Burgos. Estas pruebas permitieron comprobar la estabilidad de la captura, la generación correcta de CSV, la detección de operaciones relevantes y la lectura posterior de los registros por parte del complemento de análisis.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{diagramas/easd_actividad.png}
+    \caption{Actividad práctica realizada en la Escuela de Arte y Superior de Diseño de Burgos.}
+    \label{fig:easd_actividad}
+\end{figure}
+
+La actividad permitió observar el comportamiento del sistema en un contexto de uso real, con usuarios realizando operaciones de modelado, cambios de modo, transformaciones y modificaciones de malla. Los datos obtenidos sirvieron para validar el flujo completo desde la captura hasta el análisis y para identificar mejoras posteriores en la presentación de resultados.
+
+\section{Conclusiones del desarrollo}
+
+El desarrollo realizado demuestra la viabilidad de construir una herramienta modular para registrar y analizar procesos de modelado 3D en Blender. El primer \textit{add-on} proporciona una base sólida de captura no intrusiva y persistencia estructurada. El segundo \textit{add-on} transforma esos registros en métricas interpretables y visualizaciones integradas. La evolución final de la interfaz refuerza la utilidad práctica del sistema, al reducir la carga visual y facilitar la lectura de resultados complejos.
+
+En conjunto, la solución desarrollada ofrece una plataforma funcional para el estudio de estrategias de modelado, la comparación entre sesiones y la evaluación de procesos de aprendizaje en entornos tridimensionales.

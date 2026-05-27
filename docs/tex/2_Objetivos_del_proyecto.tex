@@ -1,0 +1,39 @@
+\capitulo{2}{Objetivos del proyecto}
+
+El propósito principal de este proyecto es el desarrollo, desarrollo, y ejecución de un sistema de software modular destinado a registrar, analizar y mostrar en automático las interacciones del usuario en entornos de modelado tridimensional, utilizando Blender como base para tal desarrollo.
+
+La función central de este programa es proporcionar un sistema fuerte que capture y organize información del proceso de diseño de forma automática y transparente, de forma que permita un análisis estadístico posterior. Por tanto, el objetivo es conseguir métricas objetivas sobre el comportamiento del usuario, el nivel de uso de herramientas y la transformación geométrica de las escenas, aportando un mayor conocimiento del proceso de modelado tridimensional~\cite{jankowski2014,lavioila2017}.
+
+La solución desarrollada se enfoca en capturar información útil sobre el proceso de modelado sin afectar el rendimiento del entorno o el flujo de trabajo del usuario. Con esto, es posible analizar los conjuntos de datos generados para investigar cómo se construyen los modelos tridimensionales, cuáles operaciones son más comunes y qué acontecimientos ocurren dentro del entorno virtual~\cite{bowman2004}.
+
+El proyecto considera todo el proceso de recopilación y conservación de datos, así como su posterior procesamiento analítico y visualización. El sistema dispone de técnicas capaces de explorar la información recolectada desde múltiples perspectivas: el seguimiento del tiempo, el análisis de la evolución de la malla geométrica, el descubrimiento de eventos de modelado por requerimiento y la representación gráfica de métricas directamente en el mismo espacio tridimensional. Este modelo coincide con las estrategias actuales vinculadas al análisis de la interacción en entornos virtuales y a los sistemas avanzados de modelado asistido~\cite{malik2023}.
+
+\section{Objetivos específicos}
+
+Para alcanzar el objetivo general planteado, se definen los siguientes objetivos específicos:
+
+\begin{itemize}
+
+\item \textbf{Diseño de un núcleo de adquisición no intrusivo}: Desarrollar un sistema de captura de datos en segundo plano que funcione de manera transparente y sin latencia perceptible durante las sesiones de modelado 3D.
+
+\item \textbf{Implementación de una arquitectura modular de extensión}: Programar un conjunto de \textit{add-ons} para Blender, integrados en su API oficial, capaces de extraer información temporal, espacial y estructural de la escena activa y de los objetos que la componen.
+
+\item \textbf{Automatización del análisis topológico complejo}: Desarrollar algoritmos específicos para la detección automática de eventos analíticos avanzados, tales como duplicaciones de vértices, fusiones geométricas, conmutaciones de modo, cuantificación de islas de coordenadas UV y cálculo de distancias de similitud geométrica.
+
+\item \textbf{Garantía de persistencia externa y estructurada}: Diseñar un mecanismo de almacenamiento eficiente basado en archivos de texto plano estructurados (formatos de persistencia CSV), asegurando la integridad, portabilidad y trazabilidad de los datos entre diferentes sesiones de trabajo de forma independiente a la plataforma.
+
+\item \textbf{Establecimiento de un marco ético de captura}: Incorporar un módulo de consentimiento y configuración de privacidad en la interfaz de usuario que garantice una recopilación de datos ética, informada y transparente.
+
+\item \textbf{Desarrollo de un motor de visualización interactivo}: Diseñar e implementar componentes de representación gráfica y procedural (gráficos estadísticos, mapas de dispersión y diagramas de radar translúcidos) integrados de forma nativa en el visor 3D de Blender para facilitar la interpretación del comportamiento del usuario.
+
+\item \textbf{Definición de un sistema de métricas interpretables}: Organizar los indicadores calculados por el sistema mediante una nomenclatura estable, incluyendo métricas estadísticas A1--A17, métricas geométricas, métricas UV y métricas de actividad operacional, de modo que puedan relacionarse de forma clara con los datos capturados.
+
+\item \textbf{Optimización de la interfaz analítica}: Refinar la presentación de resultados mediante bloques compactos, agrupaciones de métricas relacionadas, textos visibles breves y ayudas contextuales, reduciendo la sobrecarga visual sin eliminar información técnica relevante.
+
+\item \textbf{Validación y evaluación experimental en entornos reales}: Evaluar la estabilidad, la eficiencia del software frente a la sobrecarga de la CPU y la utilidad metodológica del sistema mediante pruebas experimentales controladas con usuarios finales en contextos académicos y de producción.
+
+\item \textbf{Abstracción de conclusiones conductuales}: Extraer patrones correlacionales a partir del análisis estadístico de los datos obtenidos, permitiendo identificar diferencias significativas en las estrategias de diseño entre perfiles de usuarios expertos y novatos.
+
+\end{itemize}
+
+Estos objetivos específicos permiten estructurar el desarrollo del proyecto en fases metodológicas bien definidas, abarcando desde la ingeniería de requisitos y la implementación del software hasta el análisis de la información y la validación experimental en entornos reales de aprendizaje.
