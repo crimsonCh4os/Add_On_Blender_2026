@@ -3,11 +3,9 @@
 
 \section{Introducción}
 
-Este apéndice recoge la especificación de requisitos del sistema desarrollado. La solución se organiza como una suite de dos add-ons para Blender: \textit{Data Logger 3D}, orientado a la monitorización y captura de datos durante sesiones de modelado 3D, y un segundo add-on de análisis y visualización, encargado de procesar los ficheros CSV generados, calcular métricas estadísticas, geométricas y UV, y presentar los resultados dentro del propio entorno de Blender.
+Este apéndice recoge la especificación de requisitos del sistema desarrollado. La solución se organiza como una \textit{suite} de dos add-ons para Blender: \textit{Data Logger 3D}, orientado a la monitorización y captura de datos durante sesiones de modelado 3D, y \textit{Analysis 3D} de análisis y visualización, encargado de procesar los ficheros CSV generados, calcular métricas estadísticas, geométricas y UV, y presentar los resultados dentro del propio entorno de Blender.
 
-La especificación se plantea con un nivel de detalle suficiente para justificar las decisiones de diseño y facilitar la trazabilidad entre objetivos, funcionalidades y módulos implementados. No se pretende reproducir el código fuente ni describir exhaustivamente cada función, sino delimitar qué debe hacer el sistema, bajo qué restricciones debe funcionar y qué garantías mínimas debe ofrecer en términos de rendimiento, robustez, usabilidad y tratamiento de datos.
-
-Los requisitos se agrupan en requisitos funcionales, no funcionales, de interfaz y ético-legales. Además, se incorporan tablas de trazabilidad y una relación resumida de casos de uso, con el fin de conectar las necesidades del proyecto con los componentes principales de la suite.
+Los requisitos se agrupan en requisitos funcionales, no funcionales, de interfaz y ético-legales. Además, se incorporan tablas de trazabilidad y una relación resumida de casos de uso, con el fin de conectar las necesidades del proyecto con los componentes principales de la \textit{suite}.
 
 \section{Objetivos generales}
 
@@ -224,12 +222,19 @@ La trazabilidad se plantea en dos niveles. En primer lugar, la Tabla~\ref{tab:tr
 \textbf{Bloque funcional} & \textbf{Requisitos} & \textbf{Módulos o responsabilidades principales} \\
 \midrule
 Captura temporal y espacial & RF-01 a RF-04 & Temporizador de muestreo, posición de vista, objeto activo, radio de objeto y radio de escena. \\
+\midrule
 Captura topológica y contexto & RF-05 a RF-10 & Consulta de malla, evaluación en \textit{Object Mode} y \textit{Edit Mode}, uso de \texttt{bmesh}, cambios de modo, objetos y modificadores. \\
+\midrule
 Operadores y cambios UV & RF-11 a RF-16 & Interceptación de \textit{Ctrl+V}, \textit{Shift+D}, \textit{Alt+D}, operaciones \textit{Merge}, operadores UV y firma hash de coordenadas UV. \\
+\midrule
 Persistencia y control de sesión & RF-17 a RF-25 & Snapshots, deltas, escritura incremental en CSV, persistencia interna en \texttt{.blend}, restauración, exportación, consentimiento, aviso de \textit{Auto Run} y panel de control. \\
+\midrule
 Análisis estadístico & RF-26 a RF-34 & Detección y lectura de CSV, validación de datos, cálculo de métricas A1--A17, agrupación de métricas y cuartiles selectivos. \\
+\midrule
 Métricas geométricas y UV & RF-35 a RF-46 & Área UV, islas UV, \textit{stretch}, densidad de texeles, normales, ángulos, no cuadrángulos, vértices duplicados, similitud y distancia de Hausdorff cuando proceda. \\
+\midrule
 Visualización e interfaz & RF-47 a RF-50, RIU & Gráficos 2D, visualizaciones 3D, paneles de resultados, bloques compactos, tooltips y separación entre cálculo e interfaz. \\
+\midrule
 Calidad, ética y privacidad & RNF, RLE & Rendimiento, robustez, modularidad, tolerancia a fallos, consentimiento, seudonimización, transparencia y minimización de datos. \\
 \bottomrule
 \end{tabularx}
@@ -241,10 +246,9 @@ Calidad, ética y privacidad & RNF, RLE & Rendimiento, robustez, modularidad, to
 
 Como apoyo visual a la especificación funcional, la Figura~\ref{fig:diagrama_cu} puede sintetizar las interacciones principales entre el usuario, el add-on de captura y el add-on de análisis. La figura se mantiene como elemento recomendado, ya que facilita la lectura de la relación entre captura no intrusiva, generación de CSV, procesamiento de métricas y visualización en Blender.
 
-% [Insertar figura: diagrama de casos de uso del sistema]
 \begin{figure}[H]
     \centering
-    % \includegraphics[width=0.95\textwidth]{diagramas/casos_uso_b.png}
+    \includegraphics[width=0.95\textwidth]{diagramas/casos_uso_b.png}
     \caption{Diagrama de casos de uso del sistema de monitorización, análisis y visualización.}
     \label{fig:diagrama_cu}
 \end{figure}

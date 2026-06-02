@@ -15,6 +15,7 @@ Durante las fases finales se realizó un refinamiento de la interfaz para reduci
     \includegraphics[width=\textwidth, height=0.62\textheight, keepaspectratio]{diagramas/ciclo_general.png}
     \caption{Flujo general de análisis y visualización de datos de la plataforma.}
     \label{fig:Flujo}
+    {\footnotesize \textit{Nota. Figura elaborada por la autora con asistencia de ChatGPT.}}
 \end{figure}
 
 \section{Arquitectura general del sistema}
@@ -24,10 +25,11 @@ La solución desarrollada adopta una arquitectura modular compuesta por dos \tex
 La comunicación entre ambos módulos se realiza mediante ficheros CSV. Este formato se ha seleccionado por su simplicidad, portabilidad y facilidad de inspección externa. La elección de un archivo intermedio también permite ejecutar la captura y el análisis en momentos distintos, facilitando la comparación entre sesiones y la reutilización de los datos en herramientas externas.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.95\textwidth]{diagramas/arquitecturaV2.png}
-\caption{Arquitectura general del sistema desarrollado y flujo de comunicación por ficheros.}
-\label{fig:architecture_system}
+    \centering
+    \includegraphics[width=0.95\textwidth]{diagramas/arquitecturaV2.png}
+    \caption{Arquitectura general del sistema desarrollado y flujo de comunicación por ficheros.}
+    \label{fig:architecture_system}
+    {\footnotesize \textit{Nota. Figura elaborada por la autora con asistencia de ChatGPT.}}
 \end{figure}
 
 \begin{table}[H]
@@ -57,8 +59,6 @@ El primer \textit{add-on} desarrollado constituye la capa de adquisición de dat
 \caption{Interfaz principal del \textit{add-on} de captura de datos.}
 \label{fig:data_logger_sin_debug}
 \end{figure}
-
-% IMAGEN RECOMENDADA: si se dispone de una captura actualizada del panel con la sección de depuración abierta, sustituir o complementar la figura anterior por una imagen del archivo data_logger_con_debug.png.
 
 \subsection{Captura diferencial de estados}
 
@@ -125,6 +125,7 @@ El flujo completo comienza con la interacción del usuario en Blender. El primer
     \includegraphics[width=0.9\textwidth]{diagramas/pipeline.png}
     \caption{Pipeline general de captura, análisis y visualización de datos.}
     \label{fig:pipeline_analisis}
+    {\footnotesize \textit{Nota. Figura elaborada por la autora con asistencia de ChatGPT.}}
 \end{figure}
 
 Este diseño permite separar el coste computacional de la captura y del análisis. Durante la sesión de modelado, la prioridad es no interferir en el trabajo del usuario. En cambio, el cálculo estadístico y la generación de gráficos pueden realizarse posteriormente, cuando el registro ya ha sido exportado.
@@ -199,8 +200,6 @@ El sistema permite generar gráficos estadísticos tradicionales y representacio
     \label{fig:radar_experto_novato}
 \end{figure}
 
-% IMAGEN OPCIONAL: si se dispone de una captura actualizada de los gráficos generados en el visor 3D, puede añadirse en esta sección para sustituir o complementar la figura de radar.
-
 \section{Decisiones técnicas relevantes}
 
 Durante el desarrollo se adoptaron varias decisiones orientadas a mejorar la estabilidad, portabilidad y mantenibilidad del sistema. La separación en dos complementos redujo el acoplamiento entre captura y análisis. El uso de CSV permitió mantener un formato abierto y fácilmente inspeccionable. La captura diferencial evitó la generación de filas redundantes y la utilización de \texttt{bmesh} permitió analizar la topología de las mallas en modo edición.
@@ -257,16 +256,71 @@ Pruebas fuera de Blender & Validación parcial de sintaxis y pruebas funcionales
 
 \section{Validación y recogida de datos}
 
-La validación del sistema se realizó mediante pruebas funcionales en Blender y mediante la utilización del sistema en una actividad práctica desarrollada en la Escuela de Arte y Superior de Diseño de Burgos. Estas pruebas permitieron comprobar la estabilidad de la captura, la generación correcta de CSV, la detección de operaciones relevantes y la lectura posterior de los registros por parte del complemento de análisis.
+La validación del sistema se realizó mediante pruebas funcionales en Blender y mediante su utilización en una actividad práctica desarrollada en la Escuela de Arte y Superior de Diseño de Burgos. El objetivo principal de esta validación fue comprobar el funcionamiento real del complemento \textit{Data Logger 3D} en un contexto de uso no simulado, verificando que el sistema era capaz de iniciarse correctamente, registrar la actividad técnica de modelado, generar los ficheros CSV correspondientes y permitir su posterior lectura desde el complemento de análisis.
+
+Durante la actividad se realizaron dos sesiones de prueba con usuarios trabajando en Blender. En dichas sesiones se utilizaron operaciones habituales de modelado, incluyendo transformaciones de objetos, cambios de modo, modificaciones de malla y otras acciones relevantes para el registro. El sistema generó los datos previstos por el \textit{Data Logger 3D}, permitiendo comprobar el flujo completo de captura y almacenamiento de información.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{diagramas/easd_actividad.png}
-    \caption{Actividad práctica realizada en la Escuela de Arte y Superior de Diseño de Burgos.}
-    \label{fig:easd_actividad}
+\centering
+\includegraphics[width=0.85\textwidth]{diagramas/easd_actividad.png}
+\caption{Actividad práctica realizada en la Escuela de Arte y Superior de Diseño de Burgos.}
+\label{fig:easd_actividad}
 \end{figure}
 
-La actividad permitió observar el comportamiento del sistema en un contexto de uso real, con usuarios realizando operaciones de modelado, cambios de modo, transformaciones y modificaciones de malla. Los datos obtenidos sirvieron para validar el flujo completo desde la captura hasta el análisis y para identificar mejoras posteriores en la presentación de resultados.
+La actividad permitió observar el comportamiento del sistema en un entorno real de uso, con usuarios realizando tareas de modelado de forma autónoma. Los registros generados sirvieron para comprobar la estabilidad básica de la captura, la creación correcta de los archivos CSV y la posterior compatibilidad de estos datos con el complemento de análisis y visualización.
+
+No obstante, durante la validación también se detectó una incidencia relevante: tres participantes no iniciaron correctamente el sistema de registro, por lo que no se pudieron recoger los datos correspondientes a esas sesiones. Esta situación permitió identificar una limitación de usabilidad en el proceso de arranque del complemento, ya que el usuario debía activar correctamente la captura antes de comenzar la actividad. Como consecuencia, se consideró necesario mejorar las indicaciones de uso, reforzar los mensajes de estado de la interfaz y documentar con mayor claridad el procedimiento de inicio de una sesión de captura.
+
+Por tanto, la validación realizada debe entenderse como una prueba funcional en contexto real, orientada a comprobar la viabilidad técnica del sistema y detectar problemas prácticos de uso. No constituye un estudio estadístico con una muestra representativa, sino una comprobación experimental del flujo de trabajo completo: instalación y activación del complemento, inicio de la captura, generación de registros CSV y análisis posterior de los datos obtenidos.
+
+Asimismo, al tratarse de una actividad con usuarios reales, se contempla la incorporación en los anexos de la documentación relativa al consentimiento informado empleado durante la prueba.
+
+\subsection{Trazabilidad entre objetivos, implementación y validación}
+
+Para relacionar los objetivos planteados con los componentes desarrollados y las evidencias de validación, se presenta la Tabla~
+ef{tab:trazabilidad-objetivos}. Esta trazabilidad permite comprobar que las funcionalidades principales del sistema no solo han sido implementadas, sino también validadas mediante pruebas automatizadas o pruebas funcionales dentro de Blender.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{p{3cm} p{4cm} p{4cm} p{3cm}}
+\toprule
+\textbf{Objetivo} & \textbf{Implementación} & \textbf{Validación} & \textbf{Evidencia} \\
+\midrule
+Registrar eventos de modelado &
+\textit{Data Logger 3D}, handlers y temporizador &
+Pruebas funcionales en Blender &
+Checklist de validación y CSV anonimizado \\
+
+Analizar sesiones registradas &
+\textit{Analysis 3D} y módulo \texttt{analytics.py} &
+Pruebas unitarias de métricas &
+\texttt{tests/analysis\_3d} \\
+
+Mantener compatibilidad CSV &
+\texttt{csv\_schema.py} y normalización v1/v2 &
+Pruebas de esquema CSV &
+\texttt{test\_csv\_schema.py} \\
+
+Proteger la privacidad &
+UUID, exportación sin \texttt{UserID} y borrado de datos &
+Pruebas de privacidad y revisión funcional &
+\texttt{test\_logger\_privacy.py} \\
+
+Visualizar resultados &
+Módulos de gráficos, escena y UI &
+Prueba funcional manual dentro de Blender &
+Capturas de validación \\
+\bottomrule
+\end{tabular}
+\caption{Trazabilidad entre objetivos, implementación y validación.}
+\label{tab:trazabilidad-objetivos}
+\end{table}
+
+\section{Reproducibilidad y material de entrega}
+
+Con el fin de facilitar la evaluación del software desarrollado, la entrega del proyecto incluye los elementos necesarios para instalar, ejecutar y comprobar el funcionamiento de los dos add-ons implementados. El repositorio del proyecto contiene el código fuente, las instrucciones de instalación y uso, la licencia del software y la documentación asociada.
+
+Como material complementario de validación, se ha preparado un vídeo demostrativo que muestra el flujo completo de funcionamiento del sistema: instalación o activación de los add-ons en Blender, inicio de la monitorización, realización de operaciones de modelado, exportación del fichero CSV, carga del archivo en el módulo de análisis, cálculo de métricas y generación de visualizaciones.
 
 \section{Conclusiones del desarrollo}
 

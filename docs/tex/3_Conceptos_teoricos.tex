@@ -146,6 +146,7 @@ La API de Python permite asociar funciones de retrollamada (\textit{callback fun
     \includegraphics[width=0.95\textwidth]{diagramas/flujo_deteccion.png}
     \caption{Flujo general de captura y procesamiento de eventos dentro del sistema de monitorización.}
     \label{fig:flujo_eventos}
+    {\footnotesize \textit{Nota. Figura elaborada por la autora con asistencia de ChatGPT.}}
 \end{figure}
 
 Debido a que el \textit{handler} del grafo de dependencias funciona de manera síncrona y se dispara iterativamente ante cualquier cambio infinitesimal del entorno o de la interfaz gráfica, el diseño del software exige desacoplar temporalmente los procesos analíticos más pesados. Por ello, la información recogida es filtrada e integrada con controladores de frecuencia basados en temporizadores asíncronos (\textit{Timers}), mitigando así la sobrecarga de procesamiento en el hilo principal de la aplicación y garantizando la persistencia ordenada en archivos de datos.

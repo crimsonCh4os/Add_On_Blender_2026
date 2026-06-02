@@ -5,7 +5,7 @@
 \section{Introducción}
 \label{sec:d-introduccion}
 
-Este anexo describe la organización técnica de los dos add-ons que forman la suite. A diferencia del anexo C, centrado en el diseño, aquí se explican las responsabilidades de los módulos, funciones, clases, dependencias, instalación, pruebas y pautas de mantenimiento.
+Este anexo describe la organización técnica de los dos add-ons que forman la \textit{suite}. La estructura se documenta desde una perspectiva de mantenimiento del software, apoyada en principios de modularidad, claridad de responsabilidades y calidad interna del código~\cite{parnas1972criteria,pressman2005}. A diferencia del anexo C, centrado en el diseño, aquí se explican las responsabilidades de los módulos, funciones, clases, dependencias, instalación, pruebas y pautas de mantenimiento.
 
 La información se ordena de lo general a lo específico. Primero se presenta la estructura técnica del código, después el primer add-on de captura, a continuación el add-on de análisis y, finalmente, las tablas de funciones, dependencias, pruebas y criterios de mantenimiento.
 
@@ -16,29 +16,113 @@ La estructura técnica del proyecto se organiza en torno a los dos add-ons desar
 
 \begin{verbatim}
 codigo/
-  DeteccionDatosV6.py
-  analisisV7.zip
-
-analisisV7/
-  __init__.py
-  analytics.py
-  constants.py
-  dependencies.py
-  graphs.py
-  operator.py
-  ui.py
-  ui_graph_rendering.py
-  ui_graph_service.py
-  ui_helpers.py
-  ui_operators.py
-  ui_panels.py
-  ui_properties.py
-  utils.py
-  tests/
-    test_logic.py
+|-- Data_Logger_3D.py
+|-- Analysis_3D.zip
+`-- Analysis_3D/
+    |-- __init__.py
+    |-- analytics.py
+    |-- csv_schema.py
+    |-- constants.py
+    |-- dependencies.py
+    |-- graphs.py
+    |-- operator.py
+    |-- ui.py
+    |-- ui_graph_rendering.py
+    |-- ui_graph_service.py
+    |-- ui_helpers.py
+    |-- ui_operators.py
+    |-- ui_panels.py
+    |-- ui_properties.py
+    `-- utils.py
+|-- core/
+|   `-- data_logger_core.py
+`-- tests/
+    |-- test_core.py
+    |-- test_csv_schema.py
+    `-- analysis_3d/
+        |-- _logger_test_utils.py
+        |-- test_analysis_csv_schema.py
+        |-- test_analysis_metrics.py
+        |-- test_logger_csv_schema.py
+        |-- test_logger_deduplication.py
+        |-- test_logger_operator_detection.py
+        |-- test_logger_privacy.py
+        `-- test_logic.py
 \end{verbatim}
 
-\section{Primer add-on: \texttt{DeteccionDatosV6.py}}
+
+\section{Preparación del entorno de desarrollo}
+\label{sec:d-entorno-desarrollo}
+
+Este apartado concreta qué debe instalar y configurar un programador que desee modificar el código de los add-ons. La preparación del entorno se basa en el uso del Python integrado en Blender y en sus APIs oficiales, por lo que las pruebas deben realizarse dentro del mismo entorno de ejecución que utilizará el usuario final~\cite{blenderapi,pythonlang}. No se trata de una compilación tradicional, ya que los complementos de Blender se ejecutan como scripts de Python interpretados por el propio Blender. Por tanto, el entorno de trabajo debe reproducir el intérprete de Python incluido en Blender y permitir recargar los add-ons durante las pruebas.
+
+\subsection{Herramientas necesarias}
+\label{subsec:d-herramientas-necesarias}
+
+Para comenzar a desarrollar se recomienda preparar el siguiente entorno:
+
+\begin{itemize}
+    \item \textbf{Blender 4.0 o superior}: entorno de ejecución principal y proveedor de las APIs \texttt{bpy}, \texttt{bmesh} y \texttt{mathutils}. La versión utilizada debe incluir Python 3.11 o una versión compatible con las dependencias del proyecto.
+    \item \textbf{Git}: herramienta necesaria para clonar el repositorio, crear ramas de trabajo, revisar cambios y mantener trazabilidad mediante commits.
+    \item \textbf{Editor de código}: se recomienda Visual Studio Code, PyCharm u otro editor con soporte para Python. La autocompletación de \texttt{bpy} puede requerir extensiones o stubs externos, pero no es imprescindible para ejecutar el proyecto.
+    \item \textbf{Python integrado en Blender}: las pruebas deben realizarse con el Python incluido en Blender, no con una instalación externa independiente, para evitar incompatibilidades con \texttt{bpy}.
+    \item \textbf{Dependencias científicas}: NumPy y Matplotlib para las funciones de análisis y visualización. Deben estar disponibles dentro del entorno Python de Blender.
+    \item \textbf{Sistema \LaTeX}: solo es necesario si se desea modificar y recompilar la documentación del TFG.
+\end{itemize}
+
+\subsection{Obtención del código fuente}
+\label{subsec:d-obtencion-codigo}
+
+El programador debe clonar o descargar el repositorio del proyecto y localizar los dos componentes principales: el archivo \texttt{Data\_Logger\_3D.py}, correspondiente al logger, y el paquete \texttt{Analysis\_3D}, correspondiente al add-on de análisis. Se recomienda no trabajar directamente sobre el ZIP final, sino sobre la carpeta descomprimida del paquete de análisis, para poder modificar sus módulos de forma individual.
+
+\begin{verbatim}
+git clone [URL_DEL_REPOSITORIO]
+cd [NOMBRE_DEL_REPOSITORIO]
+\end{verbatim}
+
+Si el repositorio se entrega comprimido, basta con descomprimirlo y conservar la misma estructura de carpetas. La carpeta del add-on de análisis debe mantener su archivo \texttt{\_\_init\_\_.py}, ya que Blender lo utiliza como punto de entrada del paquete.
+
+\subsection{Instalación de dependencias en el Python de Blender}
+\label{subsec:d-instalacion-dependencias-dev}
+
+Las dependencias externas deben instalarse en el Python integrado de Blender. En Windows, una forma habitual es ejecutar el Python de Blender desde la carpeta de instalación. La ruta exacta puede variar según la versión instalada:
+
+\begin{verbatim}
+"C:\\Program Files\\Blender Foundation\\
+Blender 4.x\\4.x\\python\\bin\\python.exe"
+ -m ensurepip
+"C:\\Program Files\\Blender Foundation\\
+Blender 4.x\\4.x\\python\\bin\\python.exe"
+ -m pip install numpy matplotlib
+\end{verbatim}
+
+En Linux o macOS se debe usar de forma equivalente el ejecutable de Python incluido en la instalación de Blender. Si NumPy o Matplotlib ya están disponibles en la distribución utilizada, no es necesario reinstalarlos. En cualquier caso, las dependencias deben comprobarse desde Blender, ya que el Python del sistema y el Python de Blender pueden tener paquetes distintos.
+
+\subsection{Carga del add-on durante el desarrollo}
+\label{subsec:d-carga-desarrollo}
+
+Durante el desarrollo existen dos formas de probar los cambios. La primera consiste en instalar el archivo o ZIP desde \textit{Edit $\rightarrow$ Preferences $\rightarrow$ Add-ons}. Esta opción reproduce el comportamiento del usuario final. La segunda consiste en copiar o enlazar la carpeta del add-on dentro del directorio de scripts de Blender, lo que facilita modificar archivos y recargar el complemento.
+
+Después de editar el código, se recomienda desactivar y volver a activar el add-on desde las preferencias de Blender. Si se modifican clases, propiedades o paneles, también puede ser necesario reiniciar Blender para limpiar registros anteriores. Las funciones \texttt{register} y \texttt{unregister} deben mantenerse actualizadas para evitar duplicados de clases, operadores o manejadores.
+
+\subsection{Flujo recomendado para modificar el código}
+\label{subsec:d-flujo-modificacion}
+
+El flujo de trabajo recomendado para un programador es el siguiente. Se recomienda mantener commits pequeños y descriptivos, y seguir criterios de estilo coherentes con Python para facilitar la revisión del código~\cite{github,pep8}:
+
+\begin{enumerate}
+    \item Crear una rama de trabajo en Git antes de modificar el código.
+    \item Abrir Blender y cargar una escena de prueba sencilla.
+    \item Modificar el módulo correspondiente: logger, métricas, visualización o interfaz.
+    \item Recargar el add-on y comprobar que no aparecen errores en la consola de Blender.
+    \item Probar la funcionalidad con un CSV controlado o una malla sencilla.
+    \item Revisar que las modificaciones no rompen la exportación CSV ni el cálculo de métricas existentes.
+    \item Registrar el cambio mediante un commit descriptivo.
+\end{enumerate}
+
+Este flujo reduce el riesgo de introducir cambios incompatibles entre el logger y el add-on de análisis. En particular, cualquier modificación de la cabecera CSV debe acompañarse de cambios equivalentes en la validación y en la documentación de campos.
+
+\section{Primer add-on: \texttt{Data\_Logger\_3D.py}}
 \label{sec:d-logger}
 
 \subsection{Variables globales}
@@ -99,8 +183,8 @@ El add-on define un panel principal y un panel de depuración. El panel principa
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\textwidth]{diagramas/data_logger_sin_debug.png}
-    \caption{Panel de depuración del add-on Data Logger 3D durante una sesión de captura.}
-    \label{fig:d-panel-debug-logger}
+    \caption{Panel principal del add-on Data Logger 3D con controles de captura y exportación.}
+    \label{fig:d-panel-logger-principal}
 \end{figure}
 
 \begin{figure}[H]
@@ -210,30 +294,31 @@ Las siguientes tablas agrupan las funciones y clases relevantes por módulo. Par
 \endfoot
 \bottomrule
 \endlastfoot
-\texttt{init\_csv} & \texttt{DeteccionDatosV6.py} & Crea el CSV temporal con la cabecera definida para la sesión de captura. & Ruta temporal global. & Archivo CSV inicializado. \\
-\texttt{append\_csv} & \texttt{DeteccionDatosV6.py} & Añade una fila serializada al CSV, conservando el formato de salto de línea. & Fila CSV serializada. & CSV actualizado. \\
-\texttt{ensure\_file\_ends\_with\_newline} & \texttt{DeteccionDatosV6.py} & Comprueba que el archivo termina con salto de línea para evitar concatenaciones erróneas entre filas. & Ruta del archivo CSV. & Archivo normalizado. \\
-\texttt{remove\_duplicate\_rows} & \texttt{DeteccionDatosV6.py} & Elimina filas duplicadas manteniendo la cabecera original del CSV. & CSV temporal. & CSV sin duplicados. \\
-\texttt{import\_csv\_to\_blend} & \texttt{DeteccionDatosV6.py} & Incrusta el contenido del CSV en un bloque de texto interno del archivo \texttt{.blend}. & CSV temporal. & \texttt{data\_log\_internal.csv}. \\
-\texttt{restore\_csv\_from\_blend} & \texttt{DeteccionDatosV6.py} & Reconstruye el CSV temporal a partir del bloque de texto incrustado en Blender. & Bloque de texto interno. & CSV temporal reconstruido. \\
-\texttt{get\_camera\_pos} & \texttt{DeteccionDatosV6.py} & Obtiene la posición de la vista 3D activa mediante la matriz de vista. & Contexto de Blender. & Coordenadas \texttt{UserX}, \texttt{UserY}, \texttt{UserZ}. \\
-\texttt{get\_active\_object\_data} & \texttt{DeteccionDatosV6.py} & Calcula centro y radio del objeto activo a partir de su caja envolvente en coordenadas de mundo. & Objeto activo. & Tupla espacial del objeto. \\
-\texttt{get\_scene\_radius} & \texttt{DeteccionDatosV6.py} & Estima el radio global de la escena considerando las cajas envolventes de las mallas. & Objetos de la escena. & Radio de escena. \\
-\texttt{get\_mesh\_stats} & \texttt{DeteccionDatosV6.py} & Calcula contadores topológicos de vértices, triángulos, n-gons y normales potencialmente invertidas. & Objeto malla. & Contadores topológicos. \\
-\texttt{get\_global\_uv\_hash} & \texttt{DeteccionDatosV6.py} & Resume las coordenadas UV de la escena mediante un hash para detectar cambios. & Escena y capas UV. & Cadena hash. \\
-\texttt{detect\_flags\_from\_operator} & \texttt{DeteccionDatosV6.py} & Activa banderas de operadores como \texttt{Ctrl+V}, \texttt{Shift+D}, \texttt{Alt+D}, \texttt{Merge} y operaciones UV. & Identificador de operador. & Booleano de cambio. \\
-\texttt{process\_new\_operators} & \texttt{DeteccionDatosV6.py} & Recorre los operadores recientes registrados por Blender y actualiza las banderas pendientes. & Historial de operadores. & Indicador de cambio. \\
-\texttt{build\_snapshot} & \texttt{DeteccionDatosV6.py} & Construye un resumen del estado de la escena y una firma comparable entre ciclos. & Contexto de Blender. & Snapshot y firma. \\
-\texttt{apply\_snapshot\_as\_baseline} & \texttt{DeteccionDatosV6.py} & Actualiza el estado de referencia usado para calcular deltas posteriores. & Snapshot y firma. & Línea base actualizada. \\
-\texttt{collect\_data} & \texttt{DeteccionDatosV6.py} & Calcula deltas, estados de modo, banderas de operador y genera una fila CSV cuando hay cambios. & Estado actual de la escena. & Fila CSV o \texttt{None}. \\
-\texttt{logger\_timer} & \texttt{DeteccionDatosV6.py} & Ejecuta ciclos periódicos de captura mediante el temporizador de Blender. & Temporizador de Blender. & Intervalo de repetición o \texttt{None}. \\
-\texttt{DATA\_LOGGER\_OT\_ExportCSV} & \texttt{DeteccionDatosV6.py} & Exporta el CSV incrustado a un archivo externo junto al archivo \texttt{.blend}. & Contexto de Blender. & Archivo CSV exportado. \\
-\texttt{DATA\_LOGGER\_PT\_Panel} & \texttt{DeteccionDatosV6.py} & Muestra el panel principal de control del logger en la barra lateral de Blender. & Contexto de interfaz. & Panel de usuario. \\
-\texttt{DATA\_LOGGER\_PT\_DebugPanel} & \texttt{DeteccionDatosV6.py} & Muestra información de depuración sobre operadores, hash UV y estado del temporizador. & Contexto de interfaz. & Panel de depuración. \\
-\texttt{register}/\texttt{unregister} & \texttt{DeteccionDatosV6.py} & Registra o elimina clases, keymaps y handlers del add-on. & Runtime de Blender. & Add-on activo o inactivo. \\
+\texttt{init\_csv} & \texttt{Data\_Logger\_3D.py} & Crea el CSV temporal con la cabecera definida para la sesión de captura. & Ruta temporal global. & Archivo CSV inicializado. \\
+\texttt{append\_csv} & \texttt{Data\_Logger\_3D.py} & Añade una fila serializada al CSV, conservando el formato de salto de línea. & Fila CSV serializada. & CSV actualizado. \\
+\texttt{ensure\_file\_ends\_with\_newline} & \texttt{Data\_Logger\_3D.py} & Comprueba que el archivo termina con salto de línea para evitar concatenaciones erróneas entre filas. & Ruta del archivo CSV. & Archivo normalizado. \\
+\texttt{remove\_duplicate\_rows} & \texttt{Data\_Logger\_3D.py} & Elimina filas duplicadas manteniendo la cabecera original del CSV. & CSV temporal. & CSV sin duplicados. \\
+\texttt{import\_csv\_to\_blend} & \texttt{Data\_Logger\_3D.py} & Incrusta el contenido del CSV en un bloque de texto interno del archivo \texttt{.blend}. & CSV temporal. & \texttt{data\_log\_internal.csv}. \\
+\texttt{restore\_csv\_from\_blend} & \texttt{Data\_Logger\_3D.py} & Reconstruye el CSV temporal a partir del bloque de texto incrustado en Blender. & Bloque de texto interno. & CSV temporal reconstruido. \\
+\texttt{get\_camera\_pos} & \texttt{Data\_Logger\_3D.py} & Obtiene la posición de la vista 3D activa mediante la matriz de vista. & Contexto de Blender. & Coordenadas \texttt{UserX}, \texttt{UserY}, \texttt{UserZ}. \\
+\texttt{get\_active\_object\_data} & \texttt{Data\_Logger\_3D.py} & Calcula centro y radio del objeto activo a partir de su caja envolvente en coordenadas de mundo. & Objeto activo. & Tupla espacial del objeto. \\
+\texttt{get\_scene\_radius} & \texttt{Data\_Logger\_3D.py} & Estima el radio global de la escena considerando las cajas envolventes de las mallas. & Objetos de la escena. & Radio de escena. \\
+\texttt{get\_mesh\_stats} & \texttt{Data\_Logger\_3D.py} & Calcula contadores topológicos de vértices, triángulos, n-gons y normales potencialmente invertidas. & Objeto malla. & Contadores topológicos. \\
+\texttt{get\_global\_uv\_hash} & \texttt{Data\_Logger\_3D.py} & Resume las coordenadas UV de la escena mediante un hash para detectar cambios. & Escena y capas UV. & Cadena hash. \\
+\texttt{detect\_flags\_from\_operator} & \texttt{Data\_Logger\_3D.py} & Activa banderas de operadores como \texttt{Ctrl+V}, \texttt{Shift+D}, \texttt{Alt+D}, \texttt{Merge} y operaciones UV. & Identificador de operador. & Booleano de cambio. \\
+\texttt{process\_new\_operators} & \texttt{Data\_Logger\_3D.py} & Recorre los operadores recientes registrados por Blender y actualiza las banderas pendientes. & Historial de operadores. & Indicador de cambio. \\
+\texttt{build\_snapshot} & \texttt{Data\_Logger\_3D.py} & Construye un resumen del estado de la escena y una firma comparable entre ciclos. & Contexto de Blender. & Snapshot y firma. \\
+\texttt{apply\_snapshot\_as\_baseline} & \texttt{Data\_Logger\_3D.py} & Actualiza el estado de referencia usado para calcular deltas posteriores. & Snapshot y firma. & Línea base actualizada. \\
+\texttt{collect\_data} & \texttt{Data\_Logger\_3D.py} & Calcula deltas, estados de modo, banderas de operador y genera una fila CSV cuando hay cambios. & Estado actual de la escena. & Fila CSV o \texttt{None}. \\
+\texttt{logger\_timer} & \texttt{Data\_Logger\_3D.py} & Ejecuta ciclos periódicos de captura mediante el temporizador de Blender. & Temporizador de Blender. & Intervalo de repetición o \texttt{None}. \\
+\texttt{DATA\_LOGGER\_OT\_ExportCSV} & \texttt{Data\_Logger\_3D.py} & Exporta el CSV incrustado a un archivo externo junto al archivo \texttt{.blend}. & Contexto de Blender. & Archivo CSV exportado. \\
+\texttt{DATA\_LOGGER\_PT\_Panel} & \texttt{Data\_Logger\_3D.py} & Muestra el panel principal de control del logger en la barra lateral de Blender. & Contexto de interfaz. & Panel de usuario. \\
+\texttt{DATA\_LOGGER\_PT\_DebugPanel} & \texttt{Data\_Logger\_3D.py} & Muestra información de depuración sobre operadores, hash UV y estado del temporizador. & Contexto de interfaz. & Panel de depuración. \\
+\texttt{register}/\texttt{unregister} & \texttt{Data\_Logger\_3D.py} & Registra o elimina clases, keymaps y handlers del add-on. & Runtime de Blender. & Add-on activo o inactivo. \\
 \end{longtable}
 \endgroup
 \end{landscape}
+}
 
 \clearpage
 {\pagestyle{empty}\thispagestyle{empty}
@@ -274,6 +359,7 @@ Las siguientes tablas agrupan las funciones y clases relevantes por módulo. Par
 \end{longtable}
 \endgroup
 \end{landscape}
+}
 
 \clearpage
 {\pagestyle{empty}\thispagestyle{empty}
@@ -316,32 +402,211 @@ Las siguientes tablas agrupan las funciones y clases relevantes por módulo. Par
 }
 
 \clearpage
-\section{Compilación, instalación y ejecución}
+\section{Instalación, ejecución y recarga en desarrollo}
 \label{sec:d-instalacion-ejecucion}
 
-Para instalar el primer add-on se debe utilizar el archivo \texttt{DeteccionDatosV6.py} desde las preferencias de Blender. Para instalar el segundo add-on se debe utilizar el ZIP del paquete de análisis. En ambos casos, el flujo general es: abrir Blender, acceder a \textit{Edit $\rightarrow$ Preferences $\rightarrow$ Add-ons}, instalar el archivo correspondiente, activar la casilla del add-on y guardar preferencias si se desea conservar la activación.
+El proyecto no requiere compilación en sentido estricto, ya que los add-ons se ejecutan como código Python interpretado dentro de Blender. La preparación para el usuario final consiste en instalar \texttt{Data\_Logger\_3D.py} y el ZIP del paquete de análisis desde \textit{Edit $\rightarrow$ Preferences $\rightarrow$ Add-ons}. Sin embargo, para desarrollo se recomienda trabajar con la carpeta fuente del add-on de análisis y recargar el complemento tras cada modificación.
 
-La ejecución completa comienza con el add-on de captura, continúa con la exportación del CSV y finaliza con la lectura del CSV desde el add-on de análisis. Las pruebas que dependan de paneles, operadores o mallas reales deben realizarse dentro de Blender.
+Para comprobar cambios en el logger se debe instalar o ejecutar \texttt{Data\_Logger\_3D.py}, abrir una escena de prueba, aceptar el consentimiento y revisar la consola de Blender. Para comprobar cambios en el add-on de análisis se debe cargar un CSV conocido y ejecutar primero las métricas estadísticas, después las métricas de malla y finalmente las visualizaciones. Si se modifican propiedades registradas, paneles o operadores, la recarga puede requerir desactivar el add-on, volver a activarlo o reiniciar Blender.
+
+La ejecución completa comienza con el add-on de captura, continúa con la exportación del CSV y finaliza con la lectura del CSV desde el add-on de análisis. Las pruebas que dependan de paneles, operadores, mallas reales o contexto gráfico deben realizarse dentro de Blender, ya que no pueden reproducirse correctamente con un intérprete Python externo.
 
 \section{Dependencias externas}
 \label{sec:d-dependencias}
 
-Las dependencias principales son Blender, Python integrado en Blender, \texttt{bpy}, \texttt{bmesh}, \texttt{mathutils}, \texttt{csv}, NumPy y Matplotlib. El logger depende principalmente de la API de Blender y de módulos estándar de Python. El add-on de análisis incorpora dependencias científicas para el cálculo de métricas y la representación gráfica de resultados.
+Las dependencias principales son Blender, Python integrado en Blender, \texttt{bpy}, \texttt{bmesh}, \texttt{mathutils}, \texttt{csv}, NumPy y Matplotlib~\cite{blenderapi,pythonlang,numpy,matplotlib}. El logger depende principalmente de la API de Blender y de módulos estándar de Python. El add-on de análisis incorpora dependencias científicas para el cálculo de métricas y la representación gráfica de resultados.
 
 La versión desarrollada se ha probado sobre un entorno basado en Python 3.11, integrado en versiones recientes de Blender. Por este motivo, no se garantiza la compatibilidad con Blender 3.0 ni con versiones anteriores que utilicen intérpretes de Python más antiguos o APIs parcialmente diferentes. La retrocompatibilidad con dichas versiones requeriría revisar las llamadas a la API de Blender, las dependencias científicas y los módulos utilizados por el add-on de análisis.
 
-En consecuencia, se recomienda utilizar la suite en versiones de Blender compatibles con Python 3.11. Las versiones consideradas compatibles en el entorno de desarrollo son Blender 4.0 y posteriores, hasta la versión 5.1.2. Para versiones futuras, será necesario verificar que no se hayan producido cambios incompatibles en la API de Blender o en la gestión de add-ons.
+En consecuencia, se recomienda utilizar la \textit{suite} en versiones de Blender compatibles con Python 3.11. Las versiones consideradas compatibles en el entorno de desarrollo son Blender 4.0 y posteriores, hasta la versión 5.1.2. Para versiones futuras, será necesario verificar que no se hayan producido cambios incompatibles en la API de Blender o en la gestión de add-ons.
+
+
+\section{Licencia del software desarrollado}
+\label{sec:d-licencia-software}
+
+Los add-ons desarrollados se distribuyen bajo la licencia \textbf{GNU General Public License v3.0 o posterior (GPL-3.0-or-later)}. Esta elección es coherente con el ecosistema de Blender, ya que el código se integra como complemento ejecutado dentro de Blender y utiliza directamente sus APIs de Python, como \texttt{bpy}, \texttt{bmesh} y \texttt{mathutils}~\cite{blenderapi,fsf_gpl3}.
+
+La licencia GPL permite usar, estudiar, modificar y redistribuir el software, siempre que las obras derivadas mantengan una licencia compatible y se conserve el acceso al código fuente. Por tanto, el producto software resultante, incluyendo \textit{Data Logger 3D} y el add-on de análisis y visualización, se libera como software libre bajo GPL-3.0-or-later.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Resumen del análisis de licencias de los componentes utilizados}
+\label{tab:analisis_licencias}
+\begin{tabularx}{\textwidth}{|X|X|X|X|}
+\hline
+\textbf{Componente} & \textbf{Uso en el proyecto} & \textbf{Licencia} & \textbf{Implicación} \\
+\hline
+Blender & Entorno de ejecución de los add-ons & GPL & Condiciona la compatibilidad de los add-ons \\
+\hline
+Python & Lenguaje de programación & PSF License & Compatible con GPL \\
+\hline
+\texttt{bpy} & API principal de Blender & Asociada a Blender / GPL & Compatible con GPL \\
+\hline
+\texttt{bmesh} & Acceso a mallas editables & Asociada a Blender / GPL & Compatible con GPL \\
+\hline
+\texttt{mathutils} & Operaciones matemáticas de Blender & Asociada a Blender / GPL & Compatible con GPL \\
+\hline
+\texttt{csv} & Lectura y escritura de CSV & Biblioteca estándar de Python & Compatible \\
+\hline
+NumPy & Cálculo numérico & BSD & Compatible con GPL \\
+\hline
+Matplotlib & Generación de gráficos & Licencia Matplotlib & Compatible con GPL \\
+\hline
+Código propio & Add-ons desarrollados & GPL-3.0-or-later & Licencia final del software \\
+\hline
+\end{tabularx}
+\end{table}
 
 \section{Pruebas del sistema}
 \label{sec:d-pruebas}
 
-Las pruebas se ordenan por nivel. En el logger se deben comprobar inicio/parada, consentimiento, restauración del CSV, exportación, captura de cambios de modo, detección de operadores, cambios UV y persistencia en \texttt{.blend}. En el add-on de análisis se deben comprobar lectura CSV, rechazo de valores NaN o infinitos, cálculo A1--A17, cálculo geométrico, métricas UV, generación de visualizaciones e interfaz compacta.
+Las pruebas del sistema se organizaron en dos niveles complementarios. Por un lado, se realizaron pruebas funcionales dentro de Blender, orientadas a comprobar el comportamiento real de los add-ons en su entorno final de ejecución. Por otro lado, se incorporaron pruebas automatizadas con \texttt{unittest} para validar aquellas partes de la lógica interna que pueden ejecutarse fuera de Blender.
 
-Las pruebas fuera de Blender son limitadas para funciones que dependen de \texttt{bpy}, paneles o contexto gráfico. No obstante, parte de la lógica analítica puede probarse con datos CSV simulados o con pruebas unitarias sobre funciones puras.
+\subsection{Revisión de calidad del código}
+\label{subsec:d-revisión-calidad-código}
+
+Aunque durante el desarrollo no se ha utilizado una plataforma específica de revisión estática como SonarQube o Qlty, se ha realizado una revisión manual del código fuente antes de la entrega final. Esta revisión se ha centrado en comprobar la organización modular del proyecto, la separación entre lógica de captura, lógica de análisis e interfaz, la eliminación de versiones antiguas o código no utilizado, la legibilidad de nombres de funciones y variables, y la ausencia de dependencias innecesarias.
+
+La revisión también ha tenido en cuenta aspectos de mantenibilidad, como la agrupación de responsabilidades por módulos, la reducción de duplicidades, la inclusión de comentarios en las partes más dependientes de la API de Blender y la validación básica de errores durante la carga de archivos CSV. Esta revisión manual no sustituye a un análisis estático automatizado, pero permite justificar que se ha realizado una comprobación razonada de la calidad del código entregado.
+
+Como trabajo futuro, se propone incorporar herramientas como SonarQube, Qlty, Ruff, Pylint o Flake8 para obtener métricas automáticas de calidad, complejidad, duplicación y posibles problemas de mantenibilidad.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Resumen de pruebas funcionales, de calidad y compatibilidad del sistema}
+\label{tab:pruebas_sistema}
+\begin{tabularx}{\textwidth}{|c|X|c|X|X|}
+\hline
+\textbf{ID} & \textbf{Prueba} & \textbf{Tipo} & \textbf{Resultado esperado} & \textbf{Evidencia} \\
+\hline
+P-01 & Instalación del add-on Data Logger 3D & Manual & El add-on se instala y aparece activo en Blender & Vídeo \\
+\hline
+P-02 & Instalación del add-on de análisis & Manual & El add-on se instala y muestra su panel en Blender & Captura / vídeo \\
+\hline
+P-03 & Inicio de monitorización & Manual & El sistema solicita consentimiento e inicia la captura & Vídeo \\
+\hline
+P-04 & Captura de operaciones de modelado & Manual & Se registran cambios de modo, transformaciones y eventos relevantes & CSV generado \\
+\hline
+P-05 & Exportación del CSV & Manual & Se genera un archivo CSV legible y reutilizable & CSV de ejemplo \\
+\hline
+P-06 & Carga del CSV en el add-on de análisis & Manual & El archivo se carga correctamente & Vídeo \\
+\hline
+P-07 & Cálculo de métricas A1--A17 & Manual & El sistema calcula y muestra las métricas estadísticas & Captura \\
+\hline
+P-08 & Cálculo de métricas geométricas y UV & Manual & Se obtienen resultados sobre el objeto seleccionado & Captura \\
+\hline
+P-09 & Generación de visualizaciones & Manual & Se generan gráficos o visualizaciones dentro de Blender & Vídeo \\
+\hline
+P-10 & Revisión manual de calidad & Manual & El código queda organizado, sin versiones obsoletas ni dependencias innecesarias & Revisión del repositorio \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Pruebas funcionales en Blender}
+\label{subsec:d-pruebas-funcionales-blender}
+
+En el add-on \texttt{Data\_Logger\_3D.py} se comprobaron las operaciones principales de inicio y parada de la captura, aceptación del consentimiento, restauración del CSV desde el archivo \texttt{.blend}, exportación del CSV, captura de cambios de modo, detección de operadores relevantes, detección de cambios UV y persistencia de los datos en bloques de texto internos.
+
+En el add-on de análisis se comprobaron la carga de archivos CSV, la validación de registros, el cálculo de métricas A1--A17, el cálculo de métricas geométricas y UV, la generación de visualizaciones y la actualización de la interfaz. Estas pruebas se realizaron dentro de Blender, ya que dependen del contexto gráfico, de objetos de tipo malla, de paneles, operadores y propiedades registradas mediante la API \texttt{bpy}.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Resumen de pruebas de compatibilidad en distintos equipos}
+\label{tab:compatibilidad_equipos}
+\begin{tabularx}{\textwidth}{|X|X|c|X|X|}
+\hline
+\textbf{Equipo} & \textbf{Sistema operativo} & \textbf{Versión de Blender} & \textbf{Resultado} & \textbf{Observaciones} \\
+\hline
+Equipo principal de desarrollo & Windows / Linux / macOS & Blender 4.x & Correcto & Entorno usado durante el desarrollo \\
+\hline
+Equipo externo 1 & Windows & Blender 4.x & Correcto & Instalación realizada siguiendo las dependencias indicadas en el manual de usuario \\
+
+\hline
+\end{tabularx}
+\end{table}
+
+
+\subsection{Pruebas automatizadas con unittest}
+\label{subsec:d-pruebas-unittest}
+
+Además de las pruebas funcionales realizadas directamente en Blender, el proyecto incluye un conjunto de pruebas automatizadas orientadas a comprobar partes concretas de la lógica del sistema. Estas pruebas se han implementado con el módulo estándar \texttt{unittest} de Python, por lo que no requieren instalar dependencias adicionales para su ejecución básica.
+
+El objetivo de estas pruebas no es sustituir a la validación funcional dentro de Blender, sino aportar una comprobación adicional sobre aquellas funciones que pueden evaluarse de forma aislada o parcialmente desacoplada del entorno gráfico. En particular, las pruebas se centran en aspectos como la estructura de los CSV, la migración entre versiones de esquema, la anonimización de datos, la deduplicación de registros, la detección de ciertos operadores y el cálculo de métricas analíticas a partir de datos de ejemplo.
+
+La estructura de pruebas incluida en el proyecto queda centralizada fuera del paquete instalable de los add-ons, para separar el código de producción del código de validación automática:
+
+\begin{verbatim}
+tests/
+|-- test_core.py
+|-- test_csv_schema.py
+`-- analysis_3d/
+    |-- __init__.py
+    |-- _logger_test_utils.py
+    |-- test_analysis_csv_schema.py
+    |-- test_analysis_metrics.py
+    |-- test_logger_csv_schema.py
+    |-- test_logger_deduplication.py
+    |-- test_logger_operator_detection.py
+    |-- test_logger_privacy.py
+    `-- test_logic.py
+\end{verbatim}
+
+Todas las pruebas ejecutables fuera de Blender se lanzan desde la raíz del proyecto con el siguiente comando:
+
+\begin{verbatim}
+PYTHONPATH=. python -m unittest discover -s tests -v
+\end{verbatim}
+
+Este comando ejecuta tanto las pruebas generales como las pruebas específicas del módulo \texttt{Analysis\_3D}. En un entorno Python externo a Blender, algunas pruebas geométricas pueden omitirse automáticamente si no está disponible \texttt{mathutils}; el resto de pruebas debe finalizar correctamente.
+
+En Windows PowerShell, el comando equivalente es:
+
+\begin{verbatim}
+$env:PYTHONPATH="."
+python -m unittest discover -s tests -v
+\end{verbatim}
+
+Debe evitarse interpretar como prueba principal del proyecto un descubrimiento global sin fijar la carpeta de pruebas, por ejemplo \texttt{python -m unittest discover -v}. El comando recomendado es el que indica explícitamente \texttt{-s tests}, ya que mantiene el descubrimiento dentro de la carpeta de pruebas y evita importar paquetes dependientes de Blender de forma accidental.
+
+Los ficheros de prueba cubren distintos aspectos del sistema. Las pruebas de esquema CSV verifican que las cabeceras, versiones y transformaciones entre formatos sean correctas. Las pruebas de privacidad comprueban la generación de identificadores y la eliminación de campos identificativos en exportaciones anonimizadas. Las pruebas de deduplicación validan que no se mantengan registros repetidos innecesarios. Las pruebas de detección de operadores comprueban el reconocimiento de acciones relevantes, como duplicaciones o combinaciones de teclas. Finalmente, las pruebas de análisis verifican el cálculo de métricas a partir de datos CSV de ejemplo.
+
+Un resultado correcto en estas pruebas aumenta la confianza en la lógica comprobada automáticamente, pero no garantiza por sí solo la corrección completa del sistema en una sesión real de Blender. La integración con el contexto gráfico, los paneles, los manejadores internos, los objetos de escena y la interacción del usuario requiere validación funcional dentro del entorno final de ejecución.
+
+\subsection{Limitaciones de las pruebas}
+\label{subsec:d-limitaciones-pruebas}
+
+Las pruebas automatizadas presentan una limitación importante: no validan por sí solas la integración completa con Blender. El sistema depende de elementos específicos del entorno anfitrión, como la API \texttt{bpy}, los tipos de datos de Blender, el contexto gráfico, los paneles de la interfaz, los operadores, los temporizadores y los manejadores internos. Estos elementos no pueden reproducirse de forma completa mediante una ejecución convencional de pruebas en un intérprete Python externo.
+
+Por esta razón, las pruebas incluidas deben entenderse como una validación parcial de la lógica comprobable de forma automática. Permiten detectar errores en funciones concretas y facilitan el mantenimiento del sistema, pero no sustituyen a las pruebas funcionales realizadas dentro de Blender ni a la validación práctica descrita en la memoria.
+
+Esta limitación se considera especialmente relevante desde el punto de vista de la reproducibilidad. Para mejorarla, una línea de trabajo futura consistiría en separar de forma más estricta el núcleo lógico del sistema respecto a la capa dependiente de Blender. El núcleo lógico debería incluir funciones de validación de CSV, migración de esquemas, anonimización, deduplicación y cálculo de métricas sin importar directamente \texttt{bpy}. Por otro lado, la capa de integración con Blender quedaría reservada para los paneles, operadores, temporizadores, manejadores y acceso a la escena.
+
+Esta separación permitiría ejecutar una parte más amplia de las pruebas con \texttt{unittest} en un entorno Python estándar, mientras que las pruebas de integración seguirían realizándose dentro de Blender. De este modo, el proyecto ganaría en mantenibilidad, verificabilidad y claridad a la hora de distinguir entre errores de lógica interna y errores derivados del entorno de ejecución.
 
 \section{Mantenimiento y ampliación}
 \label{sec:d-mantenimiento}
 
-El mantenimiento de la suite requiere conservar la coherencia entre el logger, el formato CSV y el add-on de análisis. Si se añaden nuevos campos al CSV, deben actualizarse la cabecera, la construcción de registros y la validación de lectura en el módulo de análisis. Del mismo modo, cualquier nueva métrica debe incorporarse en la lógica de cálculo correspondiente, reflejarse en la interfaz y documentarse en el manual de usuario para facilitar su interpretación.
+El mantenimiento de la \textit{suite} requiere conservar la coherencia entre el logger, el formato CSV y el add-on de análisis. El CSV actúa como formato intermedio entre ambos complementos, por lo que cualquier cambio en su estructura afecta directamente a la captura, la validación, el análisis y la interpretación posterior de los datos. Si se añaden nuevos campos al CSV, deben actualizarse la cabecera, la construcción de registros en el logger, la validación de lectura en el módulo de análisis, las pruebas asociadas y la documentación correspondiente.
 
-La ampliación del logger puede realizarse añadiendo nuevos operadores detectables al conjunto de identificadores normalizados y revisando si dichos eventos requieren un registro forzado. En el caso de nuevas visualizaciones, se recomienda mantener separada la lógica de cálculo respecto a la creación de objetos gráficos en Blender. Esta separación facilita la depuración, reduce dependencias entre módulos y permite ampliar la herramienta sin modificar de forma innecesaria el resto del sistema.
+Del mismo modo, cualquier nueva métrica debe incorporarse de forma coherente en la lógica de cálculo, reflejarse en la interfaz de usuario y documentarse en el manual de usuario para facilitar su interpretación. No basta con añadir el cálculo numérico: también debe explicarse qué representa la métrica, en qué condiciones es fiable, qué limitaciones tiene y cómo debe interpretarse dentro del proceso de modelado 3D.
+
+Desde el punto de vista del mantenimiento, una mejora prioritaria sería desacoplar con mayor claridad el código que contiene lógica general del código que depende directamente de Blender. Actualmente, determinadas partes del sistema requieren la presencia de módulos como \texttt{bpy}, \texttt{bmesh} o \texttt{mathutils}, lo que dificulta la ejecución de pruebas automatizadas en un entorno Python convencional. Separar el núcleo lógico en módulos independientes permitiría probar de forma más sencilla la validación de datos, el tratamiento de CSV, la anonimización, la deduplicación y el cálculo de métricas, dejando la interacción con Blender en una capa específica de integración.
+
+Una posible reorganización futura consistiría en dividir el sistema en dos niveles. El primero estaría formado por módulos de lógica pura, independientes del entorno gráfico, encargados de procesar datos, validar esquemas, calcular métricas y transformar registros. Estos módulos podrían ejecutarse y probarse con \texttt{unittest} desde un intérprete Python estándar. El segundo nivel correspondería a la integración con Blender, incluyendo paneles, operadores, temporizadores, manejadores internos, acceso a objetos de la escena y generación de visualizaciones dentro del entorno 3D.
+
+Esta separación permitiría distinguir con mayor claridad entre errores de lógica interna y errores derivados del contexto de ejecución de Blender. Además, facilitaría la ampliación del sistema, ya que nuevas funcionalidades podrían desarrollarse y probarse primero en el núcleo lógico antes de integrarse en la interfaz del complemento. También mejoraría la reproducibilidad de las pruebas automatizadas, al evitar que estas dependan innecesariamente de una sesión activa de Blender o de la disponibilidad del módulo \texttt{bpy}.
+
+La ampliación del logger puede realizarse añadiendo nuevos operadores detectables al conjunto de identificadores normalizados y revisando si dichos eventos requieren un registro forzado. Sin embargo, cualquier ampliación de la captura debe realizarse con cautela, ya que un aumento excesivo del número de eventos registrados puede incrementar el tamaño del CSV, introducir ruido en los datos o afectar al rendimiento durante la sesión de modelado. Por ello, cada nuevo evento debería justificarse en función de su utilidad analítica y probarse en sesiones reales de Blender.
+
+En el caso de nuevas visualizaciones, se recomienda mantener separada la lógica de cálculo respecto a la creación de objetos gráficos en Blender. Las funciones encargadas de calcular métricas, normalizar valores o preparar datos deberían ser independientes de las funciones que generan paneles, gráficos o elementos visuales en la escena. Esta separación reduce el acoplamiento, facilita la depuración y permite reutilizar los resultados en otros formatos o herramientas externas.
+
+También sería conveniente reforzar la gestión del formato CSV mediante un esquema más explícito. Aunque el proyecto incorpora una versión de esquema y mecanismos de compatibilidad, futuras ampliaciones deberían documentar con precisión el tipo de cada campo, sus valores permitidos, su significado y su relación con las métricas calculadas. Esto reduciría el riesgo de incompatibilidades entre versiones del logger y del add-on de análisis.
+
+Otra línea de mantenimiento relevante es mejorar la gestión de errores y advertencias. El sistema debería informar de forma clara cuando un CSV no tiene el formato esperado, cuando faltan columnas necesarias, cuando existen valores no válidos o cuando una métrica no puede calcularse con fiabilidad. Estos mensajes son importantes tanto para el usuario final como para la depuración técnica del sistema.
+
+Desde el punto de vista de la privacidad, cualquier ampliación debe revisar qué nuevos datos se registran, si pueden asociarse a una persona o sesión concreta y si deben incluirse en las exportaciones anonimizadas. La incorporación de nuevas métricas o campos de captura debe respetar el principio de minimización de datos, registrando únicamente la información necesaria para los objetivos del análisis.
+
+En resumen, el mantenimiento futuro del proyecto debería centrarse en cuatro líneas principales: conservar la coherencia entre logger, CSV y análisis; separar la lógica independiente de Blender de la capa de integración; reforzar las pruebas automatizadas sobre módulos desacoplados; y documentar con precisión cualquier cambio en métricas, campos registrados o visualizaciones. Estas mejoras permitirían que la \textit{suite} evolucionara de forma más robusta, verificable y mantenible.

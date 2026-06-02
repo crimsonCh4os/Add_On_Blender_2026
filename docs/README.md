@@ -1,35 +1,36 @@
-# Plantilla LaTeX
+# Documentación del proyecto
 
-La plantilla se compone de dos documentos maestros: uno para la memoria y otro para los anexos.
+Esta carpeta contiene la documentación LaTeX de la suite de add-ons para Blender.
 
-- Memoría: ```memoria.tex```
-- Anexos: ```anexos.tex```
+## Documentos principales
 
-En la carpeta ```tex``` se encuentran los distintos documentos que forman los documentos maestros. 
-Dichos documentos contienen las secciones y subsecciones a completar.
-En el documento ```3_Conceptos_teoricos.tex``` se encuentra una breve guía de cómo usar LaTeX y los comandos propios de esta plantilla.
+- `memoria.tex`: documento principal de la memoria.
+- `anexos.tex`: documento principal de los anexos.
+- `tex/`: capítulos y anexos incluidos desde los documentos principales.
+- `diagramas/`: imágenes y diagramas utilizados en la documentación.
+- `img/`: recursos gráficos de la plantilla.
+- `bibliografia.bib` y `bibliografiaAnexos.bib`: bibliografía de memoria y anexos.
 
-# Creación y edición de documentos en LaTeX
+## Compilación
 
-LaTeX es un lenguaje de marcado. 
-Para crear y editar documentos en LaTeX se necesita un editor de LaTeX, que puede estar instalado en nuestro ordenador http://www.xm1math.net/texmaker/, o puede tratarse de un servicio web https://www.overleaf.com/.
+Desde esta carpeta puede compilarse la documentación con:
 
-Un videotutorial de la instalación de Miktex + TexMaker en windows puede verse en 
-https://www.youtube.com/watch?v=DIdHfVpIiAk
+```bash
+pdflatex -interaction=nonstopmode -halt-on-error memoria.tex
+bibtex memoria
+pdflatex -interaction=nonstopmode -halt-on-error memoria.tex
+pdflatex -interaction=nonstopmode -halt-on-error memoria.tex
 
-# Petición de cambios y sugerencias
+pdflatex -interaction=nonstopmode -halt-on-error anexos.tex
+bibtex anexos
+pdflatex -interaction=nonstopmode -halt-on-error anexos.tex
+pdflatex -interaction=nonstopmode -halt-on-error anexos.tex
+```
 
-Se ruega a los alumnos y tutores que detecten fallos o que quieran proponer una sugerencia, que lo notifiquen mediante la creación de una issue https://github.com/ubutfgm/plantillaLatex/issues
+Si no se modifica la bibliografía, normalmente basta con ejecutar `pdflatex` sobre `memoria.tex` y `anexos.tex`.
 
-¡Contribuciones son bienvenidas! Sigue estos pasos para colaborar:
-1. Realiza un fork del repositorio.
-2. Crea una nueva rama (`git checkout -b feature/nueva-funcionalidad`).
-3. Realiza los cambios y haz commit (`git commit -am 'Descripción del cambio'`).
-4. Empuja tus cambios (`git push origin feature/nueva-funcionalidad`).
-5. Abre un Pull Request.
+## Archivos generados
 
-# Gracias a los contribuidores
-César Ignacio García Osorio, Álvar Arnaiz Gonzalez, José Francisco Díez Pastor, Carlos Lopez Nozal.
-Álvaro López Cantero, Roberto Izquierdo Amo, David Miguel Lozano, Daniel Puente Ramírez.
+Los archivos auxiliares de LaTeX (`.aux`, `.log`, `.toc`, `.lof`, `.lot`, `.out`, `.bbl`, `.blg`, etc.) son productos de compilación. Pueden borrarse y regenerarse en cualquier momento.
 
-
+Los PDF finales (`memoria.pdf` y `anexos.pdf`) pueden conservarse si forman parte de la entrega.
