@@ -14,7 +14,7 @@
 bl_info = {
     "name": "Data Logger 3D",
     "author": "Maria",
-    "version": (1, 1, 0),
+    "version": (1, 1, 1),
     "blender": (4, 0, 0),
     "location": "View3D > Sidebar > Data Logger",
     "category": "3D View",
@@ -49,6 +49,12 @@ SESSION_ID = str(uuid.uuid4())
 _WARNINGS = []
 MAX_WARNINGS = 50
 
+# UV coordinate hashing is disabled by default because continuous UV scanning in
+# Edit Mode can slow down Blender and, in large scenes, may cause instability.
+# UV-related UI/debug fields are kept for schema compatibility, but the logger
+# will not compute the expensive UV hash unless this flag is set to True.
+ENABLE_UV_CHANGE_TRACKING = False
+
 
 def log_warning(context, exc=None):
     """Registra advertencias recuperables sin romper la sesión de Blender."""
@@ -71,7 +77,7 @@ def log_warning(context, exc=None):
         txt.clear()
         txt.write("\n".join(_WARNINGS))
     except Exception as inner_exc:
-        print(f"[Data Logger] No se pudo actualizar {WARNINGS_TEXTBLOCK}: {inner_exc}")
+        print(f"[Data Logger] Could not update {WARNINGS_TEXTBLOCK}: {inner_exc}")
 
 
 def get_or_create_textblock(name):
@@ -119,7 +125,7 @@ def clear_logged_data():
         try:
             os.remove(TEMP_CSV_PATH)
         except Exception as exc:
-            log_warning("No se pudo eliminar el CSV temporal", exc)
+            log_warning("Could not delete the temporary CSV", exc)
 
 
 
@@ -376,7 +382,7 @@ def get_camera_pos():
                 pos = r3d.view_matrix.inverted().translation
                 return (float(pos.x), float(pos.y), float(pos.z))
     except Exception as exc:
-        log_warning("No se pudo obtener la posición de cámara", exc)
+        log_warning("Could not get the camera position", exc)
 
     return (0.0, 0.0, 0.0)
 
@@ -416,7 +422,7 @@ def get_scene_radius():
             centers.append(center)
             radii.append(radius)
         except Exception as exc:
-            log_warning(f"No se pudo calcular el radio de escena para {getattr(o, 'name', '?')}", exc)
+            log_warning(f"Could not calculate scene radius for {getattr(o, 'name', '?')}", exc)
             continue
 
     if not centers:
@@ -433,7 +439,7 @@ def count_inverted_normals_object_mode(mesh_obj):
     try:
         return sum(1 for p in mesh_obj.data.polygons if p.normal.dot(p.center) < 0)
     except Exception as exc:
-        log_warning("No se pudieron contar normales invertidas en Object Mode", exc)
+        log_warning("Could not count inverted normals in Object Mode", exc)
         return 0
 
 
@@ -449,10 +455,10 @@ def count_inverted_normals_edit_mode(obj):
                 if f.normal.dot(f.calc_center_median()) < 0:
                     total += 1
             except Exception as exc:
-                log_warning("No se pudo evaluar una cara en Edit Mode", exc)
+                log_warning("Could not evaluate a face in Edit Mode", exc)
         return total
     except Exception as exc:
-        log_warning("No se pudieron contar normales invertidas en Edit Mode", exc)
+        log_warning("Could not count inverted normals in Edit Mode", exc)
         return 0
 
 
@@ -480,7 +486,7 @@ def get_mesh_stats(obj):
             inverted = count_inverted_normals_edit_mode(obj)
             return (verts, ngons, tris, inverted)
         except Exception as exc:
-            log_warning("No se pudieron obtener estadísticas de malla en Edit Mode", exc)
+            log_warning("Could not get mesh statistics in Edit Mode", exc)
 
     try:
         verts = len(obj.data.vertices)
@@ -489,11 +495,14 @@ def get_mesh_stats(obj):
         inverted = count_inverted_normals_object_mode(obj)
         return (verts, ngons, tris, inverted)
     except Exception as exc:
-        log_warning("No se pudieron obtener estadísticas de malla en Object Mode", exc)
+        log_warning("Could not get mesh statistics in Object Mode", exc)
         return (0, 0, 0, 0)
 
 
 def get_global_uv_hash():
+    if not ENABLE_UV_CHANGE_TRACKING:
+        return "UV_TRACKING_DISABLED"
+
     chunks = []
 
     for obj in bpy.context.scene.objects:
@@ -531,7 +540,7 @@ def get_global_uv_hash():
                 chunks.append((obj.name, tuple(uv_data)))
 
         except Exception as exc:
-            log_warning(f"No se pudo calcular hash UV para {getattr(obj, 'name', '?')}", exc)
+            log_warning(f"Could not calculate UV hash for {getattr(obj, 'name', '?')}", exc)
             chunks.append((obj.name, "UV_ERROR"))
 
     return hashlib.sha256(str(chunks).encode()).hexdigest()
@@ -550,7 +559,7 @@ def get_occlusion_state():
 
                 return int(is_wireframe or is_xray)
     except Exception as exc:
-        log_warning("No se pudo leer el estado de oclusión", exc)
+        log_warning("Could not read occlusion state", exc)
 
     return 0
 
@@ -592,9 +601,16 @@ def normalize_operator_name(bl_idname):
 
 def mark_uv_pending():
     global _uv_action_pending, _uv_last_action_time, DEBUG_UV_PENDING
+
+    if not ENABLE_UV_CHANGE_TRACKING:
+        _uv_action_pending = 0
+        DEBUG_UV_PENDING = 0
+        return False
+
     _uv_action_pending = 1
     _uv_last_action_time = time.time()
     DEBUG_UV_PENDING = 1
+    return True
 
 
 def detect_flags_from_operator(bl_idname):
@@ -640,9 +656,9 @@ def detect_flags_from_operator(bl_idname):
             operator_flags["merge"] = 1
             changed = True
 
-    if op in UV_DEPLOY_OPS or op in UV_ASSOCIATED_OPS:
-        mark_uv_pending()
-        changed = True
+    if op in UV_DEPLOY_OPS or op in UV_ASSOCIATED_OPS or op.startswith("uv."):
+        if mark_uv_pending():
+            changed = True
 
     DEBUG_LAST_FLAGS = (
         f"CtrlV={operator_flags['ctrl_v']} "
@@ -674,7 +690,7 @@ def process_new_operators():
             try:
                 bl_id = ops[i].bl_idname
             except Exception as exc:
-                log_warning("No se pudo leer un operador reciente", exc)
+                log_warning("Could not read a recent operator", exc)
                 continue
 
             if detect_flags_from_operator(bl_id):
@@ -682,7 +698,7 @@ def process_new_operators():
 
         _last_operator_index = count
     except Exception as exc:
-        log_warning("No se pudieron procesar nuevos operadores", exc)
+        log_warning("Could not process new operators", exc)
         return False
 
     return changed
@@ -710,7 +726,7 @@ class VIEW3D_OT_paste_logger(bpy.types.Operator):
             force_log_soon()
             return {'FINISHED'}
         except Exception as e:
-            self.report({'WARNING'}, f"No se pudo pegar desde el portapapeles: {e}")
+            self.report({'WARNING'}, f"Could not paste from the clipboard: {e}")
             return {'CANCELLED'}
 
 
@@ -829,7 +845,7 @@ def init_state():
     try:
         _last_operator_index = len(bpy.context.window_manager.operators)
     except Exception as exc:
-        log_warning("No se pudo inicializar el índice de operadores", exc)
+        log_warning("Could not initialize the operator index", exc)
         _last_operator_index = 0
 
 # CONTROL LOGGER
@@ -852,14 +868,14 @@ def start_logger():
 
     timer_running = True
     bpy.app.timers.register(logger_timer)
-    print("Data Logger iniciado.")
+    print("Data Logger started.")
 
 
 def stop_logger():
     global timer_running
     timer_running = False
     import_csv_to_blend()
-    print("Data Logger detenido.")
+    print("Data Logger stopped.")
 
 
 class WM_OT_data_logger_toggle(bpy.types.Operator):
@@ -869,10 +885,18 @@ class WM_OT_data_logger_toggle(bpy.types.Operator):
     def execute(self, context):
         if timer_running:
             stop_logger()
-            self.report({'INFO'}, "Logger detenido.")
-        else:
-            start_logger()
-            self.report({'INFO'}, "Logger iniciado.")
+            self.report({'INFO'}, "Logger stopped.")
+            return {'FINISHED'}
+
+        # No se permite iniciar la captura sin consentimiento aceptado.
+        consent_text = get_consent_textblock()
+        if "ACCEPTED" not in consent_text.as_string():
+            bpy.ops.wm.data_logger_consent('INVOKE_DEFAULT')
+            self.report({'WARNING'}, "Consent is required before starting the logger.")
+            return {'CANCELLED'}
+
+        start_logger()
+        self.report({'INFO'}, "Logger started.")
         return {'FINISHED'}
 
 
@@ -1106,7 +1130,7 @@ def unregister_keymaps():
         try:
             km.keymap_items.remove(kmi)
         except Exception as exc:
-            log_warning("No se pudo eliminar un keymap del logger", exc)
+            log_warning("Could not remove a logger keymap", exc)
     addon_keymaps.clear()
 
 
@@ -1118,7 +1142,7 @@ def get_consent_textblock():
 
 class DATA_LOGGER_OT_ConsentPopup(bpy.types.Operator):
     bl_idname = "wm.data_logger_consent"
-    bl_label = "Consentimiento de recopilación de datos"
+    bl_label = "Data Collection Consent"
 
     def execute(self, context):
         consent_text = get_consent_textblock()
@@ -1126,11 +1150,14 @@ class DATA_LOGGER_OT_ConsentPopup(bpy.types.Operator):
         consent_text.write("ACCEPTED")
         consent_text.use_fake_user = True
         start_logger()
-        self.report({'INFO'}, "Consentimiento aceptado.")
+        self.report({'INFO'}, "Consent accepted.")
         return {'FINISHED'}
 
     def cancel(self, context):
-        bpy.ops.wm.data_logger_consent('INVOKE_DEFAULT')
+        # Si el usuario cancela, no se guarda consentimiento
+        # y no se inicia la captura.
+        clear_consent()
+        self.report({'INFO'}, "Consent cancelled. Logger not started.")
         return {'CANCELLED'}
 
     def invoke(self, context, event):
@@ -1139,14 +1166,14 @@ class DATA_LOGGER_OT_ConsentPopup(bpy.types.Operator):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="¿Aceptas la recopilación de datos técnicos?")
-        layout.label(text="(Transformaciones, UV, duplicados, modificadores, etc.)")
-        layout.label(text="Debes guardar el .blend para recordar este consentimiento.")
+        layout.label(text="Do you accept technical data collection?")
+        layout.label(text="(Transforms, duplicates, modifiers, etc.)")
+        layout.label(text="Save the .blend file to remember this consent.")
 
 
 class DATA_LOGGER_OT_AutoRunWarning(bpy.types.Operator):
     bl_idname = "wm.data_logger_autorun_warning"
-    bl_label = "Auto Run desactivado"
+    bl_label = "Auto Run Disabled"
     _timer = None
 
     def modal(self, context, event):
@@ -1172,11 +1199,11 @@ class DATA_LOGGER_OT_AutoRunWarning(bpy.types.Operator):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Auto Run no está activado.", icon='ERROR')
+        layout.label(text="Auto Run is not enabled.", icon='ERROR')
         layout.separator()
         layout.label(text="Edit → Preferences → File Paths → Auto Run Python Scripts")
         layout.separator()
-        layout.label(text="Esta ventana permanecerá abierta hasta que lo actives.")
+        layout.label(text="This window will stay open until you enable it.")
 
 
 @persistent
@@ -1220,20 +1247,20 @@ class DATA_LOGGER_PT_Panel(bpy.types.Panel):
         layout = self.layout
 
         box = layout.box()
-        box.label(text="Estado del logger:")
-        box.label(text="Activo" if timer_running else "Detenido")
+        box.label(text="Logger status:")
+        box.label(text="Running" if timer_running else "Stopped")
 
         button_text = "Stop Logger" if timer_running else "Start Logger"
         button_icon = "PAUSE" if timer_running else "PLAY"
         box.operator("wm.data_logger_toggle", text=button_text, icon=button_icon)
 
         layout.separator()
-        layout.label(text="Exportar registros a CSV:")
+        layout.label(text="Export logs to CSV:")
         layout.operator("wm.data_logger_export_csv", icon="EXPORT")
         layout.operator("wm.data_logger_export_csv_anonymous", icon="EXPORT")
 
         layout.separator()
-        layout.label(text="Privacidad:")
+        layout.label(text="Privacy:")
         layout.operator("wm.data_logger_reset_user_id", icon="FILE_REFRESH")
         layout.operator("wm.data_logger_clear_consent", icon="X")
         layout.operator("wm.data_logger_clear_logged_data", icon="TRASH")
@@ -1256,6 +1283,7 @@ class DATA_LOGGER_PT_DebugPanel(bpy.types.Panel):
         col.label(text=f"Last log reason: {DEBUG_LAST_LOG_REASON or '-'}")
         col.label(text=f"Last rebase: {DEBUG_LAST_REBASE_REASON or '-'}")
         col.separator()
+        col.label(text=f"UV tracking: {'ON' if ENABLE_UV_CHANGE_TRACKING else 'OFF'}")
         col.label(text=f"UV pending: {DEBUG_UV_PENDING}")
         col.label(text=f"UV hash changed: {DEBUG_UV_HASH_CHANGED}")
         col.separator()
@@ -1264,7 +1292,7 @@ class DATA_LOGGER_PT_DebugPanel(bpy.types.Panel):
         col.label(text=f"Active object: {get_active_object_name() or '-'}")
         col.label(text=f"Mode: {bpy.context.mode}")
         col.separator()
-        col.label(text="Últimas advertencias:")
+        col.label(text="Latest warnings:")
         for warning in _WARNINGS[-5:]:
             col.label(text=warning[:90])
 
@@ -1273,16 +1301,16 @@ def _export_csv_content(context, operator, anonymize=False):
     blend_path = bpy.data.filepath
 
     if not blend_path:
-        operator.report({'ERROR'}, "Guarda el archivo .blend antes de exportar.")
+        operator.report({'ERROR'}, "Save the .blend file before exporting.")
         return {'CANCELLED'}
 
     if DATA_TEXTBLOCK not in bpy.data.texts:
-        operator.report({'ERROR'}, "No hay CSV incrustado para exportar.")
+        operator.report({'ERROR'}, "There is no embedded CSV to export.")
         return {'CANCELLED'}
 
     content = bpy.data.texts[DATA_TEXTBLOCK].as_string()
     if not content.strip():
-        operator.report({'WARNING'}, "El CSV está vacío.")
+        operator.report({'WARNING'}, "The CSV is empty.")
         return {'CANCELLED'}
 
     content = upgrade_csv_content_to_v2(content)
@@ -1298,17 +1326,17 @@ def _export_csv_content(context, operator, anonymize=False):
         with open(csv_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(content)
     except Exception as exc:
-        log_warning("No se pudo guardar el CSV exportado", exc)
-        operator.report({'ERROR'}, f"No se pudo guardar el CSV: {exc}")
+        log_warning("Could not save the exported CSV", exc)
+        operator.report({'ERROR'}, f"Could not save the CSV: {exc}")
         return {'CANCELLED'}
 
-    operator.report({'INFO'}, f"Datos exportados correctamente: {csv_path}")
+    operator.report({'INFO'}, f"Data exported successfully: {csv_path}")
     return {'FINISHED'}
 
 
 class DATA_LOGGER_OT_ExportCSV(bpy.types.Operator):
     bl_idname = "wm.data_logger_export_csv"
-    bl_label = "Exportar a CSV"
+    bl_label = "Export to CSV"
 
     def execute(self, context):
         return _export_csv_content(context, self, anonymize=False)
@@ -1316,7 +1344,7 @@ class DATA_LOGGER_OT_ExportCSV(bpy.types.Operator):
 
 class DATA_LOGGER_OT_ExportCSVAnonymous(bpy.types.Operator):
     bl_idname = "wm.data_logger_export_csv_anonymous"
-    bl_label = "Exportar CSV sin UserID"
+    bl_label = "Export CSV without UserID"
 
     def execute(self, context):
         return _export_csv_content(context, self, anonymize=True)
@@ -1324,31 +1352,31 @@ class DATA_LOGGER_OT_ExportCSVAnonymous(bpy.types.Operator):
 
 class DATA_LOGGER_OT_ResetUserID(bpy.types.Operator):
     bl_idname = "wm.data_logger_reset_user_id"
-    bl_label = "Regenerar UserID"
+    bl_label = "Regenerate UserID"
 
     def execute(self, context):
         new_id = reset_user_id()
-        self.report({'INFO'}, f"Nuevo UserID generado: {new_id[:8]}...")
+        self.report({'INFO'}, f"New UserID generated: {new_id[:8]}...")
         return {'FINISHED'}
 
 
 class DATA_LOGGER_OT_ClearConsent(bpy.types.Operator):
     bl_idname = "wm.data_logger_clear_consent"
-    bl_label = "Borrar consentimiento"
+    bl_label = "Clear Consent"
 
     def execute(self, context):
         clear_consent()
-        self.report({'INFO'}, "Consentimiento eliminado.")
+        self.report({'INFO'}, "Consent cleared.")
         return {'FINISHED'}
 
 
 class DATA_LOGGER_OT_ClearLoggedData(bpy.types.Operator):
     bl_idname = "wm.data_logger_clear_logged_data"
-    bl_label = "Borrar datos incrustados"
+    bl_label = "Clear Embedded Data"
 
     def execute(self, context):
         clear_logged_data()
-        self.report({'INFO'}, "Datos del logger eliminados.")
+        self.report({'INFO'}, "Logger data cleared.")
         return {'FINISHED'}
 
 
@@ -1384,7 +1412,7 @@ def register():
     if operator_tracker not in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.append(operator_tracker)
 
-    print("Data Logger cargado correctamente.")
+    print("Data Logger loaded successfully.")
 
 
 def unregister():
@@ -1403,7 +1431,7 @@ def unregister():
         try:
             bpy.utils.unregister_class(cls)
         except Exception as exc:
-            log_warning(f"No se pudo desregistrar la clase {getattr(cls, '__name__', cls)}", exc)
+            log_warning(f"Could not unregister class {getattr(cls, '__name__', cls)}", exc)
 
 
 if __name__ == "__main__":

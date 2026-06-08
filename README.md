@@ -1,18 +1,19 @@
 # Herramientas para la monitorización y análisis de procesos de modelado 3D en Blender
 
-Suite de add-ons para Blender orientada al registro (logging), análisis y visualización de procesos de modelado 3D.
+Suite de *add-ons* para Blender orientada al registro (*logging*), análisis y visualización de procesos de modelado 3D.
 
 El proyecto se divide en dos componentes principales:
 
-1. **Data Logger 3D**: add-on encargado de registrar eventos técnicos de una sesión de modelado 3D en Blender.
-2. **Analysis 3D**: add-on encargado de procesar los archivos CSV generados y calcular métricas sobre la sesión registrada.
+1. **Data Logger 3D**: *add-on* encargado de registrar eventos técnicos de una sesión de modelado 3D en Blender.
+2. **Analysis 3D**: *add-on* encargado de procesar los archivos CSV generados y calcular métricas sobre la sesión registrada.
 
 ## Estructura del repositorio
 
 ```text
 GitHub/
 ├── Data_Logger_3D.py        # Add-on de captura de eventos
-├── Analysis_3D/             # Add-on de análisis y visualización
+├── Analysis_3D.zip          # ZIP instalable del add-on de análisis
+├── Analysis_3D/             # Código fuente del add-on de análisis y visualización
 ├── core/                    # Lógica desacoplada (agnóstica a Blender)
 ├── tests/                   # Pruebas automatizadas (unittest)
 ├── docs/                    # Memoria, manuales y documentación técnica
@@ -20,28 +21,57 @@ GitHub/
 ├── requirements.txt         # Dependencias para Analysis 3D
 ├── README.md
 └── LICENSE
-
 ```
 
 ## Licencia
 
 Este software se distribuye bajo la licencia **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`). Consulta el archivo `LICENSE` incluido en el repositorio.
 
+## Compatibilidad
+
+* **Blender**: 4.0 o superior.
+* **Python de Blender**: versión incluida con Blender 4.x.
+* **Sistemas operativos**: Windows, Linux y macOS.
+
 ## Instalación
+
+Antes de instalar los *add-ons*, se recomienda activar la ejecución automática de scripts de Python en Blender:
+
+1. Abre Blender.
+2. Ve a `Edit > Preferences > File Paths`.
+3. Activa la opción `Auto Run Python Scripts`.
+4. Guarda las preferencias si Blender lo solicita.
+
+Esta opción es necesaria para que Blender pueda ejecutar correctamente scripts y *add-ons* de Python al abrir archivos `.blend` o al cargar extensiones instaladas.
 
 ### Data Logger 3D
 
 1. Abre Blender.
 2. Ve a `Edit > Preferences > Add-ons`.
-3. Pulsa `Install...` y selecciona el archivo `Data_Logger_3D.py`.
-4. Activa el add-on **Data Logger 3D**.
-5. En la Vista 3D, presiona `N` para abrir la barra lateral y accede a la pestaña **Data Logger**.
+3. Pulsa el botón `Install...`.
+   * En algunas versiones de Blender, el botón `Install...` está oculto dentro del menú de configuración de *add-ons*, situado en la esquina superior derecha del panel de *Add-ons*. Se accede mediante el icono con una flecha o menú desplegable.
+4. Selecciona el archivo `Data_Logger_3D.py`.
+5. Activa el *add-on* **Data Logger 3D**.
+6. En la Vista 3D, presiona `N` para abrir la barra lateral y accede a la pestaña **Data Logger**.
 
 ### Analysis 3D
 
-1. Sigue los pasos 1 a 3 anteriores seleccionando la carpeta o el ZIP de `Analysis_3D`.
-2. Activa el add-on **Analysis 3D**.
-3. *Nota:* `Analysis 3D` requiere `numpy` y `matplotlib`. Si el Python interno de Blender no dispone de estas librerías, instálalas en el entorno de Python de Blender.
+1. Abre Blender.
+2. Ve a `Edit > Preferences > Add-ons`.
+3. Pulsa `Install...`.
+   * Si el botón no aparece directamente, abre el menú de configuración de *add-ons* situado en la esquina superior derecha del panel.
+4. Selecciona siempre el archivo ZIP instalable de `Analysis_3D`, por ejemplo `Analysis_3D.zip`.
+5. Activa el *add-on* **Analysis 3D**.
+
+No debe seleccionarse la carpeta `Analysis_3D` para instalar el *add-on*, ya que Blender solo abrirá el directorio. La instalación debe realizarse siempre a partir del archivo ZIP.
+
+## Dependencias de entorno
+
+`Analysis 3D` incluye las librerías externas necesarias dentro de la propia estructura del addon, por lo que el usuario final no necesita instalar manualmente `numpy`, `matplotlib` ni otras dependencias en el Python integrado de Blender.
+
+Esta decisión evita modificar la instalación local de Blender y facilita el uso del addon en ordenadores nuevos. Al instalar y activar el addon, este carga las dependencias incluidas junto al código del proyecto.
+
+Solo sería necesario instalar dependencias manualmente en un entorno de desarrollo, o si se utiliza una versión del addon que no incluya las librerías externas empaquetadas.
 
 ## Uso básico
 
@@ -49,156 +79,70 @@ Este software se distribuye bajo la licencia **GNU General Public License v3.0 o
 
 Desde el panel **Data Logger** puedes:
 
-* **Start/Stop Logger**: Gestiona el inicio y fin de la sesión.
-* **Exportar a CSV**: Guarda el registro en un archivo externo.
-* **Privacidad**: Exportar sin `UserID`, regenerar identificadores o borrar datos incrustados en el `.blend`.
+* **Start/Stop Logger**: inicia o detiene la captura de la sesión.
+* **Export to CSV**: guarda el registro en un archivo CSV externo.
+* **Export anonymous CSV**: exporta una copia sin `UserID`.
+* **Privacy**: permite regenerar el identificador, borrar el consentimiento o eliminar datos incrustados.
+
+El *add-on* guarda los datos dentro del propio archivo `.blend` como un bloque de texto interno. Por tanto, aunque no se exporte el CSV inmediatamente, el registro puede quedar incrustado en el archivo de Blender si la sesión se ha guardado correctamente.
+
+### Extracción de CSV incrustados en el `.blend`
+
+Además de usar los botones de exportación del *add-on*, los CSV pueden recuperarse manualmente desde Blender porque se almacenan como bloques de texto internos.
+
+Para extraerlos:
+
+1. Abre el archivo `.blend` que contiene la sesión registrada.
+2. Cambia un área de Blender al editor `Text Editor`.
+3. En el selector de textos, busca el bloque `data_log_internal.csv`.
+4. Abre ese bloque de texto.
+5. Usa `Text > Save As...` para guardarlo como archivo `.csv` externo.
+
+También puede aparecer el bloque `data_logger_warnings.txt`, que contiene advertencias recuperables del sistema de captura.
 
 ### Analysis 3D
 
 1. Selecciona un archivo CSV generado por **Data Logger 3D**.
-2. Carga el archivo y ejecuta el cálculo de métricas para visualizar los resultados.
+2. Carga el archivo desde el panel de **Analysis 3D**.
+3. Ejecuta el cálculo de métricas.
+4. Revisa los resultados y, si procede, genera visualizaciones.
 
 ### Debug
 
-El panel **Data Logger Debug** ofrece telemetría en tiempo real: último operador, estado de UV, advertencias y logs almacenados en el Text Block `data_logger_warnings.txt`.
+El panel **Data Logger Debug** ofrece telemetría en tiempo real: último operador detectado, razón del último registro, estado de UV, advertencias y logs almacenados en el bloque de texto `data_logger_warnings.txt`.
 
 ## Formato CSV
 
 El proyecto soporta dos esquemas:
 
-* **v1**: Formato heredado (incluye `USER_ID`).
-* **v2**: Formato actual (incluye `SchemaVersion`, `LoggerVersion`, `SessionID` y `UserID`).
+* **v1**: formato heredado, con `USER_ID`.
+* **v2**: formato actual, con `SchemaVersion`, `LoggerVersion`, `SessionID` y `UserID`.
 
-`Analysis 3D` normaliza automáticamente los archivos v1. Especificaciones completas en [`docs/CSV_SCHEMA.md`](docs/CSV_SCHEMA.md).
+`Analysis 3D` normaliza automáticamente los archivos v1. Las especificaciones completas se encuentran en [`docs/CSV_SCHEMA.md`](docs/CSV_SCHEMA.md).
 
 ## Datos CSV de ejemplo
 
-La entrega limpia no incluye CSV reales de participantes para evitar riesgos de identificación indirecta. Para la defensa se recomienda generar un CSV nuevo durante la demostración o incluir únicamente una versión revisada y anonimizada.
+La entrega incluye CSV de ejemplo anonimizados para permitir la comprobación del funcionamiento de las herramientas sin utilizar datos identificables de participantes.
 
-Si se añade un CSV de ejemplo, debe comprobarse que no contiene nombres propios, rutas locales, identificadores personales ni valores que permitan vincular directa o indirectamente el registro con una persona concreta.
-
-
-## Vídeo demostrativo
-
-La entrega incluye un vídeo demostrativo del funcionamiento completo del sistema. En el vídeo se muestra el flujo principal de uso: activación de los add-ons en Blender, inicio de una sesión de captura, realización de operaciones de modelado, exportación del CSV, carga del archivo en `Analysis 3D`, cálculo de métricas y generación de visualizaciones.
-
-Este vídeo se considera una evidencia complementaria de validación funcional y no sustituye a las pruebas automatizadas ni a la validación manual indicada en `docs/VALIDACION_BLENDER.md`.
+Estos ficheros se han revisado para evitar la inclusión de nombres propios, rutas locales, identificadores personales u otros valores que puedan vincular directa o indirectamente los registros con una persona concreta.
 
 ## Pruebas automatizadas
 
 El proyecto utiliza `unittest` para validar la lógica desacoplada (`core/` y lógica de análisis).
 
-**Ejecución (Raíz del proyecto):**
+Ejecución desde la raíz del proyecto:
 
-* **Linux/macOS:** `PYTHONPATH=. python3 -m unittest discover -s tests -v`
-* **Windows (PowerShell):** `$env:PYTHONPATH="."; python -m unittest discover -s tests -v`
-
-> **Nota:** Las pruebas automatizadas no sustituyen la validación funcional dentro de Blender (UI, contextos, operadores). Para la ejecución de los mismos Analysis_3D debe ser extraido en la raiz del proyecto.
-
-## Dependencias y Entorno
-
-`Analysis 3D` requiere `numpy` y `matplotlib`. Para instalar librerías en el Python interno de Blender:
+* **Linux/macOS:**
 
 ```bash
-# Localizar el ejecutable de Python de Blender
-blender --background --python-expr "import sys; print(sys.executable)"
-
-# Instalar dependencias (usando la ruta obtenida arriba)
-/ruta/al/python/de/blender -m pip install -r requirements.txt
-
+PYTHONPATH=. python3 -m unittest discover -s tests -v
 ```
 
-## Entorno de validación
-
-Las pruebas automatizadas del proyecto se ejecutan fuera de Blender mediante `unittest`. La funcionalidad integrada con la interfaz, los operadores y el ciclo de vida de los add-ons debe validarse además dentro de Blender.
-
-Las pruebas automatizadas de esta entrega limpia se han verificado fuera de Blender con el siguiente entorno:
-
-| Componente | Versión probada | Observaciones |
-|---|---|---|
-| Python externo | 3.13.5 | Usado para ejecutar `unittest` fuera de Blender. |
-| NumPy externo | 2.3.5 | Disponible en el entorno de pruebas externo. |
-| Matplotlib externo | 3.10.8 | Disponible en el entorno de pruebas externo. |
-| Pruebas automatizadas | 51 OK, 3 omitidas | Las 3 omitidas dependen de `mathutils`/Blender. |
-| Blender | No validado en este entorno | Debe completarse en el equipo real de defensa. |
-| Python de Blender | No validado en este entorno | Obtener con `blender --background --python-expr "import sys; print(sys.version)"`. |
-| NumPy en Blender | No validado en este entorno | Obtener desde el Python de Blender con `import numpy; print(numpy.__version__)`. |
-| Matplotlib en Blender | No validado en este entorno | Obtener desde el Python de Blender con `import matplotlib; print(matplotlib.__version__)`. |
-| Sistema operativo de validación manual | No validado en este entorno | Indicar sistema y versión usados en las pruebas manuales. |
-
-## Validación funcional en Blender
-
-La siguiente tabla debe utilizarse como registro de validación manual. No debe darse por superada una fila si no se ha comprobado en Blender con el entorno indicado en la sección anterior.
-
-| Prueba manual | Resultado | Evidencia recomendada |
-|---|---|---|
-| Instalación de `Data_Logger_3D.py` desde `Edit > Preferences > Add-ons > Install...` | No validado en este entorno | Captura del add-on instalado o anotación de versión de Blender. |
-| Activación de `Data Logger 3D` sin errores en consola | No validado en este entorno | Captura del panel lateral o salida de consola sin errores. |
-| Inicio y parada del logger desde el panel | No validado en este entorno | Captura del estado activo/detenido. |
-| Exportación de CSV con cabecera v2 | No validado en este entorno | CSV generado y comprobación de cabecera según `docs/CSV_SCHEMA.md`. |
-| Exportación anónima sin `UserID` | No validado en este entorno | CSV exportado verificando la eliminación del identificador. |
-| Instalación y activación de `Analysis_3D` | No validado en este entorno | Captura del add-on activo. |
-| Carga de CSV generado por el logger | No validado en este entorno | Captura del panel de análisis tras cargar el CSV. |
-| Cálculo de métricas sobre el CSV | No validado en este entorno | Captura o registro de métricas calculadas. |
-| Generación de visualizaciones/gráficos | No validado en este entorno | Captura de gráfico o visualización 3D. |
-| Recarga de Blender con el add-on activado | No validado en este entorno | Verificar que no se duplican handlers, keymaps ni errores de registro. |
-
-
-## Compatibilidad
-
-* **Blender**: 4.0 o superior.
-* **SO**: Windows, Linux y macOS.
-
-## Privacidad
-
-El `UserID` es un identificador seudónimo generado mediante UUID. No se almacenan datos personales (nombres de usuario o rutas locales). El proyecto proporciona herramientas específicas para la eliminación de datos y la gestión del consentimiento dentro del archivo `.blend`.
-
-
-
-## Estructura de entrega final
-
-La entrega conserva una estructura doble para facilitar tanto la evaluación automática como la instalación manual en Blender:
-
-```text
-ActualV4/
-├── Data_Logger_3D.py                 # Copia en raíz para pruebas automáticas
-├── Analysis_3D/                      # Paquete extraído para pruebas automáticas
-├── historial_desarrollo/             # Versiones antiguas
-│   ├── addon_deteccion_datos/
-│   │   ├── Deteccion_Datos.py
-│   │   ├── Deteccion_DatosV2.py
-│   │   ├── Deteccion_DatosV3.py
-│   │   ├── DeteccionDatosV4.py
-│   │   ├── DeteccionDatosV5.py
-│   │   └── DeteccionDatosV6.py
-│   ├── addon_analisis_datos/
-│   │   ├── analisisV1
-│   │   ├── analisisV2
-│   │   ├── analisisV3.zip
-│   │   ├── analisisV4.zip
-│   │   ├── analisisV5.zip
-│   │   ├── analisisV6.zip
-│   │   └── analisisV7.zip
-├── core/
-├── tests/
-├── docs/
-├── datos_analisis/
-├── requirements.txt
-├── README.md
-├── LICENSE
-└── TEST_RESULTS.txt
-```
-
-Para ejecutar las pruebas desde Windows PowerShell:
+* **Windows PowerShell:**
 
 ```powershell
-$env:PYTHONPATH="."; python -m unittest discover -s tests -v
-```
-
-En Linux/macOS:
-
-```bash
-PYTHONPATH=. python -m unittest discover -s tests -v
+$env:PYTHONPATH="."
+python -m unittest discover -s tests -v
 ```
 
 Resultado esperado fuera de Blender:
@@ -208,9 +152,66 @@ Ran 51 tests
 OK (skipped=3)
 ```
 
-Las pruebas omitidas dependen de `mathutils`, disponible en el entorno Python de Blender.
+Las pruebas omitidas dependen de `mathutils`, disponible en el entorno Python de Blender. Para ejecutar correctamente las pruebas, `Analysis_3D` debe estar extraído en la raíz del proyecto.
 
-## Vídeo demostrativo
+## Entorno de validación
 
-La entrega incluye un vídeo demostrativo del flujo completo de uso del proyecto: instalación/activación de los add-ons, registro de una sesión, exportación CSV, carga en Analysis 3D, cálculo de métricas y generación de gráficos.
+Las pruebas automatizadas del proyecto se ejecutan fuera de Blender mediante `unittest`. La funcionalidad integrada con la interfaz, los operadores, los paneles y el ciclo de vida de los *add-ons* debe comprobarse además dentro de Blender.
 
+La siguiente tabla resume el entorno utilizado o pendiente de validación, separando las pruebas automáticas externas de la validación manual en Blender:
+
+| Componente | Estado | Observaciones |
+|---|---|---|
+| Python externo | Validado con Python 3.13.5 | Usado para ejecutar `unittest` fuera de Blender. |
+| NumPy externo | Validado con NumPy 2.3.5 | Disponible en el entorno de pruebas externo. |
+| Matplotlib externo | Validado con Matplotlib 3.10.8 | Disponible en el entorno de pruebas externo. |
+| Pruebas automatizadas | 51 OK, 3 omitidas | Las 3 omitidas dependen de `mathutils`/Blender. |
+| Blender 4.x | Requiere validación manual | Debe comprobarse en el equipo donde se instalen los *add-ons*. |
+| Python interno de Blender | Requiere comprobación local | Obtener con `blender --background --python-expr "import sys; print(sys.version)"`. |
+| NumPy y Matplotlib en Blender | Requiere comprobación local | Verificar desde el Python interno de Blender. |
+
+## Desinstalación
+
+### Desinstalar Data Logger 3D
+
+1. Abre Blender.
+2. Ve a `Edit > Preferences > Add-ons`.
+3. Busca **Data Logger 3D**.
+4. Desactiva el *add-on*.
+5. Pulsa `Remove` si quieres eliminarlo de la instalación de Blender.
+
+Los datos incrustados en archivos `.blend` existentes no se eliminan automáticamente al desinstalar el *add-on*. Para borrarlos dentro de una escena, usa el botón de borrado de datos del panel o elimina manualmente los bloques de texto `data_log_internal.csv`, `data_logger_user_id`, `consent_flag` y `data_logger_warnings.txt` desde el `Text Editor`.
+
+### Desinstalar Analysis 3D
+
+1. Abre Blender.
+2. Ve a `Edit > Preferences > Add-ons`.
+3. Busca **Analysis 3D**.
+4. Desactiva el *add-on*.
+5. Pulsa `Remove` si quieres eliminarlo de la instalación de Blender.
+
+## Privacidad
+
+El `UserID` es un identificador seudónimo generado mediante UUID. No se almacenan datos personales como nombres de usuario o rutas locales. El proyecto proporciona herramientas específicas para la eliminación de datos, la exportación anónima y la gestión del consentimiento dentro del archivo `.blend`.
+
+## Estructura de entrega final
+
+La entrega conserva una estructura doble para facilitar tanto la evaluación automática como la instalación manual en Blender:
+
+```text
+ActualV4/
+├── Data_Logger_3D.py                 # Copia en raíz para pruebas automáticas
+├── Analysis_3D.zip                   # ZIP instalable en Blender
+├── Analysis_3D/                      # Paquete extraído para pruebas automáticas
+├── historial_desarrollo/             # Versiones antiguas
+│   ├── addon_deteccion_datos/
+│   └── addon_analisis_datos/
+├── core/
+├── tests/
+├── docs/
+├── datos_analisis/
+├── requirements.txt
+├── README.md
+├── LICENSE
+└── TEST_RESULTS.txt
+```

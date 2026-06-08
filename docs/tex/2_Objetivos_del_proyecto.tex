@@ -1,12 +1,12 @@
 \capitulo{2}{Objetivos del proyecto}
 
-El propósito principal de este proyecto es el desarrollo, y ejecución de un sistema de software modular destinado a registrar, analizar y mostrar en automático las interacciones del usuario en entornos de modelado tridimensional, utilizando Blender como base para tal desarrollo.
+El propósito principal de este proyecto es el desarrollo, y ejecución de un sistema de software modular destinado a registrar, analizar y mostrar las interacciones del usuario en entornos de modelado tridimensional, utilizando Blender como base para tal desarrollo~\cite{blenderapi,pressman2005}.
 
-La función central de este programa es proporcionar un sistema fuerte que capture y organize información del proceso de diseño de forma automática y transparente, de forma que permita un análisis estadístico posterior. Por tanto, el objetivo es conseguir métricas objetivas sobre el comportamiento del usuario, el nivel de uso de herramientas y la transformación geométrica de las escenas, aportando un mayor conocimiento del proceso de modelado tridimensional~\cite{jankowski2014,lavioila2017}.
+La función central de este programa es proporcionar un sistema fuerte que capture y organize información del proceso de diseño de forma automática y transparente, de forma que permita un análisis estadístico posterior. Por tanto, el objetivo es conseguir métricas objetivas sobre el comportamiento del usuario, el nivel de uso de herramientas y la transformación geométrica de las escenas, aportando un mayor conocimiento del proceso de modelado tridimensional~\cite{jankowski2014,gao2021}.
 
-La solución desarrollada se enfoca en capturar información útil sobre el proceso de modelado sin afectar el rendimiento del entorno o el flujo de trabajo del usuario. Con esto, es posible analizar los conjuntos de datos generados para investigar cómo se construyen los modelos tridimensionales, cuáles operaciones son más comunes y qué acontecimientos ocurren dentro del entorno virtual~\cite{bowman2004}.
+La solución desarrollada se enfoca en capturar información útil sobre el proceso de modelado sin afectar el rendimiento del entorno o el flujo de trabajo del usuario. Con esto, es posible analizar los conjuntos de datos generados para investigar cómo se construyen los modelos tridimensionales, cuáles operaciones son más comunes y qué acontecimientos ocurren dentro del entorno virtual~\cite{xie2014,liu2022}.
 
-El proyecto considera todo el proceso de recopilación y conservación de datos, así como su posterior procesamiento analítico y visualización. El sistema dispone de técnicas capaces de explorar la información recolectada desde múltiples perspectivas: el seguimiento del tiempo, el análisis de la evolución de la malla geométrica, el descubrimiento de eventos de modelado por requerimiento y la representación gráfica de métricas directamente en el mismo espacio tridimensional. Este modelo coincide con las estrategias actuales vinculadas al análisis de la interacción en entornos virtuales y a los sistemas avanzados de modelado asistido~\cite{malik2023}.
+El proyecto considera todo el proceso de recopilación y conservación de datos, así como su posterior procesamiento analítico y visualización. El sistema dispone de técnicas capaces de explorar la información recolectada desde múltiples perspectivas: el seguimiento del tiempo, el análisis de la evolución de la malla geométrica, el descubrimiento de eventos de modelado por requerimiento y la representación gráfica de métricas directamente en el mismo espacio tridimensional. Este modelo coincide con las estrategias actuales vinculadas al análisis de la interacción en entornos virtuales y a los sistemas avanzados de modelado asistido~\cite{munzner2014visualization,malik2023}.
 
 \section{Objetivos específicos}
 
@@ -14,25 +14,25 @@ Para alcanzar el objetivo general planteado, se definen los siguientes objetivos
 
 \begin{itemize}
 
-\item \textbf{Diseño de un núcleo de adquisición no intrusivo}: Desarrollar un sistema de captura de datos en segundo plano que funcione de manera transparente y sin latencia perceptible durante las sesiones de modelado 3D.
+\item \textbf{Diseño de un núcleo de adquisición no intrusivo}: desarrollar un sistema de captura de datos en segundo plano que funcione de manera transparente y sin latencia perceptible durante las sesiones de modelado 3D.
 
-\item \textbf{Implementación de una arquitectura modular de extensión}: Programar un conjunto de \textit{add-ons} para Blender, integrados en su API oficial, capaces de extraer información temporal, espacial y estructural de la escena activa y de los objetos que la componen.
+\item \textbf{Implementación de una arquitectura modular de extensión}: programar un conjunto de \textit{add-ons} para Blender, integrados en su API oficial, capaces de extraer información temporal, espacial y estructural de la escena activa y de los objetos que la componen~\cite{blenderapi,parnas1972criteria}.
 
-\item \textbf{Automatización del análisis topológico complejo}: Desarrollar algoritmos específicos para la detección automática de eventos analíticos avanzados, tales como duplicaciones de vértices, fusiones geométricas, conmutaciones de modo, cuantificación de islas de coordenadas UV y cálculo de distancias de similitud geométrica.
+\item \textbf{Automatización del análisis topológico complejo}: desarrollar algoritmos específicos para la detección automática de eventos analíticos avanzados, tales como duplicaciones de vértices, fusiones geométricas, conmutaciones de modo, cuantificación de islas de coordenadas UV y cálculo de distancias de similitud geométrica~\cite{botsch2010polygon,cignoni1998metro}.
 
-\item \textbf{Garantía de persistencia externa y estructurada}: Diseñar un mecanismo de almacenamiento eficiente basado en archivos de texto plano estructurados (formatos de persistencia CSV), asegurando la integridad, portabilidad y trazabilidad de los datos entre diferentes sesiones de trabajo de forma independiente a la plataforma.
+\item \textbf{Garantía de persistencia externa y estructurada}: diseñar un mecanismo de almacenamiento eficiente basado en archivos de texto plano estructurados (formatos de persistencia CSV), asegurando la integridad, portabilidad y trazabilidad de los datos entre diferentes sesiones de trabajo de forma independiente a la plataforma~\cite{data_analysis}.
 
-\item \textbf{Establecimiento de un marco ético de captura}: Incorporar un módulo de consentimiento y configuración de privacidad en la interfaz de usuario que garantice una recopilación de datos ética, informada y transparente.
+\item \textbf{Establecimiento de un marco ético de captura}: incorporar un módulo de consentimiento y configuración de privacidad en la interfaz de usuario que garantice una recopilación de datos ética, informada y transparente.
 
-\item \textbf{Desarrollo de un motor de visualización interactivo}: Diseñar e implementar componentes de representación gráfica y procedural (gráficos estadísticos, mapas de dispersión y diagramas de radar translúcidos) integrados de forma nativa en el visor 3D de Blender para facilitar la interpretación del comportamiento del usuario.
+\item \textbf{Desarrollo de un motor de visualización interactivo}: diseñar e implementar componentes de representación gráfica y procedural (gráficos estadísticos, mapas de dispersión y diagramas de radar translúcidos) integrados de forma nativa en el visor 3D de Blender para facilitar la interpretación del comportamiento del usuario~\cite{munzner2014visualization,matplotlib}.
 
-\item \textbf{Definición de un sistema de métricas interpretables}: Organizar los indicadores calculados por el sistema mediante una nomenclatura estable, incluyendo métricas estadísticas A1--A17, métricas geométricas, métricas UV y métricas de actividad operacional, de modo que puedan relacionarse de forma clara con los datos capturados.
+\item \textbf{Definición de un sistema de métricas interpretables}: organizar los indicadores calculados por el sistema mediante una nomenclatura estable, incluyendo métricas estadísticas, métricas geométricas, métricas UV y métricas de actividad operacional, de modo que puedan relacionarse de forma clara con los datos capturados~\cite{gao2021}.
 
-\item \textbf{Optimización de la interfaz analítica}: Refinar la presentación de resultados mediante bloques compactos, agrupaciones de métricas relacionadas, textos visibles breves y ayudas contextuales, reduciendo la sobrecarga visual sin eliminar información técnica relevante.
+\item \textbf{Optimización de la interfaz analítica}: refinar la presentación de resultados mediante bloques compactos, agrupaciones de métricas relacionadas, textos visibles breves y ayudas contextuales, reduciendo la sobrecarga visual sin eliminar información técnica relevante~\cite{nielsen1994usability}.
 
-\item \textbf{Validación funcional preliminar del sistema}: Comprobar la instalación, activación, captura, exportación, análisis y visualización mediante pruebas automatizadas sobre la lógica desacoplada y pruebas manuales controladas dentro de Blender. La evaluación experimental con usuarios finales queda fuera del alcance cerrado de esta versión y se plantea como trabajo futuro.
+\item \textbf{Validación funcional preliminar del sistema}: comprobar la instalación, activación, captura, exportación, análisis y visualización mediante pruebas automatizadas sobre la lógica desacoplada y pruebas manuales controladas dentro de Blender. La evaluación experimental con usuarios finales queda fuera del alcance cerrado de esta versión y se plantea como trabajo futuro~\cite{pressman2005}.
 
-\item \textbf{Preparación para análisis conductuales futuros}: Definir métricas y estructuras de datos que puedan apoyar estudios posteriores sobre estrategias de modelado. La identificación de diferencias significativas entre usuarios expertos y novatos requeriría una muestra experimental, un protocolo de evaluación y un análisis estadístico específicos.
+\item \textbf{Preparación para análisis conductuales futuros}: definir métricas y estructuras de datos que puedan apoyar estudios posteriores sobre estrategias de modelado. La identificación de diferencias significativas entre usuarios expertos y novatos requeriría una muestra experimental, un protocolo de evaluación y un análisis estadístico específicos~\cite{chen2022,casakin2023}.
 
 \end{itemize}
 

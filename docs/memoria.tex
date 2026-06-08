@@ -8,7 +8,7 @@
 \usepackage{lmodern} % Scalable font
 \usepackage{microtype}
 \usepackage{placeins}
-
+\usepackage{makecell}
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{placeins}
@@ -328,7 +328,10 @@
 % Formato de portada
 \makeatletter
 \usepackage{xcolor}
-\newcommand{\tutor}[1]{\def\@tutor{#1}}
+\newcommand{\tutor}[2]{%
+  \def\@tutoruno{#1}%
+  \def\@tutordos{#2}%
+}
 \newcommand{\course}[1]{\def\@course{#1}}
 \definecolor{cpardoBox}{HTML}{E6E6FF}
 \def\maketitle{
@@ -359,7 +362,8 @@
     \noindent\LARGE
     Presentado por \@author{}\\ 
     en Universidad de Burgos --- \@date{}\\
-    Tutor: \@tutor{}\\
+    Tutores: \@tutoruno{}\\
+\@tutordos{}\\
   }%
   \end{center}%
   \null
@@ -376,7 +380,7 @@
 \Large Add-on Blender 1.0
 }
 \author{\nombre}
-\tutor{Dr. Bruno Rodríguez García y Dr. Raúl Marticorena Sánchez}
+\tutor{Dr. Bruno Rodríguez García}{Dr. Raúl Marticorena Sánchez}
 
 \date{\today}
 

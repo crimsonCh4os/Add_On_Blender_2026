@@ -1,152 +1,184 @@
 \capitulo{3}{Conceptos teóricos}
 
-En el desarrollo del sistema propuesto es necesario entender varios conceptos relativos al análisis de datos, el formato CSV (\textit{Comma-Separated Values}, valores separados por comas), la representación de datos e introducción de los \textit{add-ons} en Blender. Este capítulo introduce los principios teóricos que respaldan el proyecto y las bases a las que se refiere la solución.
+El sistema desarrollado se apoya en la captura, organización, análisis y representación de datos generados durante una sesión de modelado tridimensional. Por ello, este capítulo presenta los conceptos geométricos, temporales y analíticos que justifican las variables registradas y las métricas utilizadas en el proyecto.
 
-El trabajo se concentra en la recolección, análisis y representación de datos procedentes de la etapa de creación tridimensional. De esta manera, se sitúa el modelo dentro del contexto de analítica de la interacción en entornos 3D. El estudio de la actividad del usuario permite una mayor comprensión del procedimiento de modelado y facilitar el ahorro de tiempo en la optimización de herramientas existentes~\cite{gao2023,gao2021,jankowski2014,lavioila2017}.
+El trabajo se sitúa dentro del análisis de la interacción en entornos 3D. En este contexto, cada transformación, cambio de modo, modificación de malla, alteración de vista u operación sobre el modelo puede considerarse una evidencia del comportamiento del usuario. El registro de estos eventos permite estudiar el flujo de trabajo, detectar fases de actividad e inactividad, observar la evolución estructural del modelo y comparar estrategias de creación digital~\cite{gao2021,gao2023,jankowski2014}.
 
-\section{Blender y modelado 3D}
+Este capítulo se centra en los fundamentos necesarios para interpretar los datos del sistema: la representación geométrica mediante mallas, la complejidad topológica, las coordenadas UV, las métricas temporales y espaciales, y la relación entre registro, análisis y visualización.
 
-El modelado tridimensional implica la generación de representaciones digitales de objetos y superficies en un espacio virtual. Tales representaciones se crean mayoritariamente mediante mallas poligonales compuestas por vértices, aristas y caras. La relación de estas partes determina la complejidad geométrica y topológica de los modelos creados.
+\section{Modelado tridimensional y representación geométrica}
 
-En una simulación física, el sistema gráfico funciona como una capa de representación visual vinculada al modelo físico subyacente. Los objetos gráficos, normalmente definidos mediante mallas, superficies o volúmenes, se asocian a propiedades físicas como masa, elasticidad, rigidez, densidad, fricción o deformabilidad. A partir de estas propiedades, el motor de simulación calcula la evolución del sistema y el modelo gráfico permite visualizar sus efectos sobre la escena.
-
-Esta interacción resulta especialmente útil en física computacional y simulaciones científicas, ya que permite representar fenómenos biológicos y materiales complejos. Por ejemplo, una malla puede emplearse para simular la deformación de un tejido, el comportamiento de un órgano, la respuesta de un material ante una fuerza o la colisión entre estructuras. Así, el modelo físico calcula los cambios mediante métodos numéricos, mientras que el modelo gráfico los muestra de forma comprensible para facilitar su análisis e interpretación.
+El modelado tridimensional consiste en construir representaciones digitales de objetos situados en un espacio cartesiano definido por tres ejes, normalmente expresados como coordenadas $(X,Y,Z)$. En el modelado poligonal, la estructura principal es la malla, formada por vértices, aristas y caras. La relación entre estos elementos define tanto la forma visible del objeto como su complejidad topológica~\cite{botsch2010polygon}.
 
 \begin{itemize}
-\item \textbf{Vértices}: puntos definidos mediante coordenadas espaciales ($X, Y, Z$).
-\item \textbf{Aristas}: segmentos que conectan dos vértices consecutivos.
-\item \textbf{Caras}: superficies delimitadas por conjuntos de aristas.
+    \item \textbf{Vértice}: punto espacial identificado mediante una posición tridimensional. Su número total permite estimar el grado de detalle geométrico del modelo.
+    \item \textbf{Arista}: conexión entre dos vértices. Las aristas determinan la continuidad de la estructura y delimitan las caras.
+    \item \textbf{Cara}: superficie cerrada por aristas. Puede estar formada por tres vértices, cuatro vértices o más de cuatro vértices.
 \end{itemize}
 
-El proceso de modelado implica la ejecución continua de operaciones sobre la escena tridimensional, entre las que destacan:
-
-\begin{itemize}
-\item Transformación espacial de objetos.
-\item Creación y eliminación de primitivas geométricas.
-\item Modificación topológica de mallas.
-\item Escalado y rotación de elementos.
-\item Cambios entre modos de trabajo.
-\item Configuración de modificadores procedimentales.
-\item Manipulación de coordenadas UV (coordenadas de textura U y V) para el mapeado de texturas.
-\end{itemize}
-
-Cada una de estas operaciones cambia el estado interno del escenario. Por tanto, las acciones del usuario producen datos que pueden registrarse y analizarse posteriormente. El análisis así realizado ha sido utilizado en investigaciones recientes para estudiar patrones de comportamiento, procesos creativos y estrategias de diseño durante la manipulación de objetos virtuales en modelado 3D~\cite{casakin2023,chen2022,gao2021,liu2022,wang2024}.
-
-El uso de ambientes 3D interactivos ha demostrado su aplicación relevante en entornos educativos y de aprendizaje, sobre todo en actividades enfocadas en la creatividad, simulación y diseño digital~\cite{koh2010,krassmann2018,sosna2025}.
-
-\subsection{Estructuras de datos geométricos: Mesh frente a BMesh}
-
-Para la monitorización de operaciones geométricas en tiempo real, es crucial diferenciar las dos estructuras fundamentales de representación de mallas que gestiona el núcleo de Blender:
-
-\begin{itemize}
-    \item \textbf{Estructura Mesh (Datos evaluados)}: Representa una disposición indexada de matrices estáticas optimizada para el renderizado. El acceso a sus elementos ($V$ vértices, $E$ aristas, $F$ caras) resulta eficiente para operaciones de lectura, pero no permite mutaciones topológicas dinámicas en tiempo real ni inspecciones directas de vecindad compleja.
-    \item \textbf{Estructura BMesh (Datos de edición)}: Constituye una estructura de datos basada en listas doblemente enlazadas de tipo \textit{radial-edge} y representación de fronteras (\textit{B-rep}). Esta disposición permite realizar consultas de conectividad complejas en tiempo constante $O(1)$ a través de bucles de caras (\textit{loops}). 
-\end{itemize}
-
-El análisis de eventos que alteran la topología exige la conversión o acceso a estructuras \textit{BMesh} durante el modo de edición, permitiendo evaluar propiedades avanzadas como las islas de coordenadas UV mediante algoritmos de inundación de mallas (\textit{mesh flood-fill}).
-
-\section{Análisis y procesamiento de datos}
-
-El análisis de datos implica la obtención de información valiosa a partir de conjuntos de datos no estructurados. El propósito de la evaluación dentro del marco de esta investigación es la detección de patrones en el comportamiento del usuario, las variaciones del entorno y las acciones realizadas por el individuo al crear un modelo tridimensional.
-
-Para ello, resulta necesario aplicar diferentes etapas de preprocesamiento, entre las que destacan:
-
-\begin{itemize}
-\item Limpieza de datos inconsistentes o incompletos.
-\item Normalización de valores y formatos.
-\item Estructuración y organización de la información.
-\item Filtrado de eventos irrelevantes.
-\item Conversión de datos temporales y espaciales.
-\end{itemize}
-
-Las operaciones permiten asegurar la coherencia de los datos y facilitan su procesamiento posterior con la ayuda de herramientas de cálculo computacional~\cite{data_analysis}.
-
-El análisis interactivo para entornos tridimensionales es una área importante del persona-computadora-interacción, porque permite observar cómo los usuarios manejan los objetos en espacios virtuales y qué tipos de estrategias utilizan en la tarea de diseño~\cite{jankowski2014,lavioila2017}.
-
-Hasta ahora, diversas investigaciones han abordado la detección del comportamiento del usuario durante las tareas de modelado 3D mediante la recopilación de registros de eventos y el análisis de flujos de procesos. Estos métodos ofrecen la oportunidad de evaluar secuencias de acciones, tiempos de interacción y cambios en las vistas virtuales~\cite{gao2021,gao2023,liu2022,xie2014}.
-
-Además, se han estudiado las diferencias en el comportamiento de diseñadores principiantes y avanzados, lo que ha permitido detectar desigualdades significativas en las estrategias de modelado, el análisis de los resultados, y las soluciones de problemas~\cite{casakin2023,chen2022,welch}.
-
-\subsection{Métricas de similitud geométrica y topológica}
-
-Para medir cuantitativamente el aprendizaje o la eficiencia del usuario, es esencial evaluar si el modelo tridimensional actual coincide con un modelo estándar o de referencia. La discrepancia espacial en la geometría computacional no se puede determinar por medio de conjuntos de puntos:
-
-\begin{itemize}
-    \item \textbf{Distancia de Hausdorff}: Mide el grado de desemejanza entre dos subconjuntos de un espacio métrico. Dados un conjunto de vértices de referencia $A$ y un conjunto objetivo $B$, la distancia de Hausdorff bidireccional se define formalmente como:
-    $$H(A, B) = \max(h(A, B), h(B, A))$$
-    donde $h(A, B) = \max_{a \in A} \min_{b \in B} \lVert a - b \rVert$ representa la distancia de Hausdorff unidireccional.
-    \item \textbf{Métricas de distribución de normales}: Permiten evaluar la suavidad y consistencia de la superficie mediante el cálculo del producto escalar de los vectores normales pertenecientes a las caras concurrentes de la geometría.
-\end{itemize}
-
-\section{Visualización de datos en entornos tridimensionales}
-
-La visualización de datos constituye un elemento fundamental para interpretar la información obtenida a partir del análisis computacional. La representación gráfica facilita la detección de patrones, tendencias y relaciones entre variables complejas.
-
-La solución propuesta integra la información analítica en un entorno tridimensional, lo que permite mostrar gráficamente datos relacionados con la actividad de modelado. Este enfoque ayuda a entender mejor el contexto de los datos y facilita la interpretación espacial y temporal de los eventos.
-
-El uso de representaciones tridimensionales es parte de las últimas tendencias en visualización avanzada y interactividad total~\cite{jankowski2014,wang2024}. Los espacios 3D permiten acceder intuitivamente a información compleja, especialmente en sistemas donde la dimensión espacial es importante.
-
-Además, la representación gráfica de datos temporales y estructurales puede proporcionar una vista de los procesos de modelado, así como ayudar a identificar patrones de comportamiento del usuario~\cite{gao2023,xie2014}.
-
-Para crear representaciones gráficas y realizar análisis estadísticos, se utiliza herramientas como \textit{Matplotlib}~\cite{matplotlib}, popular entre expertos en matemáticas y científico y dentro de las comunidades de análisis de datos basadas en el lenguaje Python.
-
-\section{Desarrollo de \textit{add-ons} en Blender}
-
-Blender extiende sus capacidades a través de la creación de \textit{add-ons} desarrollados en Python, que trabajan con la API oficial para acceder al escenario, los elementos y las acciones del usuario. 
-
-La arquitectura modular basada en \textit{add-ons} permite integrar instrumentos especiales sin alterar la parte principal de Blender. Esta estrategia beneficia el uso de funciones compartidas, fomenta la mantenibilidad y facilita el crecimiento de las nuevas capacidades~\cite{gamma1994,pressman2005}.
-
-La Figura~\ref{fig:addons_menu} muestra el menú de \textit{addons} dentro de Blender.
+Desde el punto de vista del análisis, la malla no se interpreta solo como una figura visual, sino como una estructura de datos medible. Si durante una sesión aumenta el número de vértices, se puede inferir una fase de construcción o subdivisión. Si aumentan los triángulos o los \textit{n-gons}, puede existir una transformación topológica relevante. Si aparecen variaciones en normales invertidas, el sistema registra posibles problemas de orientación superficial.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{diagramas/add-on.png}
-    \caption{Menú de \textit{addons} de Blender con extensiones instaladas.}
-    \label{fig:addons_menu}
+    \includegraphics[width=0.85\textwidth]{diagramas/mesh.jpg}
+    \caption{Representación conceptual de una malla poligonal mediante vértices 1, aristas 2 y caras 3.}
+    \label{fig:malla_vertices_aristas_caras}
 \end{figure}
 
-Los \textit{add-ons} desarrollados para Blender permiten implementar funcionalidades relacionadas con:
+\subsection{Complejidad topológica de la malla}
 
-\begin{itemize}
-\item Automatización de tareas repetitivas.
-\item Sistemas de análisis y monitorización.
-\item Herramientas de importación y exportación de datos.
-\item Integración con motores de renderizado.
-\item Extensiones orientadas al modelado y animación.
-\end{itemize}
+La topología describe cómo se conectan los elementos de una malla, independientemente de su posición exacta en el espacio. Dos modelos pueden tener una apariencia parecida y, sin embargo, presentar topologías diferentes. Esta diferencia es importante porque la topología condiciona la facilidad de edición, la aplicación de modificadores, la deformación, el sombreado y la preparación técnica del objeto~\cite{botsch2010polygon}.
 
-Además de las soluciones implementadas de forma específica para este sistema, Blender incorpora extensiones nativas orientadas a optimizar los flujos de edición geométrica en entornos profesionales. Entre las herramientas más destacadas se incluyen:
+En este trabajo se consideran tres indicadores especialmente relevantes: variación de vértices, variación de triángulos y variación de \textit{n-gons}. Un aumento de vértices puede indicar subdivisión o incorporación de detalle. Un aumento de triángulos puede reflejar triangulación o cambios derivados de ciertas operaciones geométricas. Un aumento de \textit{n-gons} puede señalar simplificación de superficies o generación de caras complejas. Estas métricas no juzgan de forma aislada la calidad del modelo; proporcionan una señal cuantitativa sobre su evolución.
 
-\begin{itemize}
-\item \textbf{Node Wrangler}: facilita la gestión de materiales y sistemas de nodos en el editor de sombreado.
-\item \textbf{LoopTools}: incorpora herramientas avanzadas para la edición y regularización geométrica de mallas.
-\item \textbf{Rigify}: permite generar automáticamente esqueletos y sistemas de control para animación.
-\item \textbf{Archimesh}: proporciona herramientas procedurales orientadas al modelado arquitectónico técnico.
-\end{itemize}
+\subsection{Normales y orientación superficial}
 
-En el marco de la solución propuesta, se han desarrollado módulos orientados tanto a la adquisición automática de eventos como al posterior procesamiento y visualización tridimensional de la información recopilada.
+Cada cara de una malla posee una normal, es decir, un vector perpendicular que indica la orientación de la superficie. Las normales se utilizan para calcular iluminación, sombreado y coherencia visual. Cuando una cara está orientada de manera contraria a la esperada, puede producir artefactos de visualización o problemas en etapas posteriores del flujo de trabajo~\cite{botsch2010polygon}.
 
-\subsection{Infraestructura de monitorización y Grafo de Dependencias}
+El sistema registra la variación de normales invertidas mediante la métrica \texttt{NormalDelta}. Una variación positiva puede indicar la aparición de nuevas superficies problemáticas, mientras que una variación negativa puede corresponder a una corrección del modelo. Al integrarse con otras métricas, \texttt{NormalDelta} funciona como un indicador de errores estructurales o de limpieza geométrica.
 
-El subsistema de monitorización implementado se fundamenta en el Grafo de Dependencias (\textit{Dependency Graph} o \textit{Depsgraph}) de Blender. El \textit{Depsgraph} constituye el motor interno encargado de evaluar y sincronizar las relaciones de dependencia existentes entre los distintos bloques de datos de la escena, tales como animaciones, mallas modificadas y restricciones de objetos.
+\section{Espacio UV y correspondencia bidimensional}
+\label{subsec:espacio-uv}
 
-La API de Python permite asociar funciones de retrollamada (\textit{callback functions}) a disparadores específicos del sistema mediante el espacio de nombres de la plataforma (\texttt{bpy.app.handlers}). Para un registro analítico continuo del comportamiento del usuario, el evento crítico monitorizado es \texttt{depsgraph\_update\_post}, el cual se ejecuta inmediatamente después de que el grafo de dependencias haya reevaluado la escena debido a una acción o mutación geométrica. A través de este mecanismo se capturan de forma asíncrona alteraciones relativas a:
+Además de la geometría situada en el espacio tridimensional, los modelos pueden disponer de coordenadas UV. El espacio UV es un sistema bidimensional que permite asociar puntos de la superficie del modelo con posiciones en un plano. Esta correspondencia se utiliza para aplicar texturas, organizar islas y preparar la información visual del objeto~\cite{botsch2010polygon}.
 
-\begin{itemize}
-\item Creación, aislamiento y eliminación de objetos.
-\item Cambios estructurales entre modos de edición y objeto.
-\item Transformaciones espaciales de traslación, rotación y escala.
-\item Modificaciones topológicas operadas sobre la malla.
-\item Alteraciones y redistribuciones en las coordenadas cartesianas UV.
-\item Cambios jerárquicos en la estructura general de la escena.
-\end{itemize}
+El despliegue UV transforma una superficie tridimensional en una representación plana. Durante este proceso, la malla se divide en regiones denominadas islas UV. Cada isla representa una parte de la superficie colocada sobre el plano bidimensional. La relación entre la geometría 3D y el espacio UV es importante porque una edición puede modificar el mapeado de textura sin alterar el número de vértices, caras o aristas del modelo.
+
+Por este motivo, el sistema incorpora la variable \texttt{UV}, que actúa como indicador de trabajo relacionado con coordenadas UV. Esta métrica no mide la calidad absoluta del mapeado, sino la existencia de acciones asociadas al despliegue, empaquetado, reajuste o modificación de coordenadas. En términos analíticos, permite separar las fases dedicadas a la construcción geométrica de las fases dedicadas a la preparación superficial.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{diagramas/flujo_deteccion.png}
-    \caption{Flujo general de captura y procesamiento de eventos dentro del sistema de monitorización.}
-    \label{fig:flujo_eventos}
-    {\footnotesize \textit{Nota. Figura elaborada por la autora con asistencia de ChatGPT.}}
+    \includegraphics[width=0.9\textwidth]{diagramas/UV.png}
+    \caption{Relación conceptual entre una superficie tridimensional y su despliegue en el espacio UV.}
+    \label{fig:uv_3d_2d_islas}
 \end{figure}
 
-Debido a que el \textit{handler} del grafo de dependencias funciona de manera síncrona y se dispara iterativamente ante cualquier cambio infinitesimal del entorno o de la interfaz gráfica, el diseño del software exige desacoplar temporalmente los procesos analíticos más pesados. Por ello, la información recogida es filtrada e integrada con controladores de frecuencia basados en temporizadores asíncronos (\textit{Timers}), mitigando así la sobrecarga de procesamiento en el hilo principal de la aplicación y garantizando la persistencia ordenada en archivos de datos.
+\section{Sistema teórico de métricas del proceso de modelado}
+
+A partir de las variables registradas durante la interacción se define un conjunto de dieciseis métricas analíticas, identificadas como A1--A16. Su objetivo no es valorar únicamente el resultado final del modelo, sino describir el proceso seguido durante su construcción. Esta distinción es importante porque dos modelos visualmente similares pueden generarse mediante estrategias de trabajo muy diferentes: una sesión puede estar basada en duplicaciones y transformaciones rápidas, mientras que otra puede implicar edición manual, cambios topológicos frecuentes o pausas prolongadas~\cite{gao2021,gao2023}.
+
+Las métricas se organizan en cuatro dimensiones principales: temporal, espacial, geométrica y operacional. La dimensión temporal permite estudiar la duración, el ritmo y las pausas de la sesión. La dimensión espacial describe la navegación de la vista y la relación entre el usuario y el objeto activo. La dimensión geométrica resume la evolución de la malla mediante variaciones de vértices, triángulos, \textit{n-gons} y normales. Finalmente, la dimensión operacional recoge acciones que describen la estrategia de construcción, como duplicados, modificaciones, cambios de modo, trabajo UV y cambios en la composición de la escena.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.10\textwidth}p{0.28\textwidth}X}
+\toprule
+\textbf{Código} & \textbf{Tipo de métrica} & \textbf{Interpretación teórica} \\
+\midrule
+A1 & Duración de la sesión & Establece la base temporal del análisis y permite comparar sesiones de distinta longitud. \\
+A2--A3 & Pausas e inactividad & Detectan interrupciones o cambios de ritmo dentro del proceso de modelado. \\
+A4--A5 & Navegación y proximidad & Describen cómo se desplaza la vista y la distancia relativa respecto al objeto activo. \\
+A6--A9 & Picos de movimiento espacial & Identifican instantes de desplazamiento rápido o exploración intensa de la escena. \\
+A10 & Reutilización de elementos & Resume acciones como pegado o duplicación, asociadas a estrategias de repetición o aprovechamiento de geometría existente. \\
+A11 & Uso de modificadores & Señala fases de ajuste procedural o transformación no destructiva del modelo. \\
+A12 & Variación de vértices & Indica incremento, reducción o reorganización de la complejidad geométrica. \\
+A13 & Cambios estructurales de malla & Agrupa variaciones en triángulos, \textit{n-gons} y normales invertidas como señal de alteración topológica o corrección geométrica. \\
+A14 & Estado de trabajo & Diferencia fases de edición de malla, trabajo en modo objeto u otros estados de interacción. \\
+A15 & Actividad UV & Identifica acciones relacionadas con el mapeado bidimensional de la superficie. \\
+A16 & Evolución de objetos & Analizan cambios en la composición de la escena mediante creación, eliminación o variación de objetos. \\
+\bottomrule
+\end{tabularx}
+\caption{Interpretación teórica de las métricas A1--A16 empleadas para analizar sesiones de modelado 3D.}
+\label{tab:metricas_teoricas_a1_a17}
+\end{table}
+
+En conjunto, estas métricas permiten transformar un registro de eventos en una descripción cuantitativa del comportamiento de modelado. No todas representan calidad geométrica de forma directa; algunas describen ritmo de trabajo, otras reflejan navegación espacial y otras resumen operaciones técnicas. Por este motivo, su interpretación debe realizarse de forma conjunta y no como valores aislados~\cite{gao2023}.
+
+\section{Registro temporal de la interacción}
+
+El análisis de una sesión de modelado requiere ordenar los eventos en el tiempo. Para ello, el sistema registra marcas temporales absolutas y valores derivados como minuto y segundo de sesión. A partir de estas columnas se obtiene el tiempo transcurrido y se calculan métricas temporales como duración total, pausas y distribución de pausas por fases~\cite{xie2014}.
+
+La duración total se expresa en minutos mediante la métrica A1. Su valor se calcula como la diferencia entre el primer registro de la sesión y cada registro posterior, dividida entre 3600:
+
+\[
+A1_i = \frac{t_i - t_0}{3600}
+\]
+
+donde $t_i$ es la marca temporal del registro actual y $t_0$ la marca temporal inicial. Esta métrica establece la base temporal sobre la que se interpretan el resto de indicadores.
+
+Las pausas se estiman mediante la métrica A2. Una pausa se identifica cuando el intervalo entre dos registros consecutivos es anormalmente alto en relación con la media y la desviación típica de los intervalos positivos:
+
+\[
+\theta_p = \overline{\Delta t} + 2\sigma_{\Delta t}
+\]
+
+Si $\Delta t_i \geq \theta_p$ y no se detecta evento de edición asociado, el intervalo se interpreta como pausa. La métrica A3 reutiliza esta detección para estudiar la distribución de pausas por fases temporales, normalmente dividiendo la sesión en cuartiles.
+
+\section{Métricas espaciales de navegación y proximidad}
+
+Durante una sesión, el usuario modifica la posición de la vista para inspeccionar el modelo desde diferentes perspectivas. Esta navegación espacial se registra mediante las coordenadas \texttt{UserX}, \texttt{UserY} y \texttt{UserZ}. Aunque estas coordenadas no describen cambios directos en la geometría, sí aportan información sobre cómo se explora el objeto~\cite{jankowski2014,lavioila2017}.
+
+La velocidad de movimiento de la vista se calcula mediante la distancia euclídea entre dos posiciones consecutivas dividida por el tiempo transcurrido:
+
+\[
+v_i = \frac{\lVert P_i - P_{i-1} \rVert}{t_i - t_{i-1}}
+\]
+
+donde $P_i=(x_i,y_i,z_i)$ representa la posición de la vista en el instante $i$. La métrica A4 expresa esta velocidad en unidades por hora para facilitar su comparación a lo largo de la sesión.
+
+La proximidad al objeto se calcula con la métrica A5. Para ello se compara la posición de la vista con el centro del objeto activo y se descuenta el radio aproximado del objeto:
+
+\[
+d_i = \max(\lVert P_i - O_i \rVert - r_i, 0)
+\]
+
+donde $O_i$ es el centro del objeto y $r_i$ su radio. Un valor bajo indica inspección cercana, mientras que un valor alto sugiere una vista general de la escena.
+
+Las métricas A6, A7, A8 y A9 se basan en picos de velocidad espacial. Para identificarlos, se calcula un umbral de velocidad:
+
+\[
+\theta_v = \overline{v}_{+} + 2\sigma_{v_{+}}
+\]
+
+Los instantes cuya velocidad supera este umbral se interpretan como manipulaciones rápidas de vista o desplazamientos espaciales destacados.
+
+\section{Métricas de estrategia y evolución del modelo}
+
+Las métricas estratégicas describen acciones que no se explican únicamente por la geometría resultante, sino por la forma en la que el usuario avanza durante la construcción del modelo. En este grupo se incluyen duplicados, pegado, uso de modificadores, variaciones de malla, cambios de modo, trabajo UV y cambios de objeto~\cite{gao2021,liu2022}.
+
+La métrica A10 agrupa acciones de aceleración basadas en \texttt{CtrlV}, \texttt{ShiftD} y \texttt{AltD}:
+
+\[
+A10_i = |CtrlV_i| + |ShiftD_i| + |AltD_i|
+\]
+
+Esta métrica permite identificar estrategias de reutilización de elementos. Un valor elevado puede indicar construcción por duplicación, repetición de componentes o aprovechamiento de geometría existente.
+
+La métrica A11 mide variaciones en modificadores mediante \texttt{ModifierDelta}. Registra fases de ajuste técnico o exploración procedural. La métrica A12 representa la evolución de vértices mediante \texttt{VertexDelta}; un valor positivo indica incremento de complejidad geométrica y un valor negativo puede señalar simplificación, eliminación o fusión.
+
+La métrica A13 agrupa errores o cambios estructurales de malla mediante la suma absoluta de \texttt{NgonDelta}, \texttt{TriDelta} y \texttt{NormalDelta}:
+
+\[
+A13_i = |NgonDelta_i| + |TriDelta_i| + |NormalDelta_i|
+\]
+
+El uso del valor absoluto permite medir la intensidad del cambio sin diferenciar si el valor aumenta o disminuye. Por ejemplo, en una sesión de modelado puede ser relevante saber que ha cambiado el número de triángulos, \textit{n-gons} o normales invertidas, aunque el cambio corresponda a una creación, eliminación o corrección de geometría.
+
+La métrica A14 identifica el estado de trabajo del usuario. Se asigna un valor distinto según el modo activo: edición de malla, modo objeto u otros estados. Esta codificación permite distinguir si la actividad registrada corresponde a una fase de edición directa de la geometría o a una fase de manipulación general de objetos.
+
+La métrica A15 registra la existencia de actividad relacionada con coordenadas UV. Su finalidad es detectar momentos en los que el usuario trabaja sobre el mapeado bidimensional de la superficie, aunque la geometría principal de la malla no cambie.
+
+Por último, la métrica A16 describe cambios en la composición de la escena, por lo que permite saber si se han añadido o eliminado objetos. 
+
+\section{Formato CSV y estructura tabular de los datos}
+
+El formato CSV (\textit{Comma-Separated Values}) permite almacenar información en forma de tabla, donde cada fila representa una observación y cada columna describe una variable. En el contexto de una sesión de modelado tridimensional, esta estructura resulta adecuada porque permite ordenar cronológicamente los eventos registrados y relacionarlos con variables temporales, espaciales, geométricas y operacionales~\cite{data_analysis}.
+
+Desde un punto de vista teórico, el CSV actúa como una representación intermedia entre la interacción del usuario y el cálculo posterior de métricas. Las acciones realizadas durante el modelado no se analizan directamente como eventos aislados, sino como una secuencia estructurada de registros. Esta organización permite transformar la actividad observada en series temporales comparables, resúmenes estadísticos y visualizaciones~\cite{vanderalst2016process}.
+
+La estructura tabular también facilita la separación entre captura y análisis. El módulo de registro puede limitarse a almacenar los cambios relevantes de la sesión, mientras que el módulo de análisis interpreta posteriormente esos datos y calcula los indicadores correspondientes. De este modo, el CSV funciona como un puente entre el proceso de modelado y la explotación analítica de la información.
+
+\section{Visualización analítica en tres dimensiones}
+
+La visualización de datos permite interpretar resultados que serían difíciles de comprender mediante tablas aisladas. En este proyecto, las métricas calculadas pueden representarse como trayectorias, puntos, radares o gráficas temporales. La elección de la representación depende del tipo de variable: las métricas temporales se interpretan mejor como evolución, las espaciales como recorrido o proximidad, y las estratégicas como frecuencia o intensidad de acción~\cite{munzner2014visualization}.
+
+La representación tridimensional aporta una ventaja conceptual cuando los datos proceden de una tarea espacial. Por ejemplo, la trayectoria de la vista puede relacionarse con la posición del objeto; los picos de velocidad pueden localizarse en momentos específicos de la sesión; y la evolución de vértices o errores puede compararse con fases de navegación intensa.
+
+\section{Relación conceptual entre registro, métricas y visualización}
+
+La información del sistema sigue un recorrido progresivo desde la acción del usuario hasta la interpretación final de los resultados. Primero, el usuario realiza acciones durante el modelado, como mover la vista, transformar un objeto, modificar una malla, cambiar coordenadas UV o añadir y eliminar elementos de la escena. Después, el sistema registra esas acciones en un archivo CSV mediante columnas específicas. Finalmente, el módulo de análisis utiliza esos datos para calcular métricas y generar visualizaciones.
+
+De esta forma, el CSV no se utiliza únicamente como un archivo de almacenamiento, sino como una estructura intermedia entre la sesión de modelado y el análisis posterior. Cada columna registrada aporta información concreta: unas columnas permiten ordenar los eventos en el tiempo, otras describen posiciones y distancias, otras recogen cambios geométricos y otras identifican operaciones realizadas por el usuario.
+
+Esta organización permite justificar por qué se registran esas variables y no otras. El objetivo no es describir solamente una herramienta, sino mostrar cómo los datos temporales, espaciales, geométricos y operacionales pueden utilizarse para analizar el proceso de modelado tridimensional~\cite{gao2021,gao2023}.

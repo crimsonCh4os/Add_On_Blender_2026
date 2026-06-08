@@ -9,14 +9,14 @@ Este apartado describe la planificación, organización, viabilidad y gestión d
 El sistema desarrollado se ha estructurado como una \textit{suite} de software formada por dos complementos o \textit{add-ons} independientes y complementarios para el entorno de modelado 3D Blender~\cite{blenderapi}:
 
 \begin{itemize}
-    \item \textbf{Data Logger 3D o módulo de recopilación:} encargado de registrar automáticamente y en segundo plano la actividad técnica del usuario durante sesiones de modelado 3D. Este add-on captura eventos, estados, transformaciones espaciales, cambios topológicos, operaciones relevantes, cambios de modo, modificaciones UV y otros indicadores asociados al proceso de modelado. Los datos se almacenan en formato CSV para su posterior análisis.
+    \item \textbf{Data Logger 3D o módulo de recopilación:} encargado de registrar automáticamente y en segundo plano la actividad técnica del usuario durante sesiones de modelado 3D. Este \textit{add-on} captura eventos, estados, transformaciones espaciales, cambios topológicos, operaciones relevantes, cambios de modo, modificaciones UV y otros indicadores asociados al proceso de modelado. Los datos se almacenan en formato CSV para su posterior análisis.
 
-    \item \textbf{Add-on de análisis y visualización:} encargado de procesar de forma diferida los CSV generados por el logger. Este segundo componente lee y valida los datos, calcula métricas estadísticas, métricas geométricas, métricas UV y genera resultados visuales mediante paneles, gráficos y visualizaciones integradas en Blender.
+    \item \textbf{\textit{Add-on} de análisis y visualización:} encargado de procesar de forma diferida los CSV generados por el logger. Este segundo componente lee y valida los datos, calcula métricas estadísticas, métricas geométricas, métricas UV y genera resultados visuales mediante paneles, gráficos y visualizaciones integradas en Blender.
 \end{itemize}
 
 Esta división modular permite separar la fase de adquisición de datos de la fase de interpretación. La captura debe ser ligera, estable y poco intrusiva, ya que se ejecuta durante la sesión de modelado. En cambio, el análisis puede incorporar operaciones más costosas, como cálculos estadísticos, comparaciones geométricas, generación de gráficos y visualizaciones 3D, porque se ejecuta posteriormente y bajo demanda.
 
-El proyecto se ha llevado a cabo mediante un \textbf{enfoque iterativo e incremental}~\cite{schwabermethod,pressman2005}, construyendo inicialmente versiones de funcionalidad mínima viable que posteriormente han sido refinadas y ampliadas. Esta estrategia permitió detectar problemas de forma temprana, especialmente en relación con la API de Blender, la gestión de modos de edición, la captura de eventos y la validación de métricas. Asimismo, facilitó que el alcance evolucionara desde un registrador básico de actividad hacia una \textit{suite} completa de captura, análisis y visualización.
+El proyecto se ha llevado a cabo mediante un \textbf{enfoque iterativo e incremental}~\cite{pressman2005,schwabermethod}, construyendo inicialmente versiones de funcionalidad mínima viable que posteriormente han sido refinadas y ampliadas. Esta estrategia permitió detectar problemas de forma temprana, especialmente en relación con la API de Blender, la gestión de modos de edición, la captura de eventos y la validación de métricas. Asimismo, facilitó que el alcance evolucionara desde un registrador básico de actividad hacia una \textit{suite} completa de captura, análisis y visualización.
 
 Para la gestión del código se ha utilizado GitHub~\cite{github}, lo que ha permitido mantener un historial de commits con la evolución del proyecto. Este historial se ha empleado como fuente de contraste para revisar la planificación y comprobar qué tareas fueron ejecutadas realmente en cada etapa. La documentación se ha redactado y maquetado en \LaTeX~\cite{wiki:latex}, siguiendo la estructura institucional del Trabajo de Fin de Grado.
 
@@ -26,6 +26,26 @@ Para la gestión del código se ha utilizado GitHub~\cite{github}, lo que ha per
 El desarrollo se organizó en ciclos de trabajo o \textit{sprints}, con una orientación aproximada quincenal. Cada iteración incorporó nuevas funcionalidades o mejoras sobre la base existente. La planificación inicial partía de una evolución progresiva: primero un logger funcional, después la normalización del CSV, posteriormente el análisis de datos y finalmente la visualización, validación y refinamiento de interfaz.
 
 No obstante, la ejecución real mostró que varias tareas tuvieron que redistribuirse entre sprints. La razón principal fue la complejidad técnica del entorno Blender, especialmente en la detección de eventos internos, el comportamiento diferente entre \textit{Object Mode} y \textit{Edit Mode}, la captura de UV y el cálculo correcto de métricas a partir de CSV reales. Por ello, la planificación se mantuvo como una guía de trabajo, pero la ejecución siguió un patrón incremental y adaptativo.
+
+La planificación temporal se resume visualmente en la Figura~\ref{fig:a-burndown-global}, que muestra el burndown global del proyecto.
+
+La evolución del trabajo durante el Sprint 1 se muestra en la Figura~\ref{fig:a-burndown-sprint1}.
+
+La evolución del trabajo durante el Sprint 2 se muestra en la Figura~\ref{fig:a-burndown-sprint2}.
+
+La evolución del trabajo durante el Sprint 3 se muestra en la Figura~\ref{fig:a-burndown-sprint3}.
+
+La evolución del trabajo durante el Sprint 4 se muestra en la Figura~\ref{fig:a-burndown-sprint4}.
+
+La evolución del trabajo durante el Sprint 5 se muestra en la Figura~\ref{fig:a-burndown-sprint5}.
+
+La evolución del trabajo durante el Sprint 6 se muestra en la Figura~\ref{fig:a-burndown-sprint6}.
+
+La evolución del trabajo durante el Sprint 7 se muestra en la Figura~\ref{fig:a-burndown-sprint7}.
+
+La evolución del trabajo durante el Sprint 8 se muestra en la Figura~\ref{fig:a-burndown-sprint8}.
+
+El flujo general de captura y análisis considerado en la planificación se representa en la Figura~\ref{fig:flujo_asincrono}.
 
 \begin{figure}[H]
     \centering
@@ -48,14 +68,14 @@ El objetivo previsto era comprobar si resultaba viable registrar actividad técn
 
 Esta fase se desarrolló durante enero.
 
-El Sprint 0 se dedicó a la definición del dominio del problema, el alcance funcional y la arquitectura inicial. En esta etapa se planteó la separación del sistema en dos add-ons independientes:
+El Sprint 0 se dedicó a la definición del dominio del problema, el alcance funcional y la arquitectura inicial. En esta etapa se planteó la separación del sistema en dos \textit{add-ons} independientes:
 
 \begin{itemize}
-    \item un primer add-on centrado en la recopilación de datos durante el modelado;
-    \item un segundo add-on orientado al análisis posterior de los registros generados.
+    \item un primer \textit{add-on} centrado en la recopilación de datos durante el modelado;
+    \item un segundo \textit{add-on} orientado al análisis posterior de los registros generados.
 \end{itemize}
 
-La planificación prevista consistía en delimitar requisitos, establecer el formato de intercambio y definir el flujo general de datos. La ejecución real confirmó la validez de esta separación, aunque el desarrollo posterior mostró que el segundo add-on tendría un peso mayor del inicialmente previsto. El módulo de análisis no se limitó a leer CSV, sino que terminó incorporando validación de datos, métricas estadísticas, métricas geométricas, métricas UV, gráficos, visualizaciones y una interfaz organizada por pestañas.
+La planificación prevista consistía en delimitar requisitos, establecer el formato de intercambio y definir el flujo general de datos. La ejecución real confirmó la validez de esta separación, aunque el desarrollo posterior mostró que el segundo \textit{add-on} tendría un peso mayor del inicialmente previsto. El módulo de análisis no se limitó a leer CSV, sino que terminó incorporando validación de datos, métricas estadísticas, métricas geométricas, métricas UV, gráficos, visualizaciones y una interfaz organizada por pestañas.
 
 \subsection{Sprint 1: primera versión funcional del Data Logger 3D}
 \label{subsec:a-sprint-1}
@@ -69,12 +89,12 @@ Esta fase se desarrolló durante la primera y segunda semana de febrero.
     \label{fig:a-burndown-sprint1}
 \end{figure}
 
-El primer sprint de desarrollo se centró en crear una primera versión funcional del add-on de captura. El objetivo previsto era disponer de un prototipo mínimo capaz de ejecutarse dentro de Blender, mostrar una interfaz básica y registrar datos en formato CSV.
+El primer sprint de desarrollo se centró en crear una primera versión funcional del \textit{add-on} de captura. El objetivo previsto era disponer de un prototipo mínimo capaz de ejecutarse dentro de Blender, mostrar una interfaz básica y registrar datos en formato CSV.
 
 Las tareas previstas fueron:
 
 \begin{itemize}
-    \item creación de la estructura inicial del add-on;
+    \item creación de la estructura inicial del \textit{add-on};
     \item definición de operadores básicos;
     \item incorporación de una interfaz gráfica inicial;
     \item captura de eventos o estados relevantes;
@@ -106,14 +126,14 @@ Las tareas previstas fueron:
     \item mejorar el registro de eventos significativos;
     \item reorganizar archivos del proyecto;
     \item avanzar en la normalización del CSV;
-    \item preparar el formato de datos para el futuro add-on de análisis.
+    \item preparar el formato de datos para el futuro \textit{add-on} de análisis.
 \end{itemize}
 
 La ejecución real se centró especialmente en corregir versiones tempranas y reorganizar el código. En esta fase se realizaron movimientos de archivos, eliminación de componentes obsoletos y ajustes relacionados con la captura de eventos significativos. Esta desviación respecto a una planificación puramente funcional resultó positiva, ya que permitió reducir ruido en los datos y preparar una base más coherente para las métricas posteriores.
 
-El principal aprendizaje de este sprint fue que el CSV debía tratarse como un contrato entre los dos add-ons. Cualquier cambio en la estructura del logger afectaría directamente al análisis posterior, por lo que la cabecera, los campos registrados y la semántica de cada columna debían mantenerse documentados y controlados.
+El principal aprendizaje de este sprint fue que el CSV debía tratarse como un contrato entre los dos \textit{add-ons}. Cualquier cambio en la estructura del logger afectaría directamente al análisis posterior, por lo que la cabecera, los campos registrados y la semántica de cada columna debían mantenerse documentados y controlados.
 
-\subsection{Sprint 3: implementación inicial del add-on de análisis}
+\subsection{Sprint 3: implementación inicial del \textit{add-on} de análisis}
 \label{subsec:a-sprint-3}
 
 \begin{figure}[H]
@@ -125,19 +145,19 @@ El principal aprendizaje de este sprint fue que el CSV debía tratarse como un c
 
 Esta fase se desarrolló durante la primera y segunda semana de marzo.
 
-El tercer sprint tuvo como objetivo iniciar el segundo add-on de la \textit{suite}. La planificación contemplaba la lectura de CSV, el cálculo de primeras métricas temporales y espaciales, y una interfaz inicial para el análisis.
+El tercer sprint tuvo como objetivo iniciar el segundo \textit{add-on} de la \textit{suite}. La planificación contemplaba la lectura de CSV, el cálculo de primeras métricas temporales y espaciales, y una interfaz inicial para el análisis.
 
 Las tareas previstas fueron:
 
 \begin{itemize}
-    \item crear la estructura base del add-on de análisis;
+    \item crear la estructura base del \textit{add-on} de análisis;
     \item implementar la lectura de archivos CSV;
     \item calcular primeras métricas temporales y espaciales;
     \item mostrar resultados básicos en Blender;
     \item preparar primeras visualizaciones.
 \end{itemize}
 
-La ejecución real incorporó varias versiones asociadas a la implementación del análisis temporal y espacial. También se subieron archivos ZIP del add-on de análisis, se eliminaron versiones antiguas y se reorganizaron carpetas. Esto indica que el sprint no solo permitió implementar cálculo analítico, sino también consolidar la estructura del segundo complemento.
+La ejecución real incorporó varias versiones asociadas a la implementación del análisis temporal y espacial. También se subieron archivos ZIP del \textit{add-on} de análisis, se eliminaron versiones antiguas y se reorganizaron carpetas. Esto indica que el sprint no solo permitió implementar cálculo analítico, sino también consolidar la estructura del segundo complemento.
 
 Durante esta fase comenzaron a aparecer problemas propios del análisis de datos: valores incompletos, necesidad de interpretar columnas temporales, cálculo de velocidades, distancias y evolución de actividad. Por ello, la implementación inicial tuvo que combinar lectura de datos, depuración de CSV y primeras decisiones sobre cómo presentar los resultados.
 
@@ -213,14 +233,14 @@ Esta fase se desarrolló durante la tercera y cuarta semana de abril.
     \label{fig:a-burndown-sprint6}
 \end{figure}
 
-El sexto sprint se dedicó al desarrollo avanzado del add-on de análisis. La planificación contemplaba la ampliación del cálculo estadístico, la incorporación de métricas sobre CSV y la generación de gráficos enriquecidos.
+El sexto sprint se dedicó al desarrollo avanzado del \textit{add-on} de análisis. La planificación contemplaba la ampliación del cálculo estadístico, la incorporación de métricas sobre CSV y la generación de gráficos enriquecidos.
 
 Las tareas previstas fueron:
 
 \begin{itemize}
     \item implementar análisis estadístico de CSV;
     \item calcular media, mediana, desviación estándar, mínimos y máximos cuando procediera;
-    \item ampliar métricas A1--A17;
+    \item ampliar métricas A1--A16;
     \item incorporar visualizaciones con Matplotlib~\cite{matplotlib};
     \item mejorar la presentación de resultados en la interfaz;
     \item actualizar la documentación técnica.
@@ -248,14 +268,14 @@ Las tareas previstas fueron:
 
 \begin{itemize}
     \item validar el sistema con CSV reales;
-    \item comprobar el cálculo de métricas A1--A17;
+    \item comprobar el cálculo de métricas A1--A16;
     \item revisar el análisis de múltiples CSV;
     \item corregir errores de cálculo;
-    \item integrar el segundo add-on en la documentación;
+    \item integrar el segundo \textit{add-on} en la documentación;
     \item preparar el sistema para su cierre.
 \end{itemize}
 
-La ejecución real muestra la incorporación de un CSV real procedente de la actividad realizada en la EASD, Escuela de Arte y Superior de Diseño de Burgos, así como varias correcciones sobre \texttt{Calculate CSV Metric Stats} y métricas CSV múltiples. También se llevó a cabo la reestructuración de anexos e integración completa del segundo add-on en la documentación del TFG.
+La ejecución real muestra la incorporación de un CSV real procedente de la actividad realizada en la EASD, Escuela de Arte y Superior de Diseño de Burgos, así como varias correcciones sobre \texttt{Calculate CSV Metric Stats} y métricas CSV múltiples. También se llevó a cabo la reestructuración de anexos e integración completa del segundo \textit{add-on} en la documentación del TFG.
 
 Este sprint cumplió su función de validación, pero también reveló errores que no habían aparecido en pruebas más controladas. La lectura de CSV múltiples y el cálculo estadístico sobre datos reales exigieron revisar funciones, controlar casos límite y reforzar la validación. Por tanto, la ejecución real fue más correctiva de lo previsto, pero permitió aumentar la fiabilidad del sistema antes de la fase final.
 
@@ -278,7 +298,7 @@ Las tareas previstas fueron:
 
 \begin{itemize}
     \item revisar la documentación final;
-    \item mejorar la interfaz del add-on de análisis;
+    \item mejorar la interfaz del \textit{add-on} de análisis;
     \item eliminar redundancias visuales;
     \item incorporar textos breves y tooltips;
     \item organizar resultados de forma más clara;
@@ -287,7 +307,7 @@ Las tareas previstas fueron:
 
 La ejecución real incluyó una refactorización final importante. Se reorganizó la estructura interna del código, separando la lógica de cálculo, la interfaz y la generación de visualizaciones. También se incorporaron optimizaciones mediante estructuras tipo KDTree para mejorar cálculos geométricos relacionados con búsquedas de proximidad entre mallas. Además, se revisaron funciones de métricas procedentes de CSV y métricas de malla, incluyendo similitud, distancia de Hausdorff, normales, ángulos, duplicados de vértices y métricas UV.
 
-En la interfaz se incorporó una organización por pestañas, separando la navegación entre métricas estadísticas, métricas geométricas, métricas UV y visualizaciones. Esta decisión mejoró la claridad del add-on y redujo la sobrecarga visual. El sprint cumplió su objetivo de cierre, aunque también asumió tareas de optimización técnica que inicialmente podrían haberse previsto en fases anteriores.
+En la interfaz se incorporó una organización por pestañas, separando la navegación entre métricas estadísticas, métricas geométricas, métricas UV y visualizaciones. Esta decisión mejoró la claridad del \textit{add-on} y redujo la sobrecarga visual. El sprint cumplió su objetivo de cierre, aunque también asumió tareas de optimización técnica que inicialmente podrían haberse previsto en fases anteriores.
 
 El resultado final fue una \textit{suite} más organizada, mantenible y coherente, con una separación más clara entre captura, análisis, cálculo geométrico e interfaz.
 
@@ -305,13 +325,13 @@ La Tabla~\ref{tab:sprints_resumen} sintetiza de forma cronológica las fases fun
 \textbf{Sprint} & \textbf{Periodo} & \textbf{Funcionalidades principales} & \textbf{Resultado} \\
 \midrule
 Fase previa & Noviembre & Estudio de Blender, API \texttt{bpy}, eventos y viabilidad técnica. & Confirmación de viabilidad y detección de limitaciones iniciales. \\
-Sprint 0 & Enero & Requisitos, alcance y arquitectura basada en dos add-ons. & Definición del enfoque modular. \\
+Sprint 0 & Enero & Requisitos, alcance y arquitectura basada en dos \textit{add-ons}. & Definición del enfoque modular. \\
 Sprint 1 & Febrero semanas 1--2 & Logger inicial, interfaz básica y CSV. & Primera versión funcional del sistema de captura. \\
 Sprint 2 & Febrero semanas 3--4 & Refinamiento de captura, reorganización y normalización CSV. & Base más estable para el intercambio de datos. \\
-Sprint 3 & Marzo semanas 1--2 & Add-on de análisis, lectura CSV y primeras métricas. & Integración inicial del análisis temporal y espacial. \\
+Sprint 3 & Marzo semanas 1--2 & \textit{Add-on} de análisis, lectura CSV y primeras métricas. & Integración inicial del análisis temporal y espacial. \\
 Sprint 4 & Marzo semanas 3--4 & Métricas, ejes 3D, pruebas y evolución del logger. & Mejora simultánea de análisis y captura. \\
 Sprint 5 & Abril semanas 1--2 & Refactorización del logger, \texttt{bmesh}, operadores, UV y deltas. & Versión avanzada y robusta del Data Logger 3D. \\
-Sprint 6 & Abril semanas 3--4 & Análisis estadístico, métricas CSV y gráficos. & Add-on de análisis más completo. \\
+Sprint 6 & Abril semanas 3--4 & Análisis estadístico, métricas CSV y gráficos. & \textit{Add-on} de análisis más completo. \\
 Sprint 7 & Mayo semanas 1--2 & Validación funcional con datos reales procedentes de la actividad realizada en la EASD, Escuela de Arte y Superior de Diseño de Burgos, y corrección de métricas. & Sistema comprobado con CSV real y funciones corregidas. \\
 Sprint 8 & Mayo semanas 3--4 & Refactorización final, KDTree, pestañas, documentación e interfaz. & Versión final de la \textit{suite} completa. \\
 \bottomrule
@@ -338,8 +358,8 @@ Estudiar la viabilidad técnica y la API de Blender. &
 Se confirmó la viabilidad y se detectó la necesidad de usar temporizadores, snapshots y \texttt{bmesh}. \\
 
 \textbf{Sprint 0} &
-Definir requisitos, alcance y arquitectura de dos add-ons. &
-Se mantuvo la arquitectura modular, aunque el add-on de análisis adquirió mayor alcance. \\
+Definir requisitos, alcance y arquitectura de dos \textit{add-ons}. &
+Se mantuvo la arquitectura modular, aunque el \textit{add-on} de análisis adquirió mayor alcance. \\
 
 \textbf{Sprint 1} &
 Crear un logger inicial con interfaz básica y salida CSV. &
@@ -394,7 +414,7 @@ La Tabla~\ref{tab:desviaciones} expone las desviaciones temporales más relevant
 \textbf{Hito técnico} & \textbf{Plan.} & \textbf{Real} & \textbf{Desv.} & \textbf{Justificación técnica} \\
 \midrule
 Prototipo inicial del logger & 16 Feb & 16 Feb & 0 d & Se alcanzó una primera versión funcional con interfaz básica y registro inicial. \\
-Implementación v0.3 & 05 Mar & 11 Mar & +6 d & La lectura de CSV, el análisis temporal y espacial y la reorganización del add-on de análisis requirieron más iteraciones de las previstas. \\
+Implementación v0.3 & 05 Mar & 11 Mar & +6 d & La lectura de CSV, el análisis temporal y espacial y la reorganización del \textit{add-on} de análisis requirieron más iteraciones de las previstas. \\
 Soporte avanzado de \textit{Edit Mode} & 10 Mar & 20 Mar & +10 d & La lectura de mallas editables mediante \texttt{bmesh} y la detección robusta de eventos resultaron más complejas de lo esperado. \\
 Análisis estadístico CSV & 20 Abr & 27 Abr & +7 d & La integración de estadísticas descriptivas y validación de datos exigió revisar funciones de cálculo. \\
 Validación con datos reales & 10 May & 15 May & +5 d & El CSV real procedente de la actividad realizada en la EASD, Escuela de Arte y Superior de Diseño de Burgos, permitió detectar errores en métricas múltiples y obligó a corregir funciones de cálculo. \\
@@ -411,7 +431,7 @@ Refactorización final y KDTree & 20 May & 26 May & +6 d & La reorganización en
 
 Los retrasos identificados se fundamentan principalmente en decisiones técnicas orientadas a mejorar la estabilidad del sistema. Durante el desarrollo se detectó que una captura demasiado frecuente o poco filtrada podía generar CSV excesivamente grandes y afectar al rendimiento de Blender. Por ello, se optó por un enfoque basado en cambios significativos, comparación de estados y temporizadores.
 
-Uno de los principales riesgos fue la degradación del rendimiento en el hilo principal de Blender durante el modelado. Para mitigarlo, se evitó realizar análisis pesados durante la captura. El logger se limitó a registrar datos técnicos y el cálculo de métricas quedó desplazado al segundo add-on. Esta separación permitió que la sesión de modelado no se viera interrumpida por operaciones estadísticas o geométricas complejas.
+Uno de los principales riesgos fue la degradación del rendimiento en el hilo principal de Blender durante el modelado. Para mitigarlo, se evitó realizar análisis pesados durante la captura. El logger se limitó a registrar datos técnicos y el cálculo de métricas quedó desplazado al segundo \textit{add-on}. Esta separación permitió que la sesión de modelado no se viera interrumpida por operaciones estadísticas o geométricas complejas.
 
 También se identificó un riesgo relacionado con la detección incompleta de eventos. Algunas operaciones de Blender no producen cambios evidentes en los contadores topológicos, pero sí son relevantes para el análisis del proceso. Este problema se mitigó mediante la combinación de detección de operadores, banderas internas, hash UV y comparación de snapshots.
 
@@ -441,12 +461,12 @@ Finalmente, la incorporación de optimizaciones como KDTree en métricas geomét
 
 La viabilidad técnica de la solución queda respaldada por la flexibilidad de Blender como plataforma extensible mediante Python~\cite{pythonlang}. El proyecto se apoya en la API \texttt{bpy}, en operadores personalizados, en manejadores persistentes, en temporizadores y en acceso directo a estructuras de datos de escena.
 
-El primer add-on utiliza módulos estándar de Python y componentes propios de Blender para capturar datos durante la sesión. El uso de \texttt{bmesh} permite acceder a la topología en \textit{Edit Mode}, mientras que \texttt{mathutils} facilita operaciones espaciales sobre matrices, vectores y cajas envolventes.
+El primer \textit{add-on} utiliza módulos estándar de Python y componentes propios de Blender para capturar datos durante la sesión. El uso de \texttt{bmesh} permite acceder a la topología en \textit{Edit Mode}, mientras que \texttt{mathutils} facilita operaciones espaciales sobre matrices, vectores y cajas envolventes.
 
-El segundo add-on resulta técnicamente viable porque el análisis se realiza de forma diferida. Esta decisión evita sobrecargar el proceso de modelado y permite incorporar cálculos más complejos, como:
+El segundo \textit{add-on} resulta técnicamente viable porque el análisis se realiza de forma diferida. Esta decisión evita sobrecargar el proceso de modelado y permite incorporar cálculos más complejos, como:
 
 \begin{itemize}
-    \item cálculo de métricas A1--A17 a partir de registros CSV;
+    \item cálculo de métricas A1--A16 a partir de registros CSV;
     \item validación de datos y control de valores no numéricos;
     \item cálculo de métricas geométricas de malla;
     \item cálculo de métricas UV;
@@ -461,63 +481,122 @@ La principal dificultad técnica procede de la complejidad de la API de Blender 
 \subsection{Viabilidad económica}
 \label{subsec:a-viabilidad-economica}
 
-Desde el punto de vista económico, el proyecto resulta viable porque se ha desarrollado con tecnologías de código abierto o sin coste directo de licencia. Blender, Python, NumPy, Matplotlib y GitHub en su modalidad básica pueden utilizarse sin costes de adquisición para este contexto académico.
+Desde el punto de vista económico, el proyecto resulta viable porque se ha desarrollado principalmente con tecnologías de código abierto o sin coste directo de licencia en el contexto académico. Blender, Python, NumPy, Matplotlib, GitHub en su modalidad básica y \LaTeX{} pueden utilizarse sin costes de adquisición para este proyecto.
+
+No obstante, para estimar el coste económico de forma más realista no debe imputarse al proyecto el coste total de los recursos hardware y software utilizados, ya que estos bienes siguen teniendo valor una vez finalizado el desarrollo. El equipo informático puede seguir utilizándose en otros proyectos o venderse en el mercado de segunda mano, recuperando parte de su valor. Por ello, una forma sencilla y coherente de imputación consiste en considerar únicamente la pérdida de valor correspondiente al periodo de uso durante el proyecto. En términos contables, esta imputación puede aproximarse mediante la amortización del bien durante el tiempo en que ha sido utilizado.
 
 \subsubsection{Costes de software}
 \label{subsubsec:a-costes-software}
 
+El software utilizado en el proyecto no ha supuesto un coste directo de licencia:
+
 \begin{itemize}
-    \item Blender: 0 €.
-    \item Python: 0 €.
-    \item GitHub: 0 € en el uso académico básico.
-    \item NumPy: 0 €.
-    \item Matplotlib: 0 €.
-    \item \LaTeX: 0 €.
+\item Blender: 0 €.
+\item Python: 0 €.
+\item GitHub: 0 € en el uso académico básico.
+\item NumPy: 0 €.
+\item Matplotlib: 0 €.
+\item \LaTeX: 0 €.
 \end{itemize}
+
+Por tanto, no se imputa un coste de adquisición de software al proyecto. En caso de utilizar licencias comerciales en un entorno profesional, debería aplicarse un criterio equivalente al del hardware: imputar únicamente la parte proporcional correspondiente al tiempo de uso o a la amortización de dichas licencias durante el proyecto.
 
 \subsubsection{Costes de hardware}
 \label{subsubsec:a-costes-hardware}
 
-Para la ejecución del proyecto se requiere una estación de trabajo capaz de ejecutar Blender de forma fluida. Se toma como referencia un equipo de gama media con un valor estimado de 1200 €. Aplicando una amortización lineal de 48 meses y considerando una dedicación aproximada de cuatro meses al proyecto:
+Para la ejecución del proyecto se ha utilizado una estación de trabajo capaz de ejecutar Blender de forma fluida. Se toma como referencia un equipo de gama media con un valor estimado de 1200 €. Dado que este equipo no se consume completamente durante el proyecto y conserva valor al finalizar, no sería correcto imputar su coste total.
+
+Aplicando una amortización lineal de 48 meses y considerando una dedicación aproximada de cuatro meses al proyecto, el coste imputable al proyecto se calcula como:
+
 \[
-\text{Coste hardware} = \frac{1200\,\text{euros}}{48\,\text{meses}} \times 4\,\text{meses} = 100\,\text{euros}
+\text{Coste hardware} =
+\frac{1200\,\text{euros}}{48\,\text{meses}}
+\times 4\,\text{meses}
+= 100\,\text{euros}
 \]
+
+Por tanto, el coste imputable de hardware asciende a 100 €, correspondiente a la pérdida de valor estimada durante el periodo de uso del proyecto.
 
 \subsubsection{Coste estimado de desarrollo}
 \label{subsubsec:a-costes-desarrollo}
 
-Aunque el proyecto se enmarca en un contexto académico, puede estimarse un coste equivalente de desarrollo tomando como referencia una dedicación de cuatro meses y una remuneración mensual aproximada de 1200 euros para un perfil junior:
+Aunque el proyecto se enmarca en un contexto académico, puede estimarse un coste equivalente de desarrollo tomando como referencia una dedicación de cuatro meses y una remuneración mensual aproximada de 1200 € para un perfil junior.
+
+El coste salarial bruto sería:
 
 \[
-1200\,\text{euros/mes} \times 4\,\text{meses} = 4800\,\text{euros}
+1200\,\text{euros/mes} \times 4\,\text{meses}
+= 4800\,\text{euros}
 \]
 
-\subsubsection{Coste total estimado}
-\label{subsubsec:a-coste-total}
+Sin embargo, desde el punto de vista empresarial, el coste de personal no se limita al salario bruto. También debe incluirse la Seguridad Social a cargo de la empresa. Para el año 2026, en el Régimen General, se consideran los siguientes tipos empresariales: contingencias comunes, desempleo, Fondo de Garantía Salarial, formación profesional y Mecanismo de Equidad Intergeneracional.
 
-El coste total estimado se obtiene sumando el coste amortizado de hardware y el coste equivalente de desarrollo:
+En el caso de una contratación general o indefinida, los porcentajes empresariales aplicables son:
+
+\begin{itemize}
+\item Contingencias comunes: 23,60 %.
+\item Desempleo: 5,50 %.
+\item Fondo de Garantía Salarial: 0,20 %.
+\item Formación Profesional: 0,60 %.
+\item Mecanismo de Equidad Intergeneracional: 0,75 %.
+\end{itemize}
+
+Por tanto, el porcentaje total de Seguridad Social a cargo de la empresa considerado en esta estimación es:
 
 \[
-100\,\text{euros} + 4800\,\text{euros} = 4900\,\text{euros}
+23{,}60 + 5{,}50 + 0{,}20 + 0{,}60 + 0{,}75
+= 30{,}65\,%
 \]
 
-Por tanto, aunque no haya existido un coste directo de licencias, la traslación del proyecto a un entorno profesional tendría un coste aproximado de 4900 €.
+La cuota empresarial estimada sería:
+
+\[
+4800\,\text{euros} \times 0{,}3065
+= 1471{,}20\,\text{euros}
+\]
+
+Así, el coste total de desarrollo, incluyendo salario bruto y Seguridad Social a cargo de la empresa, asciende a:
+
+\[
+4800\,\text{euros} + 1471{,}20\,\text{euros}
+= 6271{,}20\,\text{euros}
+\]
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{0.85\textwidth}{X r}
+\toprule
+\textbf{Concepto} & \textbf{Coste imputado} \\
+\midrule
+Software utilizado & 0 € \\
+Hardware amortizado durante cuatro meses & 100 € \\
+Salario bruto estimado & 4800 € \\
+Seguridad Social a cargo de la empresa, 30,65 \% & 1471,20 € \\
+\midrule
+\textbf{Coste total estimado} & \textbf{6371,20 €} \\
+\bottomrule
+\end{tabularx}
+\caption{Estimación de costes del proyecto.}
+\label{tab:costes-proyecto}
+\end{table}
 
 \subsection{Viabilidad legal}
 \label{subsec:a-viabilidad-legal}
 
 El proyecto se apoya en herramientas y bibliotecas de uso permitido en contextos académicos. Blender se distribuye bajo licencia GNU GPL, Python bajo licencia propia de la Python Software Foundation y las bibliotecas científicas utilizadas cuentan con licencias compatibles con su uso en investigación y desarrollo.
 
-La solución propuesta no modifica el núcleo de Blender, sino que se integra mediante su sistema de add-ons. Desde el punto de vista documental, las referencias externas se incorporan mediante la bibliografía correspondiente y no se incluyen recursos propietarios sin autorización.
+La solución propuesta no modifica el núcleo de Blender, sino que se integra mediante su sistema de \textit{add-ons}. Desde el punto de vista documental, las referencias externas se incorporan mediante la bibliografía correspondiente y no se incluyen recursos propietarios sin autorización.
 
 \subsection{Licencia del software desarrollado}
 \label{subsec:licencia-software}
 
-Los add-ons desarrollados para este proyecto se distribuyen bajo la licencia \textbf{GNU General Public License v3.0 o posterior (GPL-3.0-or-later)}. Esta elección resulta coherente con el ecosistema de Blender, ya que los complementos hacen uso directo de su API de Python mediante módulos como \texttt{bpy}, \texttt{bmesh} y \texttt{mathutils}. Al integrarse como extensiones ejecutadas dentro de Blender, la distribución del código debe mantenerse compatible con la licencia GPL del propio entorno.
+Los \textit{add-ons} desarrollados para este proyecto se distribuyen bajo la licencia \textbf{GNU General Public License v3.0 o posterior (GPL-3.0-or-later)}. Esta elección resulta coherente con el ecosistema de Blender, ya que los complementos hacen uso directo de su API de Python mediante módulos como \texttt{bpy}, \texttt{bmesh} y \texttt{mathutils}. Al integrarse como extensiones ejecutadas dentro de Blender, la distribución del código debe mantenerse compatible con la licencia GPL del propio entorno.
 
-La licencia GPL permite usar, estudiar, modificar y redistribuir el software, siempre que las versiones derivadas mantengan la misma licencia y se conserve el acceso al código fuente. En este proyecto, dicha condición se satisface al publicar los archivos fuente de los add-ons junto con el repositorio y al incluir un archivo \texttt{LICENSE} con el texto completo de la licencia.
+La licencia GPL permite usar, estudiar, modificar y redistribuir el software, siempre que las versiones derivadas mantengan la misma licencia y se conserve el acceso al código fuente. En este proyecto, dicha condición se satisface al publicar los archivos fuente de los \textit{add-ons} junto con el repositorio y al incluir un archivo \texttt{LICENSE} con el texto completo de la licencia.
 
-Por tanto, el producto software resultante se libera como software libre bajo GPL-3.0-or-later, incluyendo tanto el add-on \textit{Data Logger 3D} como el add-on de análisis y visualización.
+Por tanto, el producto software resultante se libera como software libre bajo GPL-3.0-or-later, incluyendo tanto el \textit{add-on} \textit{Data Logger 3D} como el \textit{add-on} de análisis y visualización.
 
 \subsection{Viabilidad ética}
 \label{subsec:a-viabilidad-etica}
@@ -556,13 +635,13 @@ Dependencia de versiones de Blender & Medio & Desarrollo sobre versiones recient
 \label{tab:riesgos}
 \end{table}
 
-La aplicación de estas medidas permitió reducir la deuda técnica, mejorar la estabilidad de los add-ons y asegurar una evolución controlada del sistema. En particular, la separación entre logger y análisis fue una decisión clave para mitigar riesgos de rendimiento y facilitar la ampliación posterior de métricas y visualizaciones.
+La aplicación de estas medidas permitió reducir la deuda técnica, mejorar la estabilidad de los \textit{add-ons} y asegurar una evolución controlada del sistema. En particular, la separación entre logger y análisis fue una decisión clave para mitigar riesgos de rendimiento y facilitar la ampliación posterior de métricas y visualizaciones.
 
 \section{Conclusión del plan de proyecto}
 \label{sec:a-conclusion}
 
 El proyecto siguió una planificación iterativa e incremental, aunque la ejecución real presentó ajustes derivados de la complejidad técnica del entorno Blender. La evolución del sistema no fue lineal: algunas tareas de análisis obligaron a revisar la captura, y algunos problemas detectados con datos reales exigieron volver sobre funciones de métricas ya implementadas.
 
-A pesar de estas desviaciones, la planificación permitió mantener una dirección clara. La \textit{suite} evolucionó desde un logger inicial hasta un sistema formado por dos add-ons complementarios, con captura automática, exportación CSV, análisis estadístico, métricas geométricas, métricas UV, visualizaciones e interfaz organizada por pestañas.
+A pesar de estas desviaciones, la planificación permitió mantener una dirección clara. La \textit{suite} evolucionó desde un logger inicial hasta un sistema formado por dos \textit{add-ons} complementarios, con captura automática, exportación CSV, análisis estadístico, métricas geométricas, métricas UV, visualizaciones e interfaz organizada por pestañas.
 
 La revisión del historial de commits muestra una progresión coherente: primero se construyó la base del logger, después se normalizó el intercambio de datos, posteriormente se incorporó el análisis, se validaron métricas con datos reales y finalmente se refactorizó el sistema para mejorar rendimiento, mantenibilidad e interfaz. Por tanto, el proyecto puede considerarse viable, trazable y técnicamente coherente con los objetivos planteados.

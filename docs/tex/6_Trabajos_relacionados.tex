@@ -24,7 +24,7 @@ Otra línea de investigación se orienta para entender cómo trabaja el diseñad
 
 Chen et al.~\cite{chen2022} analizan las diferencias entre diseñadores expertos y novatos, identificando variaciones significativas en las estrategias jerárquicas utilizadas durante el proceso de diseño. En la misma línea, Casakin y Levy~\cite{casakin2023} proponen un marco formal para medir el comportamiento del diseñador experto, identificando factores correlacionados con la descomposición del problema y el uso de pensamiento conceptual. Por su parte, Welch y Lim~\cite{welch} demuestran que los diseñadores novatos suelen adoptar procesos más iterativos, erráticos y menos estructurados que los diseñadores con mayor experiencia técnica.
 
-\textbf{Limitación:} Estos trabajos se basan fundamentalmente en análisis experimentales controlados o estudios teóricos con muestras de datos reducidas y técnicas intrusivas de observación directa (como protocolos de pensamiento en voz alta), lo que limita su escalabilidad, automatización y aplicación en entornos reales de producción.
+La limitacion es que estos trabajos se basan fundamentalmente en análisis experimentales controlados o estudios teóricos con muestras de datos reducidas y técnicas intrusivas de observación directa (como protocolos de pensamiento en voz alta), lo que limita su escalabilidad, automatización y aplicación en entornos reales de producción.
 
 \section{Entornos Virtuales e Inmersivos}
 
@@ -32,7 +32,7 @@ El progreso en tecnologías inmersivas ha creado nuevas oportunidades para el an
 
 Wang et al. \cite{wang2024} describen un análisis a escala macro del comportamiento de diseño en entornos virtuales, combinando datos de interacción y posicionamiento para crear modelos automatizados del proceso de diseño. Krassmann et al. \cite{krassmann2018} también analizan cómo interactúan los usuarios en estos entornos mediante técnicas de seguimiento óculo-manual y visuales interactivas.
 
-\textbf{Limitación:} Los estudios mencionados dependen exclusivamente de dispositivos especializados y plataformas inmersivas de realidad mixta, lo que limita su aplicación práctica en software de modelado de uso común y pantallas tradicionales.
+La limitación es que los estudios mencionados dependen exclusivamente de dispositivos especializados y plataformas inmersivas de realidad mixta, lo que limita su aplicación práctica en software de modelado de uso común y pantallas tradicionales.
 
 \section{Aplicaciones educativas del modelado 3D}
 
@@ -40,7 +40,7 @@ El modelado 3D es una recurso ampliamente empleado en campos técnicos y artíst
 
 Sosna et al. argumentan~\cite{sosna2025} que el empleo de modelos tridimensionales optimiza la percepción espacial de estudiantes de diseño, así como fomenta su creatividad. También, según Koh et al.~\cite{koh2010}, el modelo permite incrementar la motivación por el aprendizaje técnico mediante la simulación de experiencias y las simulaciones tridimensionales.
 
-\textbf{Limitación:} Al igual que lo hacen las investigaciones, se han comprobado tanto los beneficios pedagógicos del modelado 3D como sus efectos en la cognición espacial y la creatividad, pero se carece de trabajo que profundice en la representación y análisis de los archivos de malla, así como en la evaluación de las interacciones de los usuarios.
+Su limitacion es que, al igual que lo hacen las investigaciones, se han comprobado tanto los beneficios pedagógicos del modelado 3D como sus efectos en la cognición espacial y la creatividad, pero se carece de trabajo que profundice en la representación y análisis de los archivos de malla, así como en la evaluación de las interacciones de los usuarios.
 
 \section{Comparación y posicionamiento del presente trabajo}
 
@@ -56,14 +56,19 @@ Los hallazgos más relevantes del estado actual se pueden resumir en los siguien
 
 La Tabla~\ref{tab:comparativa_trabajos} resume comparativamente las características funcionales de los trabajos analizados frente a la solución propuesta en este proyecto.
 
-
 \begin{table}[H]
 \centering
-\small
-\begin{tabular}{lcccc}
-\toprule  % Línea superior gruesa (cortesía de booktabs)
-\textbf{Trabajo} & \textbf{Adquisición TR} & \textbf{Generalista} & \textbf{No intrusivo} & \textbf{Análisis geométrico} \\
-\midrule  % Línea divisoria central
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabularx}{\textwidth}{Xcccc}
+\toprule
+\textbf{Trabajo} &
+\makecell{\textbf{Adquisición}\\\textbf{TR}} &
+\textbf{General.} &
+\makecell{\textbf{No}\\\textbf{intrusivo}} &
+\makecell{\textbf{Análisis}\\\textbf{geom.}} \\
+\midrule
 Gao et al. (2021)       &   &   & X & X \\
 Gao et al. (2023)       &   &   & X & X \\
 Liu et al. (2022)       &   &   & X & X \\
@@ -74,26 +79,13 @@ Wang et al. (2024)      &   &   &   & X \\
 Krassmann et al. (2018) &   &   &   & X \\
 Sosna et al. (2025)     & X & X &   &   \\
 Koh et al. (2010)       & X & X &   &   \\
-\textbf{Add-on 1.0}     & \textbf{X} & \textbf{X} & \textbf{X} & \textbf{X} \\
-\bottomrule % Línea inferior de cierre
-\end{tabular}
+\textbf{\textit{Add-on} 1.0} & \textbf{X} & \textbf{X} & \textbf{X} & \textbf{X} \\
+\bottomrule
+\end{tabularx}
 \caption{Comparativa entre trabajos relacionados y el sistema desarrollado en el presente proyecto.}
 \label{tab:comparativa_trabajos}
 \end{table}
 
 \textit{Nota aclaratoria sobre la Tabla~\ref{tab:comparativa_trabajos}:} El sistema desarrollado garantiza la adquisición de eventos en tiempo real (TR) mediante \textit{handlers} asíncronos de fondo, mientras que la generación de visualizaciones estadísticas complejas se ejecuta bajo demanda para preservar la tasa de refresco gráfica del entorno.
-
-La Figura~\ref{fig:estado_arte_posicionamiento} representa el espacio tridimensional conceptual en el que se posiciona esta investigación con respecto a las soluciones previas de la literatura.
-
-\begin{figure}[H]
-\centering
-\includegraphics[
-    width=\textwidth,
-    height=0.65\textheight,
-    keepaspectratio
-]{diagramas/arte.png}
-\caption{Resumen del estado del arte y posicionamiento del trabajo desarrollado.}
-\label{fig:estado_arte_posicionamiento}
-\end{figure}
 
 La principal aportación del sistema integrado \textit{Add-on Blender 1.0} radica en su capacidad para unificar la adquisición no intrusiva de interacciones y el análisis topológico avanzado directamente dentro de una plataforma de uso extendido en la industria como Blender. Al mitigar las limitaciones de los enfoques tradicionales, este proyecto proporciona un marco funcional que extrae variables de mallas estructurales, calcula índices complejos como la distancia de Hausdorff y proyecta analíticas visuales en el propio espacio tridimensional, constituyendo una herramienta versátil tanto para la auditoría profesional como para la investigación educativa.

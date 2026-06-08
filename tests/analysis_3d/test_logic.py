@@ -111,24 +111,42 @@ class TestCSVAnalytics(unittest.TestCase):
             self.skipTest(f"analytics unavailable: {exc}")
 
         rows = [
-            {"USER_ID": "test", "TimeStamp": "0", "UserX": "0", "UserY": "0", "UserZ": "0", "ObjX": "0", "ObjY": "0", "ObjZ": "0"},
             {
-                "USER_ID": "test",
-                "TimeStamp": "1", "UserX": "0", "UserY": "0", "UserZ": "0",
-                "ObjX": "0", "ObjY": "0", "ObjZ": "0",
-                "CtrlV": "1", "ShiftD": "2", "AltD": "3",
-                "ModifierDelta": "4", "ObjectDelta": "5", "UV": "6",
-                "ObjModeState": "0", "EditModeState": "1",
+                "TimeStamp": "0",
+                "UserX": "0",
+                "UserY": "0",
+                "UserZ": "0",
+                "ObjX": "0",
+                "ObjY": "0",
+                "ObjZ": "0",
+            },
+            {
+                "TimeStamp": "1",
+                "UserX": "0",
+                "UserY": "0",
+                "UserZ": "0",
+                "ObjX": "0",
+                "ObjY": "0",
+                "ObjZ": "0",
+                "CtrlV": "1",
+                "ShiftD": "2",
+                "AltD": "3",
+                "ModifierDelta": "4",
+                "ObjectDelta": "5",
+                "UV": "6",
+                "ObjModeState": "0",
+                "EditModeState": "1",
             },
         ]
 
         metrics = compute_metrics_for_csv(rows)
+
         self.assertEqual(metrics["A10"][1], 6.0)
         self.assertEqual(metrics["A11"][1], 4.0)
         self.assertEqual(metrics["A14"][1], 2.0)
         self.assertEqual(metrics["A15"][1], 6.0)
-        self.assertEqual(metrics["A17"][1], 5.0)
-
-
+        self.assertEqual(metrics["A16"][1], 5.0)
+        self.assertNotIn("A17", metrics)
+        
 if __name__ == "__main__":
     unittest.main()

@@ -15,7 +15,7 @@ La especificación de requisitos responde a los siguientes objetivos generales d
     \item Capturar de forma no intrusiva la actividad del usuario durante procesos de modelado 3D en Blender.
     \item Registrar datos temporales, espaciales, topológicos, operacionales y UV en ficheros CSV estructurados.
     \item Evitar la generación de registros redundantes mediante un sistema de comparación de estados, snapshots y deltas.
-    \item Analizar los CSV generados para obtener métricas estadísticas A1--A17 sobre la sesión de modelado.
+    \item Analizar los CSV generados para obtener métricas estadísticas A1--A16 sobre la sesión de modelado.
     \item Calcular métricas geométricas y UV sobre objetos de Blender, incluyendo área UV, islas UV, \textit{stretch}, densidad de texeles, normales, ángulos, duplicados, no cuadrángulos y similitud geométrica.
     \item Presentar los resultados mediante paneles integrados en Blender, bloques compactos, textos breves, tooltips y visualizaciones 2D o 3D.
     \item Garantizar consentimiento explícito, transparencia, minimización de datos y seudonimización del identificador de usuario.
@@ -91,7 +91,7 @@ El segundo add-on debe procesar los registros generados por \textit{Data Logger 
 
     \item[RF-28 Rechazo de valores no finitos.] El sistema debe impedir el procesamiento de valores \texttt{NaN}, infinitos o datos corruptos cuando comprometan la validez de los cálculos.
 
-    \item[RF-29 Métricas A1--A17.] El sistema debe calcular el conjunto de métricas estadísticas A1--A17 definidas para caracterizar la sesión de modelado.
+    \item[RF-29 Métricas A1--A16.] El sistema debe calcular el conjunto de métricas estadísticas A1--A16 definidas para caracterizar la sesión de modelado.
 
     \item[RF-30 Duración en horas.] La métrica A1 debe expresarse en horas para facilitar la interpretación de sesiones de distinta duración.
 
@@ -212,7 +212,7 @@ El segundo add-on debe procesar los registros generados por \textit{Data Logger 
 
 \section{Trazabilidad de requisitos}
 
-La trazabilidad se plantea en dos niveles. En primer lugar, la Tabla~\ref{tab:trazabilidad_modulos} relaciona los bloques funcionales del sistema con los principales módulos o responsabilidades de implementación. En segundo lugar, la Tabla~\ref{tab:trazabilidad_cu_rf} vincula cada caso de uso con los requisitos que lo justifican. Esta doble lectura permite comprobar que las funcionalidades de captura, persistencia, análisis y visualización quedan cubiertas sin convertir el apéndice en un listado exhaustivo de código fuente.
+La trazabilidad se plantea en dos niveles. En primer lugar, la Tabla~\ref{tab:trazabilidad_modulos} relaciona los bloques funcionales del sistema con los principales módulos o responsabilidades de implementación. En segundo lugar, la Tabla~\ref{tab:trazabilidad_cu_rf} vincula cada caso de uso con los requisitos que lo justifican.
 
 \begin{table}[H]
 \centering
@@ -229,7 +229,7 @@ Operadores y cambios UV & RF-11 a RF-16 & Interceptación de \textit{Ctrl+V}, \t
 \midrule
 Persistencia y control de sesión & RF-17 a RF-25 & Snapshots, deltas, escritura incremental en CSV, persistencia interna en \texttt{.blend}, restauración, exportación, consentimiento, aviso de \textit{Auto Run} y panel de control. \\
 \midrule
-Análisis estadístico & RF-26 a RF-34 & Detección y lectura de CSV, validación de datos, cálculo de métricas A1--A17, agrupación de métricas y cuartiles selectivos. \\
+Análisis estadístico & RF-26 a RF-34 & Detección y lectura de CSV, validación de datos, cálculo de métricas A1--A16, agrupación de métricas y cuartiles selectivos. \\
 \midrule
 Métricas geométricas y UV & RF-35 a RF-46 & Área UV, islas UV, \textit{stretch}, densidad de texeles, normales, ángulos, no cuadrángulos, vértices duplicados, similitud y distancia de Hausdorff cuando proceda. \\
 \midrule
@@ -248,7 +248,7 @@ Como apoyo visual a la especificación funcional, la Figura~\ref{fig:diagrama_cu
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{diagramas/casos_uso_b.png}
+    \includegraphics[width=0.95\textwidth]{diagramas/casos_de_uso.png}
     \caption{Diagrama de casos de uso del sistema de monitorización, análisis y visualización.}
     \label{fig:diagrama_cu}
 \end{figure}
@@ -429,18 +429,18 @@ A continuación se describen los casos de uso principales. Se ha conservado el n
 \scriptsize
 \begin{tabularx}{\linewidth}{p{0.23\linewidth}X}
 \toprule
-\textbf{CU-09} & Calcular métricas estadísticas A1--A17 \\
+\textbf{CU-09} & Calcular métricas estadísticas A1--A16 \\
 \midrule
 \textbf{Requisitos asociados} & RF-29 a RF-34, RIU-06, RIU-07, RIU-08, RIU-10, RIU-12 \\
 \textbf{Descripción} & El sistema calcula las métricas estadísticas de la sesión o conjunto de sesiones, aplicando agrupaciones y cuartiles selectivos cuando corresponda. \\
 \textbf{Precondición} & Existen datos CSV validados. \\
 \textbf{Secuencia principal} & El usuario solicita el cálculo; el sistema obtiene la duración en horas, actividad general, pausas, picos, velocidades, tamaños locales, transiciones y métricas de eventos, agrupando A2--A3 y A6--A9 cuando procede y manteniendo separadas A12, A13 y A16. \\
-\textbf{Postcondición} & Las métricas A1--A17 quedan disponibles para su presentación en paneles. \\
+\textbf{Postcondición} & Las métricas A1--A16 quedan disponibles para su presentación en paneles. \\
 \textbf{Excepciones} & Series temporales incompletas, duración nula o ausencia de columnas necesarias. \\
 \textbf{Prioridad} & Alta \\
 \bottomrule
 \end{tabularx}
-\caption{CU-09: Calcular métricas estadísticas A1--A17.}
+\caption{CU-09: Calcular métricas estadísticas A1--A16.}
 \label{tab:cu9}
 \end{table}
 

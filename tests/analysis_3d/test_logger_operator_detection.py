@@ -28,9 +28,20 @@ class TestLoggerOperatorDetection(unittest.TestCase):
         cls.logger = load_logger_module()
 
     def setUp(self):
-        self.logger.operator_flags = {"ctrl_v": 0, "shift_d": 0, "alt_d": 0, "merge": 0}
+        self.logger.operator_flags = {
+            "ctrl_v": 0,
+            "shift_d": 0,
+            "alt_d": 0,
+            "merge": 0,
+        }
         self.logger._uv_action_pending = 0
         self.logger.DEBUG_LAST_OPERATOR = ""
+
+        # Guardamos el valor original para restaurarlo después de cada test.
+        self._original_uv_tracking = self.logger.ENABLE_UV_CHANGE_TRACKING
+
+    def tearDown(self):
+        self.logger.ENABLE_UV_CHANGE_TRACKING = self._original_uv_tracking
 
     def test_normalize_operator_name_matches_blender_style(self):
         self.assertEqual(
@@ -58,6 +69,8 @@ class TestLoggerOperatorDetection(unittest.TestCase):
     def test_detect_merge_and_uv(self):
         self.assertTrue(self.logger.detect_flags_from_operator("MESH_OT_merge"))
         self.assertEqual(self.logger.operator_flags["merge"], 1)
+
+        self.logger.ENABLE_UV_CHANGE_TRACKING = True
 
         self.assertTrue(self.logger.detect_flags_from_operator("UV_OT_unwrap"))
         self.assertEqual(self.logger._uv_action_pending, 1)

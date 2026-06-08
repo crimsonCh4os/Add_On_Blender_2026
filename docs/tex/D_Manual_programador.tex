@@ -33,7 +33,9 @@ codigo/
     |-- ui_operators.py
     |-- ui_panels.py
     |-- ui_properties.py
-    `-- utils.py
+    |-- utils.py
+    `-- tests
+        `-- test_logic.py
 |-- core/
 |   `-- data_logger_core.py
 `-- tests/
@@ -82,21 +84,14 @@ cd [NOMBRE_DEL_REPOSITORIO]
 
 Si el repositorio se entrega comprimido, basta con descomprimirlo y conservar la misma estructura de carpetas. La carpeta del add-on de análisis debe mantener su archivo \texttt{\_\_init\_\_.py}, ya que Blender lo utiliza como punto de entrada del paquete.
 
-\subsection{Instalación de dependencias en el Python de Blender}
-\label{subsec:d-instalacion-dependencias-dev}
+\subsection{Dependencias externas}
+\label{subsec:d-dependencias-externas}
 
-Las dependencias externas deben instalarse en el Python integrado de Blender. En Windows, una forma habitual es ejecutar el Python de Blender desde la carpeta de instalación. La ruta exacta puede variar según la versión instalada:
+Los addons incluyen las librerías externas necesarias dentro de su propia estructura de carpetas, por lo que no es necesario instalar dependencias manualmente en el Python integrado de Blender en un ordenador nuevo.
 
-\begin{verbatim}
-"C:\\Program Files\\Blender Foundation\\
-Blender 4.x\\4.x\\python\\bin\\python.exe"
- -m ensurepip
-"C:\\Program Files\\Blender Foundation\\
-Blender 4.x\\4.x\\python\\bin\\python.exe"
- -m pip install numpy matplotlib
-\end{verbatim}
+Esta decisión evita que el usuario tenga que ejecutar comandos con \texttt{pip} o modificar la instalación de Blender. Al activar el addon, este carga las librerías incluidas localmente junto al código del addon.
 
-En Linux o macOS se debe usar de forma equivalente el ejecutable de Python incluido en la instalación de Blender. Si NumPy o Matplotlib ya están disponibles en la distribución utilizada, no es necesario reinstalarlos. En cualquier caso, las dependencias deben comprobarse desde Blender, ya que el Python del sistema y el Python de Blender pueden tener paquetes distintos.
+La instalación manual de dependencias en el Python de Blender solo sería necesaria en un entorno de desarrollo, o en caso de utilizar una versión del addon que no incluya dichas librerías externas.
 
 \subsection{Carga del add-on durante el desarrollo}
 \label{subsec:d-carga-desarrollo}
@@ -147,7 +142,8 @@ La captura espacial obtiene la posición de la vista 3D, el radio de escena y la
 \subsection{Captura topológica}
 \label{subsec:d-logger-topologica}
 
-La captura topológica calcula el número de vértices, triángulos, n-gons y normales potencialmente invertidas. En \textit{Edit Mode} se utiliza \texttt{bmesh.from\_edit\_mesh} para acceder al estado editable de la malla; en \textit{Object Mode} se consulta directamente \texttt{obj.data}. La función \texttt{get\_mesh\_stats} centraliza esta lógica y devuelve una tupla con los contadores relevantes.
+La captura topológica calcula el número de vértices, triángulos, n-gons y normales potencialmente invertidas. En \textit{Edit Mode} se utiliza 
+\texttt{bmesh.from\_edit\_mesh} para acceder al estado editable de la malla; en \textit{Object Mode} se consulta directamente \texttt{obj.data}. La función \texttt{get\_mesh\_stats} centraliza esta lógica y devuelve una tupla con los contadores relevantes.
 
 \subsection{Detección de operadores}
 \label{subsec:d-logger-operadores}
@@ -162,7 +158,7 @@ La detección UV combina dos mecanismos. En primer lugar, se identifican operado
 \subsection{Snapshots y deltas}
 \label{subsec:d-logger-snapshots}
 
-El snapshot resume la escena en una estructura compacta: posición de usuario, radio de escena, objeto activo, contadores topológicos, modo, hash UV, número de objetos, número de modificadores y estado de oclusión. La función \texttt{build\_snapshot} construye esta representación y genera una firma comparable. La función \texttt{apply\_snapshot\_as\_baseline} actualiza la línea base cuando el estado se registra correctamente.
+El snapshot resume la escena en una estructura compacta: posición de usuario, radio de escena, objeto activo, contadores topológicos, modo, hash UV, número de objetos y número de modificadores. La función \texttt{build\_snapshot} construye esta representación y genera una firma comparable. La función \texttt{apply\_snapshot\_as\_baseline} actualiza la línea base cuando el estado se registra correctamente.
 
 \subsection{Temporizador}
 \label{subsec:d-logger-temporizador}
@@ -182,14 +178,14 @@ El add-on define un panel principal y un panel de depuración. El panel principa
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\textwidth]{diagramas/data_logger_sin_debug.png}
+    \includegraphics[width=0.65\textwidth]{diagramas/activo1.png}
     \caption{Panel principal del add-on Data Logger 3D con controles de captura y exportación.}
     \label{fig:d-panel-logger-principal}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\textwidth]{diagramas/data_logger_con_debug.png}
+    \includegraphics[width=0.65\textwidth]{diagramas/activo3.png}
     \caption{Panel de depuración del add-on Data Logger 3D durante una sesión de captura.}
     \label{fig:d-panel-debug-logger}
 \end{figure}
@@ -203,7 +199,8 @@ La exportación se realiza mediante \texttt{DATA\_LOGGER\_OT\_ExportCSV}. El ope
 \subsection{Registro del add-on}
 \label{subsec:d-logger-registro}
 
-Las clases del add-on se registran mediante \texttt{bpy.utils.register\_class}. Además, se añaden keymaps, manejadores \texttt{load\_post}, \texttt{save\_post} y \texttt{depsgraph\_update\_post}. En \texttt{unregister} se eliminan keymaps y manejadores para evitar duplicados al recargar el script.
+Las clases del add-on se registran mediante \texttt{bpy.utils.register\_class}. Además, se añaden keymaps, manejadores \texttt{load\_post}, \texttt{save\_post} y 
+\texttt{depsgraph\_update\_post}. En \texttt{unregister} se eliminan keymaps y manejadores para evitar duplicados al recargar el script.
 
 \section{Segundo add-on: análisis y visualización}
 \label{sec:d-analisis}
@@ -216,12 +213,12 @@ La lectura de CSV se concentra en la capa de operadores e interfaz. El usuario p
 \subsection{Validación}
 \label{subsec:d-analisis-validacion}
 
-La validación descarta valores no numéricos cuando no pueden convertirse, ignora valores no finitos y aplica funciones seguras como \texttt{safe\_float}, \texttt{series\_to\_array} y \texttt{clamp\_outliers}. Este proceso permite que una fila incompleta no detenga necesariamente todo el análisis, aunque los errores deben quedar visibles para depuración cuando proceda.
+La validación descarta valores no numéricos cuando no pueden convertirse, ignora valores no finitos y aplica funciones seguras como \texttt{safe\_float}, \texttt{series\_to\_array} y \texttt{clamp\_outliers}. Este proceso permite que una fila incompleta no detenga necesariamente todo el análisis.
 
-\subsection{Métricas A1--A17}
-\label{subsec:d-analisis-a1-a17}
+\subsection{Métricas A1--A16}
+\label{subsec:d-analisis-a1-A16}
 
-El módulo \texttt{analytics.py} define el diccionario \texttt{ANALYSIS} con las etiquetas y tipologías de A1--A17. La función \texttt{compute\_metrics\_for\_csv} calcula las métricas a partir de tiempos, posiciones de vista, posiciones de objeto, deltas, estados de modo y eventos. Las métricas se devuelven en un diccionario indexado por identificador, lo que facilita su presentación posterior.
+El módulo \texttt{analytics.py} define el diccionario \texttt{ANALYSIS} con las etiquetas y tipologías de A1--A16. La función \texttt{compute\_metrics\_for\_csv} calcula las métricas a partir de tiempos, posiciones de vista, posiciones de objeto, deltas, estados de modo y eventos. Las métricas se devuelven en un diccionario indexado por identificador, lo que facilita su presentación posterior.
 
 \subsection{Métricas UV}
 \label{subsec:d-analisis-uv}
@@ -248,11 +245,13 @@ La función \texttt{calculate\_angle\_median} resume los ángulos entre caras ad
 
 El módulo \texttt{graphs.py} genera gráficos y objetos de visualización dentro de Blender. Incluye funciones para limpiar visualizaciones previas, crear ejes, etiquetas, puntos, superficies, gráficos temporales, radar y comparativas multi-CSV. También se contemplan gráficos renderizados en memoria para evitar archivos intermedios cuando resulta posible.
 
+La Figura~\ref{fig:interaction_plot} muestra un ejemplo de gráfico de interacción generado por el \textit{add-on} de análisis. En este caso se representan varias métricas frente al tiempo de sesión: velocidad de navegación, reutilización de atajos y variación de vértices. La visualización permite observar la aparición de picos de actividad durante la sesión, aunque debe interpretarse teniendo en cuenta que las métricas poseen escalas diferentes. Por este motivo, la gráfica se utiliza como demostración funcional de la integración visual, no como comparación estadística directa entre métricas.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{diagramas/grafico1.png}
-    \caption{Ejemplo de visualización generada por el add-on de análisis dentro de la escena de Blender.}
-    \label{fig:d-visualizacion-blender}
+    \includegraphics[width=0.85\textwidth]{diagramas/grafico11.png}
+    \caption{Ejemplo de gráfico de interacción temporal. La diferencia de escala entre métricas hace que la velocidad de navegación domine visualmente la representación.}
+    \label{fig:interaction_plot}
 \end{figure}
 
 \subsection{Interfaz}
@@ -346,7 +345,7 @@ Las siguientes tablas agrupan las funciones y clases relevantes por módulo. Par
 \texttt{safe\_float} & \texttt{analytics.py} & Convierte campos CSV a número de forma segura y evita errores por valores no numéricos. & Fila y clave. & Valor flotante. \\
 \texttt{series\_to\_array} & \texttt{analytics.py} & Limpia series numéricas y descarta valores no finitos antes del cálculo estadístico. & Secuencia de valores. & \texttt{ndarray}. \\
 \texttt{clamp\_outliers} & \texttt{analytics.py} & Limita valores extremos mediante el rango intercuartílico. & Serie numérica. & Serie acotada. \\
-\texttt{compute\_metrics\_for\_csv} & \texttt{analytics.py} & Calcula las métricas A1--A17 a partir de las filas validadas del CSV. & Filas CSV. & Diccionario de métricas. \\
+\texttt{compute\_metrics\_for\_csv} & \texttt{analytics.py} & Calcula las métricas A1--A16 a partir de las filas validadas del CSV. & Filas CSV. & Diccionario de métricas. \\
 \texttt{ensure\_modules} & \texttt{dependencies.py} & Comprueba la disponibilidad de dependencias externas necesarias para el análisis. & Lista de módulos. & Estado de disponibilidad. \\
 \texttt{count\_uv\_islands} & \texttt{utils.py} & Cuenta islas UV a partir de la conectividad de la malla y sus coordenadas UV. & \texttt{bmesh}. & Número de islas UV. \\
 \texttt{calculate\_uv\_area} & \texttt{utils.py} & Calcula el área ocupada por las coordenadas UV de la malla. & Malla y capa UV. & Área UV. \\
@@ -407,7 +406,8 @@ Las siguientes tablas agrupan las funciones y clases relevantes por módulo. Par
 
 El proyecto no requiere compilación en sentido estricto, ya que los add-ons se ejecutan como código Python interpretado dentro de Blender. La preparación para el usuario final consiste en instalar \texttt{Data\_Logger\_3D.py} y el ZIP del paquete de análisis desde \textit{Edit $\rightarrow$ Preferences $\rightarrow$ Add-ons}. Sin embargo, para desarrollo se recomienda trabajar con la carpeta fuente del add-on de análisis y recargar el complemento tras cada modificación.
 
-Para comprobar cambios en el logger se debe instalar o ejecutar \texttt{Data\_Logger\_3D.py}, abrir una escena de prueba, aceptar el consentimiento y revisar la consola de Blender. Para comprobar cambios en el add-on de análisis se debe cargar un CSV conocido y ejecutar primero las métricas estadísticas, después las métricas de malla y finalmente las visualizaciones. Si se modifican propiedades registradas, paneles o operadores, la recarga puede requerir desactivar el add-on, volver a activarlo o reiniciar Blender.
+Para comprobar cambios en el logger se debe instalar o ejecutar 
+\texttt{Data\_Logger\_3D.py}, abrir una escena de prueba, aceptar el consentimiento y revisar la consola de Blender. Para comprobar cambios en el add-on de análisis se debe cargar un CSV conocido y ejecutar primero las métricas estadísticas, después las métricas de malla y finalmente las visualizaciones. Si se modifican propiedades registradas, paneles o operadores, la recarga puede requerir desactivar el add-on, volver a activarlo o reiniciar Blender.
 
 La ejecución completa comienza con el add-on de captura, continúa con la exportación del CSV y finaliza con la lectura del CSV desde el add-on de análisis. Las pruebas que dependan de paneles, operadores, mallas reales o contexto gráfico deben realizarse dentro de Blender, ya que no pueden reproducirse correctamente con un intérprete Python externo.
 
@@ -493,7 +493,7 @@ P-05 & Exportación del CSV & Manual & Se genera un archivo CSV legible y reutil
 \hline
 P-06 & Carga del CSV en el add-on de análisis & Manual & El archivo se carga correctamente & Vídeo \\
 \hline
-P-07 & Cálculo de métricas A1--A17 & Manual & El sistema calcula y muestra las métricas estadísticas & Captura \\
+P-07 & Cálculo de métricas A1--A16 & Manual & El sistema calcula y muestra las métricas estadísticas & Captura \\
 \hline
 P-08 & Cálculo de métricas geométricas y UV & Manual & Se obtienen resultados sobre el objeto seleccionado & Captura \\
 \hline
@@ -503,31 +503,6 @@ P-10 & Revisión manual de calidad & Manual & El código queda organizado, sin v
 \hline
 \end{tabularx}
 \end{table}
-
-\subsection{Pruebas funcionales en Blender}
-\label{subsec:d-pruebas-funcionales-blender}
-
-En el add-on \texttt{Data\_Logger\_3D.py} se comprobaron las operaciones principales de inicio y parada de la captura, aceptación del consentimiento, restauración del CSV desde el archivo \texttt{.blend}, exportación del CSV, captura de cambios de modo, detección de operadores relevantes, detección de cambios UV y persistencia de los datos en bloques de texto internos.
-
-En el add-on de análisis se comprobaron la carga de archivos CSV, la validación de registros, el cálculo de métricas A1--A17, el cálculo de métricas geométricas y UV, la generación de visualizaciones y la actualización de la interfaz. Estas pruebas se realizaron dentro de Blender, ya que dependen del contexto gráfico, de objetos de tipo malla, de paneles, operadores y propiedades registradas mediante la API \texttt{bpy}.
-
-\begin{table}[H]
-\centering
-\small
-\caption{Resumen de pruebas de compatibilidad en distintos equipos}
-\label{tab:compatibilidad_equipos}
-\begin{tabularx}{\textwidth}{|X|X|c|X|X|}
-\hline
-\textbf{Equipo} & \textbf{Sistema operativo} & \textbf{Versión de Blender} & \textbf{Resultado} & \textbf{Observaciones} \\
-\hline
-Equipo principal de desarrollo & Windows / Linux / macOS & Blender 4.x & Correcto & Entorno usado durante el desarrollo \\
-\hline
-Equipo externo 1 & Windows & Blender 4.x & Correcto & Instalación realizada siguiendo las dependencias indicadas en el manual de usuario \\
-
-\hline
-\end{tabularx}
-\end{table}
-
 
 \subsection{Pruebas automatizadas con unittest}
 \label{subsec:d-pruebas-unittest}

@@ -4,7 +4,7 @@
 \section{Introducción}
 \label{sec:e-introduccion}
 
-Este manual describe el uso práctico de la \textit{suite} formada por dos add-ons para Blender. La organización del contenido sigue un enfoque guiado por tareas, habitual en documentación de usuario y usabilidad, donde cada acción se acompaña de explicación y comprobación visual~\cite{nielsen1994usability}. El primer add-on, \textit{Data Logger 3D}, permite registrar una sesión de modelado y exportar un CSV con los datos capturados. El segundo add-on permite leer esos CSV, calcular métricas estadísticas A1--A17, obtener métricas geométricas y UV, y generar visualizaciones dentro de Blender.
+Este manual describe el uso práctico de la \textit{suite} formada por dos add-ons para Blender. La organización del contenido sigue un enfoque guiado por tareas donde cada acción se acompaña de explicación y comprobación visual~\cite{nielsen1994usability}. El primer add-on, \textit{Data Logger 3D}, permite registrar una sesión de modelado y exportar un CSV con los datos capturados. El segundo add-on permite leer esos CSV, calcular métricas estadísticas A1--A16, obtener métricas geométricas y UV, y generar visualizaciones dentro de Blender.
 
 El contenido se ordena siguiendo el flujo real de trabajo: requisitos del sistema, instalación, configuración, uso del logger, exportación, uso del add-on de análisis, interpretación de métricas, diagnóstico de incidencias, privacidad y recomendaciones para organizar datos.
 
@@ -23,7 +23,7 @@ Para utilizar la \textit{suite} se requiere una instalación funcional de Blende
 \midrule
 Blender & Versión compatible con la API utilizada por los add-ons. Minimo 4.0.0. \\
 Python & Python integrado en Blender. No se requiere ejecutar Python externo para el uso básico. \\
-Add-on de captura & Archivo \texttt{DeteccionDatosV6.py}. \\
+Add-on de captura & Archivo \texttt{Data\_Logger\_3D.py}. \\
 Add-on de análisis & Archivo ZIP del paquete de análisis. \\
 Permisos de archivo & Escritura en la carpeta donde se guarda el \texttt{.blend} para exportar CSV. \\
 Dependencias científicas & NumPy y Matplotlib si se utilizan las funciones analíticas y gráficas que las requieren. \\
@@ -42,7 +42,7 @@ La instalación de ambos add-ons se realiza desde el sistema estándar de Blende
     \item Abrir Blender.
     \item Acceder a \textit{Edit $\rightarrow$ Preferences $\rightarrow$ Add-ons}.
     \item Pulsar \textit{Install}.
-    \item Seleccionar \texttt{DeteccionDatosV6.py} para instalar \textit{Data Logger 3D}.
+    \item Seleccionar \texttt{Data\_Logger\_3D.py} para instalar \textit{Data Logger 3D}.
     \item Activar la casilla del add-on instalado.
     \item Repetir el proceso con el ZIP del add-on de análisis.
     \item Guardar las preferencias si se desea conservar la activación en futuras sesiones.
@@ -57,7 +57,7 @@ La Figura~\ref{fig:e-preferences-addons} muestra el punto de entrada para instal
     \label{fig:e-preferences-addons}
 \end{figure}
 
-En la Figura~\ref{fig:e-install-addon} se localiza el botón \textit{Install}, que abre el explorador de archivos. Desde esa ventana se selecciona primero el archivo \texttt{DeteccionDatosV6.py} y, posteriormente, el archivo ZIP del add-on de análisis. Tras seleccionar cada archivo, Blender añade el complemento al listado de add-ons disponibles.
+En la Figura~\ref{fig:e-install-addon} se localiza el botón \textit{Install}, que abre el explorador de archivos. Desde esa ventana se selecciona primero el archivo \texttt{Data\_Logger\_3D.py} y, posteriormente, el archivo ZIP del add-on de análisis. Tras seleccionar cada archivo, Blender añade el complemento al listado de add-ons disponibles.
 
 \begin{figure}[H]
     \centering
@@ -159,8 +159,8 @@ La Figura~\ref{fig:e-panel-logger-detenido} representa el estado inicial del pan
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\textwidth]{diagramas/parado.png}
-    \caption{Panel principal del Data Logger 3D antes de iniciar la captura.}
+    \includegraphics[width=0.65\textwidth]{diagramas/activo4.png}
+    \caption{Panel principal del Data Logger 3D al parar la captura.}
     \label{fig:e-panel-logger-detenido}
 \end{figure}
 
@@ -168,18 +168,9 @@ Cuando el logger está activo, el panel cambia de estado, como se muestra en la 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\textwidth]{diagramas/activo.png}
+    \includegraphics[width=0.65\textwidth]{diagramas/activo1.png}
     \caption{Panel principal del Data Logger 3D durante una sesión de captura activa.}
     \label{fig:e-panel-logger-activo}
-\end{figure}
-
-La Figura~\ref{fig:e-panel-debug-logger} muestra el panel de depuración. Este bloque no es necesario para un uso ordinario, pero ayuda a comprobar que el sistema detecta operadores, cambios UV y motivos de registro. Su uso está orientado a pruebas o revisión técnica.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.65\textwidth]{diagramas/data_logger_con_debug.png}
-    \caption{Panel de depuración del Data Logger 3D con información del último evento registrado.}
-    \label{fig:e-panel-debug-logger}
 \end{figure}
 
 \subsection{Operaciones detectadas}
@@ -191,6 +182,15 @@ Durante la captura se registran cambios espaciales, topológicos y contextuales.
 \label{subsec:e-panel-debug}
 
 El panel de depuración está pensado para revisión técnica. Muestra información como el último operador detectado, el motivo del último registro, el estado del hash UV y el objeto activo. No es necesario utilizarlo durante una sesión ordinaria, pero resulta útil para comprobar que el add-on está capturando eventos.
+
+La Figura~\ref{fig:e-panel-debug-logger} muestra el panel de depuración. Este bloque no es necesario para un uso ordinario, pero ayuda a comprobar que el sistema detecta operadores, cambios UV y motivos de registro. Su uso está orientado a pruebas o revisión técnica.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{diagramas/activo3.png}
+    \caption{Panel de depuración del Data Logger 3D con información del último evento registrado.}
+    \label{fig:e-panel-debug-logger}
+\end{figure}
 
 \subsection{Exportación CSV}
 \label{subsec:e-exportacion-csv}
@@ -206,6 +206,26 @@ La Figura~\ref{fig:e-export-csv-logger} muestra la acción de exportación. Ante
     \label{fig:e-export-csv-logger}
 \end{figure}
 
+Además de la exportación mediante el botón del panel, los datos también pueden consultarse desde el propio archivo \texttt{.blend}. El logger guarda una copia interna del CSV en un bloque de texto de Blender, accesible desde el editor de texto mediante el \textit{Text Editor}. Esta opción resulta útil si se desea comprobar rápidamente si la sesión ha generado datos o recuperar el contenido del registro sin realizar todavía una exportación externa.
+
+La Figura~\ref{fig:e-textblock-editor} muestra el acceso al editor de texto de Blender, desde el cual puede seleccionarse el bloque interno que contiene los datos registrados.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{diagramas/text_editor.png}
+    \caption{Acceso al editor de texto de Blender para consultar los bloques internos del archivo.}
+    \label{fig:e-textblock-editor}
+\end{figure}
+
+Una vez seleccionado el bloque de texto correspondiente al registro, es posible visualizar el contenido CSV almacenado internamente. La Figura~\ref{fig:e-textblock-csv} muestra un ejemplo de datos registrados dentro del \textit{Text Block}. Aunque esta alternativa permite inspeccionar o copiar el contenido, para el flujo habitual de análisis se recomienda utilizar el archivo CSV exportado, ya que mantiene una ubicación externa clara y facilita su carga posterior en el add-on de análisis.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{diagramas/text_block.png}
+    \caption{Contenido CSV almacenado como bloque de texto interno dentro del archivo de Blender.}
+    \label{fig:e-textblock-csv}
+\end{figure}
+
 Después de exportar, debe comprobarse en el explorador de archivos que el CSV se ha creado junto al proyecto, como se observa en la Figura~\ref{fig:e-csv-exportado}. Este archivo será la entrada del add-on de análisis, por lo que conviene conservarlo con un nombre reconocible y no modificar manualmente su cabecera.
 
 \begin{figure}[H]
@@ -215,20 +235,12 @@ Después de exportar, debe comprobarse en el explorador de archivos que el CSV s
     \label{fig:e-csv-exportado}
 \end{figure}
 
-
 \section{Uso del add-on de análisis}
 \label{sec:e-uso-analisis}
 
 El add-on de análisis se organiza en pestañas para que el usuario no tenga que trabajar con todas las opciones al mismo tiempo. La primera pestaña se dedica al análisis de CSV, la segunda a las métricas de malla y la tercera a la generación de gráficos y visualizaciones. Esta organización separa claramente el análisis de sesiones, el análisis del objeto seleccionado y la representación visual de resultados.
 
-\subsection{Vídeo demostrativo del funcionamiento}
-\label{subsec:video_demostrativo}
-
-Como material complementario de validación, se incluye un vídeo demostrativo del funcionamiento completo del sistema. En dicho vídeo se muestra la instalación o activación de los add-ons, el inicio de una sesión de captura, la realización de operaciones de modelado en Blender, la exportación del fichero CSV, la carga del CSV en el módulo de análisis, el cálculo de métricas y la generación de visualizaciones.
-
-Este vídeo permite comprobar el comportamiento general del software sin depender exclusivamente de la instalación local del tribunal, lo cual resulta especialmente útil al tratarse de add-ons dependientes del entorno Blender, de su API interna y de determinadas versiones de Python.
-
-La Figura~\ref{fig:e-panel-analisis-csv} muestra la pestaña inicial de análisis CSV. Desde esta vista se seleccionan archivos o carpetas, se lanzan los cálculos estadísticos y se revisan los resultados asociados a las métricas A1--A17.
+La Figura~\ref{fig:e-panel-analisis-csv} muestra la pestaña inicial de análisis CSV. Desde esta vista se seleccionan archivos o carpetas, se lanzan los cálculos estadísticos y se revisan los resultados asociados a las métricas A1--A16.
 
 \begin{figure}[H]
     \centering
@@ -241,7 +253,7 @@ La Figura~\ref{fig:e-panel-metricas-malla} corresponde a la pestaña de métrica
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{diagramas/mallas.png}
+    \includegraphics[width=0.75\textwidth]{diagramas/mallas1.png}
     \caption{Pestaña de métricas de malla del add-on de análisis y visualización.}
     \label{fig:e-panel-metricas-malla}
 \end{figure}
@@ -250,7 +262,7 @@ La Figura~\ref{fig:e-panel-graficos-visualizaciones} muestra la pestaña de grá
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{diagramas/graficos.png}
+    \includegraphics[width=0.75\textwidth]{diagramas/graficos1.png}
     \caption{Pestaña de gráficos y visualizaciones del add-on de análisis y visualización.}
     \label{fig:e-panel-graficos-visualizaciones}
 \end{figure}
@@ -280,15 +292,15 @@ La Figura~\ref{fig:e-seleccion-carpeta-csv} muestra la selección de una carpeta
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{diagramas/csv2.png}
+    \includegraphics[width=0.85\textwidth]{diagramas/csv3.png}
     \caption{Selección de una carpeta con varios CSV para análisis comparativo.}
     \label{fig:e-seleccion-carpeta-csv}
 \end{figure}
 
 \subsection{Cálculo de métricas estadísticas}
-\label{subsec:e-calculo-a1-a17}
+\label{subsec:e-calculo-a1-A16}
 
-El cálculo de métricas estadísticas procesa los registros CSV y genera indicadores A1--A17. Estas métricas resumen duración, pausas, velocidad, proximidad, manipulación de vista, actividad, evolución de vértices, errores, trabajo UV y cambios de objeto. La interfaz muestra resultados agrupados para evitar repetición.
+El cálculo de métricas estadísticas procesa los registros CSV y genera indicadores A1--A16. Estas métricas resumen duración, pausas, velocidad, proximidad, manipulación de vista, actividad, evolución de vértices, errores, trabajo UV y cambios de objeto. La interfaz muestra resultados agrupados para evitar repetición.
 
 Después de seleccionar la ruta, el usuario debe ejecutar el cálculo de métricas. La Figura~\ref{fig:e-boton-calculo-metricas} muestra el botón correspondiente. Al pulsarlo, el add-on lee el CSV, valida los valores y calcula los bloques de métricas que se muestran en el panel.
 
@@ -313,20 +325,40 @@ A4--A5 & Velocidad de movimiento y proximidad al objeto. \\
 A6--A9 & Manipulación de vista, velocidad en actividad/inactividad y distancia recorrida. \\
 A10--A11 & Estrategias de aceleración o cambios de ritmo. \\
 A12--A13 & Evolución de vértices y errores topológicos. \\
-A14--A17 & Trabajo en \textit{Object Mode}, UV, evolución de malla y cambios de objeto. \\
+A14--A16 & Trabajo en \textit{Object Mode}, UV, evolución de malla y cambios de objeto. \\
 \bottomrule
 \end{tabularx}
-\caption{Lectura práctica de los bloques A1--A17.}
+\caption{Lectura práctica de los bloques A1--A16.}
 \label{tab:e-interpretacion-a}
 \end{table}
 
-La Tabla~\ref{tab:e-interpretacion-a} resume cómo debe leerse cada bloque de métricas. Esta tabla no sustituye a los resultados generados por el add-on, sino que actúa como guía para interpretar los valores mostrados en pantalla. Cuando se obtengan capturas definitivas de los resultados A1--A17, podrán incorporarse como material complementario.
-%\begin{figure}[H]
-%    \centering
-%    \includegraphics[width=0.8\textwidth]{diagramas/e17_resultados_a1_a17.png}
-%    \caption{Resultados de las métricas estadísticas A1--A17 mostrados en bloques compactos.}
-%    \label{fig:e-resultados-a1-a17}
-%end{figure}
+La Tabla~\ref{tab:e-interpretacion-a} resume cómo debe leerse cada bloque de métricas. Esta tabla no sustituye a los resultados generados por el add-on, sino que actúa como guía para interpretar los valores mostrados en pantalla. 
+
+La Figura~\ref{fig:e-calculo-metricas-csv-completo} muestra el flujo de cálculo de métricas estadísticas: primero se ejecuta la acción de cálculo y, posteriormente, el panel presenta los resultados agrupados en bloques interpretables.
+
+\begin{figure}[H]
+    \centering
+
+    \begin{minipage}{0.75\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{diagramas/boton_metricas.png}
+    \end{minipage}
+
+    \vspace{0.4cm}
+
+    \begin{minipage}{0.42\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{diagramas/metricas_csv_duracion_pausas.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.42\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{diagramas/metricas_csv_velocidad_movimiento.png}
+    \end{minipage}
+
+    \caption{Proceso de cálculo y visualización de métricas estadísticas del CSV en el add-on de análisis.}
+    \label{fig:e-calculo-metricas-csv-completo}
+\end{figure}
 
 
 \subsection{Cálculo de métricas geométricas y UV}
@@ -340,38 +372,44 @@ Por tanto, antes de ejecutar la comparación de similitud, se recomienda revisar
 
 Las métricas geométricas ayudan a valorar la calidad de la malla: caras no cuadrangulares, duplicados de vértices, normales potencialmente invertidas, ángulos, similitud y distancia respecto a una referencia. Las métricas UV ayudan a revisar el despliegue y la consistencia de coordenadas UV.
 
-\begin{quote}
-\textbf{Nota:} para que la métrica de similitud sea más precisa, los objetos comparados deben estar previamente alineados de forma manual en cuanto a rotación, escala y posición. La herramienta no realiza una alineación automática completa, ya que este proceso puede ser ambiguo y difícil de generalizar para modelos con geometrías distintas.
-\end{quote}
-
 La Figura~\ref{fig:e-objeto-activo-metricas} muestra la selección del objeto analizado y del objeto de referencia. Antes de ejecutar las métricas conviene revisar visualmente que ambos modelos están correctamente seleccionados y que, para similitud o Hausdorff, se encuentran alineados de forma manual.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{diagramas/reference.png}
+    \includegraphics[width=0.8\textwidth]{diagramas/csvmalla.png}
     \caption{Selección del objeto activo y el de referencia para el cálculo de métricas geométricas y UV.}
     \label{fig:e-objeto-activo-metricas}
 \end{figure}
 
-La Figura~\ref{fig:e-resultados-geometricos} muestra el panel de resultados de métricas geométricas y UV. Si algún valor no aparece, debe comprobarse que el objeto tiene malla válida, que existe una capa UV activa y que se ha seleccionado referencia cuando la métrica lo necesita.
+La Figura~\ref{fig:e-resultados-geometricos} muestra varios bloques de resultados generados por el cálculo de métricas geométricas y UV. En ellos se incluyen valores relacionados con el mapeado UV, las normales, las transformaciones, la topología y la similitud frente a un objeto de referencia. Si algún valor no aparece, debe comprobarse que el objeto tiene malla válida, que existe una capa UV activa y que se ha seleccionado referencia cuando la métrica lo necesita.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{diagramas/mesh_metrics.png}
-    \caption{Resultados de métricas UV y geométricas calculadas sobre el objeto seleccionado.}
+
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{diagramas/mesh_metrics_uv_normals_transforms.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{diagramas/mesh_metrics_topology_similarity.png}
+    \end{minipage}
+
+    \caption{Resultados de métricas UV, geométricas y de similitud calculadas sobre el objeto seleccionado.}
     \label{fig:e-resultados-geometricos}
 \end{figure}
 
 \subsection{Visualizaciones}
 \label{subsec:e-visualizaciones}
 
-El add-on puede generar visualizaciones dentro de Blender, como gráficos temporales, comparaciones entre CSV, superficies, radar o representaciones 3D. Antes de crear una nueva visualización se recomienda eliminar gráficos anteriores si el panel ofrece esa opción, para evitar acumulación de objetos en la escena.
+El add-on puede generar visualizaciones dentro de Blender, como gráficos temporales, comparaciones entre CSV, superficies, radar o representaciones 3D. Antes de crear una nueva visualización se recomienda eliminar gráficos anteriores para evitar acumulación de objetos en la escena.
 
 La Figura~\ref{fig:e-grafico-temporal} muestra una visualización temporal. Este tipo de gráfico ayuda a observar cómo evoluciona una métrica a lo largo de la sesión y permite detectar fases de mayor o menor actividad.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{diagramas/grafico1.png}
+    \includegraphics[width=0.9\textwidth]{diagramas/grafico11.png}
     \caption{Visualización temporal generada a partir de los datos de una sesión.}
     \label{fig:e-grafico-temporal}
 \end{figure}
@@ -380,7 +418,7 @@ La Figura~\ref{fig:e-comparacion-multicsv} representa una comparación entre var
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{diagramas/grafico2.png}
+    \includegraphics[width=0.9\textwidth]{diagramas/grafico_f.png}
     \caption{Comparación visual de varias sesiones a partir de múltiples archivos CSV.}
     \label{fig:e-comparacion-multicsv}
 \end{figure}
@@ -389,7 +427,7 @@ La Figura~\ref{fig:e-grafico-radar} muestra un gráfico radar. Esta visualizaci�
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{diagramas/grafico3.png}
+    \includegraphics[width=0.9\textwidth]{diagramas/graficor1.png}
     \caption{Gráfico radar generado para representar métricas normalizadas de una sesión.}
     \label{fig:e-grafico-radar}
 \end{figure}

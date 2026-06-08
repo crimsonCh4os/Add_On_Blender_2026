@@ -66,10 +66,15 @@ def _base_v2_row(timestamp, x=0, y=0, z=0, **overrides):
 
 class TestAnalysisMetrics(unittest.TestCase):
     def test_compute_metrics_accepts_v2_rows_and_calculates_time_and_speed(self):
-        rows = [_base_v2_row(0, x=0), _base_v2_row(1, x=1), _base_v2_row(2, x=3)]
+        rows = [
+            _base_v2_row(0, x=0),
+            _base_v2_row(1, x=1),
+            _base_v2_row(2, x=3),
+        ]
         metrics = compute_metrics_for_csv(rows, max_reasonable_speed=10_000.0)
 
         self.assertAlmostEqual(metrics["A1"][-1], 2 / 3600.0, places=6)
+
         self.assertEqual(len(metrics["A4"]), 3)
         self.assertAlmostEqual(metrics["A4"][1], 3600.0, places=6)
         self.assertAlmostEqual(metrics["A4"][2], 7200.0, places=6)
@@ -77,7 +82,17 @@ class TestAnalysisMetrics(unittest.TestCase):
     def test_compute_metrics_counts_strategy_columns(self):
         rows = [
             _base_v2_row(0),
-            _base_v2_row(1, CtrlV=1, ShiftD=2, AltD=3, ModifierDelta=4, ObjectDelta=5, UV=6, EditModeState=1, ObjModeState=0),
+            _base_v2_row(
+                1,
+                CtrlV=1,
+                ShiftD=2,
+                AltD=3,
+                ModifierDelta=4,
+                ObjectDelta=5,
+                UV=6,
+                EditModeState=1,
+                ObjModeState=0,
+            ),
         ]
         metrics = compute_metrics_for_csv(rows)
 
@@ -85,17 +100,27 @@ class TestAnalysisMetrics(unittest.TestCase):
         self.assertEqual(metrics["A11"][1], 4.0)
         self.assertEqual(metrics["A14"][1], 2.0)
         self.assertEqual(metrics["A15"][1], 6.0)
-        self.assertEqual(metrics["A17"][1], 5.0)
+
+        # A17 se eliminó porque duplicaba la información de A16.
+        self.assertNotIn("A17", metrics)
 
     def test_compute_metrics_returns_empty_metric_lists_for_empty_input(self):
         metrics = compute_metrics_for_csv([])
+
         self.assertIn("A1", metrics)
         self.assertEqual(metrics["A1"], [])
-        self.assertEqual(metrics["A17"], [])
+
+        # A17 ya no debe generarse.
+        self.assertNotIn("A17", metrics)
 
     def test_safe_float_reports_bad_values_and_returns_default(self):
         reports = []
-        value = safe_float({"TimeStamp": "bad"}, "TimeStamp", default=7.5, report=lambda level, msg: reports.append((level, msg)))
+        value = safe_float(
+            {"TimeStamp": "bad"},
+            "TimeStamp",
+            default=7.5,
+            report=lambda level, msg: reports.append((level, msg)),
+        )
         self.assertEqual(value, 7.5)
         self.assertTrue(reports)
 
