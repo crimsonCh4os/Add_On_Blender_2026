@@ -64,7 +64,7 @@ La Figura~\ref{fig:api_blender} representa de forma esquemática la interacción
 
 \subsection{Persistencia de datos en formato CSV}
 
-El formato CSV (\textit{Commas-Separated Values}) ha servido como la base para registrar el registro secuencial de las interacciones~\cite{data_analysis}.
+El formato CSV (\textit{Commas-Separated Values}) ha servido como la base para registrar el registro secuencial de las interacciones~\cite{mckinney2022python}.
 
 Este método de uso es razonable ya que es simple, técnicomente compatible, minimalista en el manejo de la memoria volátil y fácil de integrar con herramientas externas de análisis. Para mejorar la velocidad de acceso y la persistencia, mientras no afecta al rendimiento del visor 3D en tiempo real, el procesamiento de dichos archivos tabulados se realiza mediante flujos lineales con diccionario orientados, utilizando el módulo \texttt{csv.DictReader} nativo para evitar la sobreexplotación de la memoria con bibliotecas masivas de análisis de datos.
 
@@ -83,7 +83,7 @@ NumPy constituye una biblioteca especializada en computación numérica y proces
 
 \subsection{BMesh y mathutils}
 
-La biblioteca \texttt{bmesh} se ha utilizado para acceder a la representación editable de las mallas de Blender. Su uso resulta especialmente relevante en operaciones de análisis topológico, recuento de caras, cálculo de islas UV y consulta de aristas compartidas entre caras. Esta capa proporciona un control más preciso que la estructura \texttt{Mesh} evaluada cuando el usuario trabaja en modo edición~\cite{blenderapi,botsch2010polygon}.
+La biblioteca \texttt{bmesh} se ha utilizado para acceder a la representación editable de las mallas de Blender. Su uso resulta especialmente relevante en operaciones de análisis topológico, recuento de caras, cálculo de islas UV y consulta de aristas compartidas entre caras. Esta capa proporciona un control más preciso que la estructura \texttt{Mesh} evaluada cuando el usuario trabaja en modo edición~\cite{botsch2010polygon,blenderapi}.
 
 El módulo \texttt{mathutils} se ha empleado para operar con vectores, matrices y transformaciones espaciales. Gracias a estas estructuras se calculan centros de objetos, radios de escena, coordenadas globales, desplazamientos y comparaciones geométricas entre modelos.
 
@@ -97,7 +97,7 @@ A diferencia de los entornos de ejecución tradicionales de análisis científic
 
 \subsection{Visual Studio Code}
 
-Visual Studio Code ha sido utilizado como entorno de desarrollo principal durante la implementación del proyecto. Este editor proporciona herramientas avanzadas de depuración de hilos, autocompletado sintáctico y gestión de extensiones, facilitando el desarrollo de código en Python y la integración con sistemas de control de versiones~\cite{vscode,pep8}.
+Visual Studio Code ha sido utilizado como entorno de desarrollo principal durante la implementación del proyecto. Este editor proporciona herramientas avanzadas de depuración de hilos, autocompletado sintáctico y gestión de extensiones, facilitando el desarrollo de código en Python y la integración con sistemas de control de versiones~\cite{pep8,vscode}.
 
 \subsection{Git y GitHub}
 

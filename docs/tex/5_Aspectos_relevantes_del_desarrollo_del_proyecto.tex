@@ -6,13 +6,13 @@ En este capítulo se describen los aspectos principales del desarrollo del siste
 
 El desarrollo se llevó a cabo mediante una aproximación iterativa. En primer lugar, se comprobó la viabilidad de monitorizar el estado de la escena mediante la API \texttt{bpy}~\cite{blenderapi}, prestando atención a la captura de transformaciones, cambios de modo, modificaciones topológicas y operaciones relevantes del usuario.
 
-Una vez validada la captura, se definió un formato de persistencia basado en CSV. Esta decisión permitió almacenar los registros de forma estructurada, inspeccionable y reutilizable por el módulo de análisis~\cite{data_analysis}. Posteriormente, el trabajo se centró en el cálculo de métricas temporales, espaciales, geométricas y operacionales, así como en la generación de visualizaciones que facilitaran la interpretación de las sesiones registradas~\cite{munzner2014visualization}.
+Una vez validada la captura, se definió un formato de persistencia basado en CSV. Esta decisión permitió almacenar los registros de forma estructurada, inspeccionable y reutilizable por el módulo de análisis~\cite{mckinney2022python}. Posteriormente, el trabajo se centró en el cálculo de métricas temporales, espaciales, geométricas y operacionales, así como en la generación de visualizaciones que facilitaran la interpretación de las sesiones registradas~\cite{munzner2014visualization}.
 
 La Figura~\ref{fig:Flujo} resume el flujo general del sistema, desde la interacción del usuario hasta la obtención de resultados analíticos.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth, height=0.62\textheight, keepaspectratio]{diagramas/ciclo_general.png}
+    \includegraphics[width=\textwidth, height=0.62\textheight, keepaspectratio]{diagramas/flujo2.png}
     \caption{Flujo general de análisis y visualización de datos de la plataforma.}
     \label{fig:Flujo}
     {\footnotesize \textit{Nota. Figura elaborada por la autora con asistencia de ChatGPT.}}
@@ -101,7 +101,7 @@ El sistema también incorpora mecanismos de consentimiento, exportación anonimi
 
 El segundo complemento constituye la capa de explotación analítica. Su función es cargar los CSV generados por el \textit{Data Logger 3D}, validar su contenido, calcular métricas y presentar resultados comprensibles. El análisis puede aplicarse a un archivo individual o a un conjunto de registros, lo que permite comparar sesiones o estudiar distintos usuarios.
 
-La lectura del CSV incluye comprobaciones de consistencia para evitar que valores incompletos, no numéricos o no finitos alteren los resultados. Esta validación es importante porque las métricas calculadas dependen directamente de la calidad de los datos registrados~\cite{data_analysis}.
+La lectura del CSV incluye comprobaciones de consistencia para evitar que valores incompletos, no numéricos o no finitos alteren los resultados. Esta validación es importante porque las métricas calculadas dependen directamente de la calidad de los datos registrados~\cite{mckinney2022python}.
 
 La Figura~\ref{fig:add-on_analisis} presenta el panel principal del complemento de análisis.
 
@@ -120,7 +120,7 @@ La Figura~\ref{fig:pipeline_analisis} resume el proceso completo.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{diagramas/pipeline.png}
+    \includegraphics[width=0.9\textwidth]{diagramas/pipeline2.png}
     \caption{Pipeline general de captura, análisis y visualización de datos.}
     \label{fig:pipeline_analisis}
     {\footnotesize \textit{Nota. Figura elaborada por la autora con asistencia de ChatGPT.}}
@@ -152,13 +152,13 @@ Métricas sobre malla activa & Geometría evaluada mediante \texttt{Mesh}, \text
 \label{tab:implementacion_metricas}
 \end{table}
 
-Esta separación permite distinguir entre métricas derivadas del registro de sesión y métricas calculadas directamente sobre la geometría seleccionada. Las primeras describen la evolución temporal del proceso; las segundas analizan propiedades técnicas del modelo en el momento de la evaluación~\cite{botsch2010polygon,cignoni1998metro}.
+Esta separación permite distinguir entre métricas derivadas del registro de sesión y métricas calculadas directamente sobre la geometría seleccionada. Las primeras describen la evolución temporal del proceso; las segundas analizan propiedades técnicas del modelo en el momento de la evaluación~\cite{cignoni1998metro,botsch2010polygon}.
 
 \section{Cálculo geométrico y UV en el sistema}
 
 Además del procesamiento del CSV, el complemento de análisis incorpora funciones que operan directamente sobre la malla activa. Estas funciones recorren vértices, caras, aristas y bucles UV para obtener información que no siempre aparece de forma explícita en el registro temporal.
 
-Para estas operaciones se emplea \texttt{bmesh} cuando es necesario acceder a la geometría editable y \texttt{Mesh} cuando basta con consultar la malla evaluada. En el cálculo de similitud se utilizan distancias espaciales entre conjuntos de vértices y, cuando está disponible, una estructura \texttt{KDTree} para reducir el coste de búsqueda de vecinos cercanos. Esta parte del sistema permite complementar las métricas de sesión con indicadores técnicos del estado del modelo~\cite{blenderapi,bentley1975kdtree}.
+Para estas operaciones se emplea \texttt{bmesh} cuando es necesario acceder a la geometría editable y \texttt{Mesh} cuando basta con consultar la malla evaluada. En el cálculo de similitud se utilizan distancias espaciales entre conjuntos de vértices y, cuando está disponible, una estructura \texttt{KDTree} para reducir el coste de búsqueda de vecinos cercanos. Esta parte del sistema permite complementar las métricas de sesión con indicadores técnicos del estado del modelo~\cite{bentley1975kdtree,blenderapi}.
 
 \section{Generación de visualizaciones}
 
@@ -168,7 +168,7 @@ La Figura~\ref{fig:radar_experto_novato} muestra un ejemplo de visualización ti
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.86\textwidth]{diagramas/radar_experto_novato.png}
+    \includegraphics[width=0.86\textwidth]{diagramas/graficor1.png}
     \caption{Ejemplo de comparación de métricas mediante visualización de radar en el \textit{viewport}.}
     \label{fig:radar_experto_novato}
 \end{figure}

@@ -2,7 +2,7 @@
 
 El sistema desarrollado se apoya en la captura, organización, análisis y representación de datos generados durante una sesión de modelado tridimensional. Por ello, este capítulo presenta los conceptos geométricos, temporales y analíticos que justifican las variables registradas y las métricas utilizadas en el proyecto.
 
-El trabajo se sitúa dentro del análisis de la interacción en entornos 3D. En este contexto, cada transformación, cambio de modo, modificación de malla, alteración de vista u operación sobre el modelo puede considerarse una evidencia del comportamiento del usuario. El registro de estos eventos permite estudiar el flujo de trabajo, detectar fases de actividad e inactividad, observar la evolución estructural del modelo y comparar estrategias de creación digital~\cite{gao2021,gao2023,jankowski2014}.
+El trabajo se sitúa dentro del análisis de la interacción en entornos 3D. En este contexto, cada transformación, cambio de modo, modificación de malla, alteración de vista u operación sobre el modelo puede considerarse una evidencia del comportamiento del usuario. El registro de estos eventos permite estudiar el flujo de trabajo, detectar fases de actividad e inactividad, observar la evolución estructural del modelo y comparar estrategias de creación digital~\cite{jankowski2014,gao2021,gao2023}.
 
 Este capítulo se centra en los fundamentos necesarios para interpretar los datos del sistema: la representación geométrica mediante mallas, la complejidad topológica, las coordenadas UV, las métricas temporales y espaciales, y la relación entre registro, análisis y visualización.
 
@@ -16,7 +16,7 @@ El modelado tridimensional consiste en construir representaciones digitales de o
     \item \textbf{Cara}: superficie cerrada por aristas. Puede estar formada por tres vértices, cuatro vértices o más de cuatro vértices.
 \end{itemize}
 
-Desde el punto de vista del análisis, la malla no se interpreta solo como una figura visual, sino como una estructura de datos medible. Si durante una sesión aumenta el número de vértices, se puede inferir una fase de construcción o subdivisión. Si aumentan los triángulos o los \textit{n-gons}, puede existir una transformación topológica relevante. Si aparecen variaciones en normales invertidas, el sistema registra posibles problemas de orientación superficial.
+Desde el punto de vista del análisis, la malla no se interpreta solo como una figura visual, sino como una estructura de datos medible. Si durante una sesión aumenta el número de vértices, se puede inferir una fase de construcción o subdivisión. Si aumentan los triángulos o los \textit{n-gons}, puede existir una transformación topológica relevante. Si aparecen variaciones en normales invertidas, el sistema registra posibles problemas de orientación superficial. La Figura~\ref{fig:malla_vertices_aristas_caras} resume visualmente la relación entre vértices, aristas y caras.
 
 \begin{figure}[H]
     \centering
@@ -44,7 +44,7 @@ Además de la geometría situada en el espacio tridimensional, los modelos puede
 
 El despliegue UV transforma una superficie tridimensional en una representación plana. Durante este proceso, la malla se divide en regiones denominadas islas UV. Cada isla representa una parte de la superficie colocada sobre el plano bidimensional. La relación entre la geometría 3D y el espacio UV es importante porque una edición puede modificar el mapeado de textura sin alterar el número de vértices, caras o aristas del modelo.
 
-Por este motivo, el sistema incorpora la variable \texttt{UV}, que actúa como indicador de trabajo relacionado con coordenadas UV. Esta métrica no mide la calidad absoluta del mapeado, sino la existencia de acciones asociadas al despliegue, empaquetado, reajuste o modificación de coordenadas. En términos analíticos, permite separar las fases dedicadas a la construcción geométrica de las fases dedicadas a la preparación superficial.
+Por este motivo, el sistema incorpora la variable \texttt{UV}, que actúa como indicador de trabajo relacionado con coordenadas UV. Esta métrica no mide la calidad absoluta del mapeado, sino la existencia de acciones asociadas al despliegue, empaquetado, reajuste o modificación de coordenadas. En términos analíticos, permite separar las fases dedicadas a la construcción geométrica de las fases dedicadas a la preparación superficial. La Figura~\ref{fig:uv_3d_2d_islas} ilustra esta correspondencia entre la superficie 3D y su despliegue bidimensional.
 
 \begin{figure}[H]
     \centering
@@ -163,7 +163,7 @@ Por último, la métrica A16 describe cambios en la composición de la escena, p
 
 \section{Formato CSV y estructura tabular de los datos}
 
-El formato CSV (\textit{Comma-Separated Values}) permite almacenar información en forma de tabla, donde cada fila representa una observación y cada columna describe una variable. En el contexto de una sesión de modelado tridimensional, esta estructura resulta adecuada porque permite ordenar cronológicamente los eventos registrados y relacionarlos con variables temporales, espaciales, geométricas y operacionales~\cite{data_analysis}.
+El formato CSV (\textit{Comma-Separated Values}) permite almacenar información en forma de tabla, donde cada fila representa una observación y cada columna describe una variable. En el contexto de una sesión de modelado tridimensional, esta estructura resulta adecuada porque permite ordenar cronológicamente los eventos registrados y relacionarlos con variables temporales, espaciales, geométricas y operacionales~\cite{mckinney2022python}.
 
 Desde un punto de vista teórico, el CSV actúa como una representación intermedia entre la interacción del usuario y el cálculo posterior de métricas. Las acciones realizadas durante el modelado no se analizan directamente como eventos aislados, sino como una secuencia estructurada de registros. Esta organización permite transformar la actividad observada en series temporales comparables, resúmenes estadísticos y visualizaciones~\cite{vanderalst2016process}.
 

@@ -14,7 +14,7 @@
 bl_info = {
     "name": "Data Logger 3D",
     "author": "Maria",
-    "version": (1, 1, 1),
+    "version": (1, 1, 2),
     "blender": (4, 0, 0),
     "location": "View3D > Sidebar > Data Logger",
     "category": "3D View",
@@ -850,9 +850,48 @@ def init_state():
 
 # CONTROL LOGGER
 
+def has_accepted_consent():
+    """Comprueba el consentimiento sin crear el Text Block si no existe."""
+    if CONSENT_TEXTBLOCK not in bpy.data.texts:
+        return False
+    return "ACCEPTED" in bpy.data.texts[CONSENT_TEXTBLOCK].as_string()
+
+
+def should_prompt_for_consent_on_load():
+    """Solo pedimos consentimiento al abrir un archivo .blend real.
+
+    Esto evita que el popup aparezca al instalar o activar el addon en Blender.
+    El flujo previsto es: instalar addon -> guardar .blend -> cerrar -> reabrir -> mostrar consentimiento.
+    """
+    return bool(bpy.data.filepath) and not has_accepted_consent()
+
+
+def request_consent_popup(delay=0.5, only_if_saved_file=False):
+    """Muestra el consentimiento de forma diferida para que Blender ya tenga ventana activa."""
+    def _show():
+        if only_if_saved_file and not should_prompt_for_consent_on_load():
+            return None
+
+        if not has_accepted_consent() and not timer_running:
+            try:
+                bpy.ops.wm.data_logger_consent('INVOKE_DEFAULT')
+            except Exception as exc:
+                log_warning("Could not show the consent dialog", exc)
+        return None
+
+    bpy.app.timers.register(_show, first_interval=delay)
+
+
 def start_logger():
     global timer_running
     global start_time
+
+    # Bloqueo de seguridad: aunque alguien llame a start_logger() directamente,
+    # no se inicia la captura sin consentimiento aceptado.
+    if not has_accepted_consent():
+        print("Data Logger blocked: consent is required before starting.")
+        request_consent_popup()
+        return
 
     if timer_running:
         return
@@ -874,8 +913,21 @@ def start_logger():
 def stop_logger():
     global timer_running
     timer_running = False
-    import_csv_to_blend()
+    if has_accepted_consent():
+        import_csv_to_blend()
     print("Data Logger stopped.")
+
+
+def hard_stop_logger_on_file_load():
+    """Detiene cualquier temporizador anterior al abrir otro .blend.
+
+    Evita que una sesión que estaba grabando en otro archivo siga escribiendo
+    en el archivo recién abierto antes de que se confirme el consentimiento.
+    """
+    global timer_running, start_time, _force_log_pending
+    timer_running = False
+    start_time = None
+    _force_log_pending = False
 
 
 class WM_OT_data_logger_toggle(bpy.types.Operator):
@@ -889,8 +941,7 @@ class WM_OT_data_logger_toggle(bpy.types.Operator):
             return {'FINISHED'}
 
         # No se permite iniciar la captura sin consentimiento aceptado.
-        consent_text = get_consent_textblock()
-        if "ACCEPTED" not in consent_text.as_string():
+        if not has_accepted_consent():
             bpy.ops.wm.data_logger_consent('INVOKE_DEFAULT')
             self.report({'WARNING'}, "Consent is required before starting the logger.")
             return {'CANCELLED'}
@@ -1208,6 +1259,15 @@ class DATA_LOGGER_OT_AutoRunWarning(bpy.types.Operator):
 
 @persistent
 def check_consent_on_load(dummy):
+    # Al abrir un .blend se corta cualquier captura anterior antes de decidir
+    # si este archivo tiene consentimiento.
+    hard_stop_logger_on_file_load()
+
+    # No mostrar nada al instalar/activar el addon ni en el archivo inicial sin guardar.
+    # El consentimiento se pide únicamente al abrir un .blend guardado.
+    if not bpy.data.filepath:
+        return
+
     prefs = bpy.context.preferences.filepaths
 
     if not prefs.use_scripts_auto_execute:
@@ -1217,14 +1277,10 @@ def check_consent_on_load(dummy):
         )
         return
 
-    consent_text = get_consent_textblock()
-    if "ACCEPTED" in consent_text.as_string():
+    if has_accepted_consent():
         start_logger()
     else:
-        bpy.app.timers.register(
-            lambda: bpy.ops.wm.data_logger_consent('INVOKE_DEFAULT'),
-            first_interval=0.5
-        )
+        request_consent_popup(delay=0.5, only_if_saved_file=True)
 
 
 # HANDLERS
@@ -1411,6 +1467,10 @@ def register():
 
     if operator_tracker not in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.append(operator_tracker)
+
+    # No llamamos a check_consent_on_load() durante register().
+    # Así, al instalar o activar el addon no aparece el consentimiento todavía.
+    # El popup se mostrará en load_post, es decir, al volver a abrir un .blend guardado.
 
     print("Data Logger loaded successfully.")
 
