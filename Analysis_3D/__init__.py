@@ -14,50 +14,44 @@
 bl_info = { 
     "name": "Analysis 3D",
     "author": "María",
-    "version": (1, 0, 0),
+    "version": (1, 2, 6),
     "blender": (4, 0, 0),
     "location": "3D View > Sidebar > 3D Analysis",
     "description": "Advanced CSV analysis system with automatic metrics and 3D visualization",
     "category": "3D View",
 }
 
-import os
-
 try:
     import bpy
 except ModuleNotFoundError:  # Permite importar/compilar el paquete fuera de Blender.
     bpy = None
 
-from .dependencies import add_local_site_packages, ensure_modules
+from .dependencies import dependency_error_message, missing_modules
 
-# Dependencias externas.
-add_local_site_packages(os.path.dirname(__file__))
-_missing = ensure_modules(("numpy", "matplotlib"), install=False)
-if _missing:
-    print(f"[3D Analysis] Dependencias no disponibles: {_missing}. Instálalas en Blender Python o incluye site-packages local.")
+_missing_dependencies = missing_modules()
 
-if bpy is not None:
-    from . import utils
-    from . import graphs
-    from . import ui
+# Los módulos funcionales importan NumPy/Matplotlib. Solo se cargan cuando el
+# entorno está preparado, evitando errores poco claros durante la activación.
+if bpy is not None and not _missing_dependencies:
+    from . import graphs, ui, utils
+
 
 def register():
     if bpy is None:
         raise RuntimeError("Analysis 3D solo puede registrarse dentro de Blender.")
 
-    bpy.types.Scene.reference_obj = bpy.props.PointerProperty(
-        name="Reference Object",
-        type=bpy.types.Object,
-        poll=lambda self, obj: obj.type == 'MESH'
-    )
-
+    if _missing_dependencies:
+        message = dependency_error_message(_missing_dependencies)
+        print(f"[Analysis 3D] {message}")
+        raise RuntimeError(message)
 
     utils.register()
     graphs.register()
     ui.register()
 
+
 def unregister():
-    if bpy is None:
+    if bpy is None or _missing_dependencies:
         return
 
     ui.unregister()

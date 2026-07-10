@@ -12,6 +12,11 @@
 # GNU General Public License for more details.
 
 import bpy
+
+try:
+    from .texts import tr
+except ImportError:
+    from texts import tr
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,6 +29,12 @@ class OBJECT_OT_MiOperador(bpy.types.Operator):
     bl_idname = "object.mi_operador"
     bl_label = "Show Matplotlib Chart"
     bl_description = "Show a test sine graph to validate Matplotlib inside Blender"
+
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
 
     def execute(self, context):
         x = np.linspace(0, 10, 100)

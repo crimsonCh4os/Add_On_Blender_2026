@@ -16,9 +16,11 @@ import bpy
 try:
     from .ui_helpers import *
     from .ui_properties import *
+    from .texts import tr, get_language, region_character_width, wrap_lines, label_value_lines
 except ImportError:
     from ui_helpers import *
     from ui_properties import *
+    from texts import tr, get_language, region_character_width, wrap_lines, label_value_lines
 
 class ANALI_UL_CSVList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -43,6 +45,11 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         scn = context.scene
         layout = self.layout
 
+        language_box = layout.box()
+        language_row = language_box.row(align=True)
+        language_row.label(text=tr(scn, "Language"), icon='WORLD')
+        language_row.prop(scn, "anali_language", text="")
+
         row = layout.row(align=True)
         row.prop(scn, "anali_ui_tab", expand=True)
 
@@ -53,66 +60,71 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         else:
             self._draw_graphs_tab(context, layout, scn)
 
-    def _wrap_lines(self, text, width=34):
-        import textwrap
-        return textwrap.wrap(str(text or ""), width=width, break_long_words=False, break_on_hyphens=False) or [""]
+    def _wrap_lines(self, context, text, width=None):
+        return wrap_lines(context, text, width=width)
 
-    def _label_wrap(self, layout, text, icon='NONE', width=34):
-        lines = self._wrap_lines(text, width)
+    def _label_wrap(self, context, layout, text, icon='NONE', width=None):
+        lines = self._wrap_lines(context, text, width)
         for i, line in enumerate(lines):
             layout.label(text=line, icon=icon if i == 0 else 'NONE')
 
-    def _info_box(self, parent, lines, icon='INFO', width=34):
+    def _info_box(self, context, parent, lines, icon='INFO', width=None):
+        """Draw fixed explanatory text with live N-panel width wrapping."""
         ib = parent.box()
-        for idx, text in enumerate(lines):
-            self._label_wrap(ib, text, icon if idx == 0 else 'NONE', width=width)
+        # Rebuild one translated paragraph on every draw. This avoids three
+        # independently wrapped fragments and responds correctly when the
+        # sidebar is resized, opened, or closed.
+        paragraph = " ".join(tr(context.scene, text).strip() for text in lines if text)
+        wrapped = wrap_lines(
+            context, paragraph, width=width, reserve_px=82,
+        )
+        for idx, line in enumerate(wrapped):
+            ib.label(text=line, icon=icon if idx == 0 else 'NONE')
         return ib
 
-    def _metric_row_wrap(self, parent, label, value, help_text="", width=20):
-        row = parent.row(align=True)
-        col = row.column(align=True)
-        for i, line in enumerate(self._wrap_lines(f"{label}: {value}", width=width)):
+    def _metric_row_wrap(self, context, parent, label, value, help_text=""):
+        """Draw one metric without contextual-help icons.
+
+        Contextual help is intentionally attached only to group titles.
+        """
+        col = parent.column(align=True)
+        for i, line in enumerate(label_value_lines(context, tr(context.scene, label), str(value))):
             col.label(text=line, icon='DOT' if i == 0 else 'NONE')
-        if help_text:
-            op = row.operator("anali.context_help", text="", icon='INFO', emboss=False)
-            op.message = help_text
 
     def _draw_data_tab(self, context, layout, scn):
         box = layout.box()
         row = box.row(align=True)
         row.prop(scn, "anali_show_csv_import", text="", icon='TRIA_DOWN' if scn.anali_show_csv_import else 'TRIA_RIGHT', emboss=False)
-        row.label(text="1. CSV / Import", icon='FILE_FOLDER')
+        row.label(text=tr(scn, "1. CSV / Import"), icon='FILE_FOLDER')
         if scn.anali_show_csv_import:
             row = box.row(align=True)
             row.prop(scn, "csv_folder", text="")
-            row.operator("anali.select_csv_path", text="Select")
+            row.operator("anali.select_csv_path", text=tr(scn, "Select"))
             box.template_list("ANALI_UL_CSVList", "", scn, "csv_items", scn, "csv_index")
-            box.operator("anali.detect_csv", text="Refresh list")
+            box.operator("anali.detect_csv", text=tr(scn, "Refresh list"))
 
 
         box = layout.box()
         row = box.row(align=True)
         row.prop(scn, "anali_show_global_metrics", text="", icon='TRIA_DOWN' if scn.anali_show_global_metrics else 'TRIA_RIGHT', emboss=False)
-        row.label(text="2. Global CSV Metrics", icon='SPREADSHEET')
+        row.label(text=tr(scn, "2. Global CSV Metrics"), icon='SPREADSHEET')
         if scn.anali_show_global_metrics:
-            box.operator("anali.calculate_csv_metric_stats", text="Calculate CSV Metric Stats")
+            box.operator("anali.calculate_csv_metric_stats", text=tr(scn, "Calculate CSV Metric Stats"))
 
             if len(scn.metric_stats) > 0:
-                self._draw_csv_metric_stats(box, scn)
+                self._draw_csv_metric_stats(context, box, scn)
             else:
-                box.label(text="No metrics calculated yet.", icon='INFO')
+                box.label(text=tr(scn, "No metrics calculated yet."), icon='INFO')
 
-    def _draw_csv_metric_stats(self, layout, scn):
+    def _draw_csv_metric_stats(self, context, layout, scn):
         """Draw CSV metrics statistics with short visible text.
 
         Long explanations are shown as tooltips when hovering over
         the info icon. Visible labels are wrapped into 18-20 character
         lines to avoid overly long horizontal rows.
         """
-        import textwrap
-
         box_stats = layout.box()
-        box_stats.label(text="CSV Metric Stats")
+        box_stats.label(text=tr(scn, "CSV Metric Stats"))
 
         def _find_stat(csv_name, key):
             for st in scn.metric_stats:
@@ -134,21 +146,14 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
             except Exception:
                 return "0"
 
-        def _wrap(text, width=20):
-            text = str(text or "")
-            return textwrap.wrap(text, width=width, break_long_words=False, break_on_hyphens=False) or [""]
+        def _wrap(text, width=None):
+            return wrap_lines(context, tr(scn, str(text or "")), width=width)
 
-        def _label(box, text, icon='NONE', width=20):
+        def _label(box, text, icon='NONE', width=None):
             lines = _wrap(text, width)
             for i, line in enumerate(lines):
-                if i == 0 and icon != 'NONE':
-                    box.label(text=line, icon=icon)
-                else:
-                    box.label(text=line)
+                box.label(text=line, icon=icon if (i == 0 and icon != 'NONE') else 'NONE')
 
-        def _help(layout, text):
-            op = layout.operator("anali.context_help", text="", icon='INFO', emboss=False)
-            op.message = str(text or "")
 
         def _header(box, text, tooltip="", icon='NONE'):
             """Draw a compact, visually strong block title.
@@ -161,16 +166,14 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
             row = box.row(align=True)
             row.scale_y = 1.12
             title_col = row.column(align=True)
-            lines = _wrap(text, 18)
+            lines = _wrap(text)
             for i, line in enumerate(lines):
                 line_icon = icon if (i == 0 and icon != 'NONE') else ('TRIA_RIGHT' if i == 0 else 'NONE')
                 if i == 0 and tooltip:
                     title_op = title_col.operator("anali.context_help", text=line, icon=line_icon, emboss=True)
-                    title_op.message = tooltip
+                    title_op.message = tr(scn, tooltip)
                 else:
                     title_col.label(text=line, icon=line_icon)
-            if tooltip:
-                _help(row, tooltip)
             box.separator(factor=0.20)
 
         def _section(parent, title, tooltip="", icon='NONE'):
@@ -179,41 +182,31 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
             return b
 
         def _q_lines(box, q1, q2, q3, q4, unit="events", decimals=0):
-            _label(box, "Quartiles", width=20)
+            _metric_value(box, "Distribution", tr(scn, "Quartiles"))
             for label, value in (("Q1", q1), ("Q2", q2), ("Q3", q3), ("Q4", q4)):
-                _label(box, f"{label}: {_num(value, decimals)} {unit}", width=20)
+                _metric_value(box, label, value, unit, decimals)
 
         def _metric_value(box, title, value, unit="", decimals=0):
-            suffix = f" {unit}" if unit else ""
+            suffix = f" {tr(scn, unit)}" if unit else ""
             value_text = f"{_num(value, decimals)}{suffix}"
-            title_text = f"{title}:"
-            # If the label is close to 18-20 characters, the value moves
-            # to its own line to avoid visually long rows in Blender.
-            if len(title_text) >= 18 or len(value_text) >= 18 or len(title_text) + len(value_text) >= 22:
-                col = box.column(align=True)
-                for line in _wrap(title_text, 20):
-                    col.label(text=line)
-                col.label(text=value_text)
-                return
-            row = box.row(align=True)
-            row.label(text=title_text)
-            row.label(text=value_text)
+            for line in label_value_lines(context, tr(scn, title), value_text):
+                box.label(text=line)
 
         def _rate_block(box, title, abs_value, rate_value, rate_unit, rate_decimals=2):
-            _label(box, title, width=20)
+            _label(box, title)
             _metric_value(box, "Total", abs_value, "", 0)
             _metric_value(box, "Frequency", rate_value, rate_unit, rate_decimals)
 
         for csv_name in csv_names:
             file_box = box_stats.box()
             clean_name = os.path.basename(csv_name).replace("_data.csv", "").replace(".csv", "")
-            _label(file_box, clean_name, icon='FILE', width=20)
+            _label(file_box, clean_name, icon='FILE')
 
             details = file_box.box()
             _header(
                 details,
                 "Metric detail",
-                "Key values are grouped by purpose; quartiles only appear where they add useful detail.",
+                "CSV_METRICS_LONG_HELP",
                 icon='SPREADSHEET',
             )
 
@@ -236,7 +229,6 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                     _metric_value(b, "Total pauses", pause_stat.count, "pauses", 0)
                     _metric_value(b, "Frequency", pause_stat.rate_per_hour, "pauses/h", 2)
                 if a3:
-                    _label(b, "Distribution", width=20)
                     _q_lines(b, a3.q1, a3.q2, a3.q3, a3.q4, "pauses")
 
             a4 = _find_stat(csv_name, "A4")
@@ -347,16 +339,16 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                     _metric_value(sub, "Object Mode", a14.pct_object, "%", 2)
                     _metric_value(sub, "Edit Mode", a14.pct_edit, "%", 2)
                     _metric_value(sub, "Mode changes", a14.switches / total_mode_min, "chg/min", 2)
-                    _label(sub, "Quartiles", width=20)
+                    _label(sub, "Quartiles")
                     for label, obj_pct, edit_pct, changes in (
                         ("Q1", a14.pct_object_q1, a14.pct_edit_q1, a14.mode_switch_q1),
                         ("Q2", a14.pct_object_q2, a14.pct_edit_q2, a14.mode_switch_q2),
                         ("Q3", a14.pct_object_q3, a14.pct_edit_q3, a14.mode_switch_q3),
                         ("Q4", a14.pct_object_q4, a14.pct_edit_q4, a14.mode_switch_q4),
                     ):
-                        _label(sub, f"{label}: Object {obj_pct:.1f}%", width=22)
-                        _label(sub, f"    Edit {edit_pct:.1f}%", width=22)
-                        _label(sub, f"    Changes {changes:.0f}", width=22)
+                        _label(sub, f"{label}: Object {obj_pct:.1f}%")
+                        _label(sub, f"    Edit {edit_pct:.1f}%")
+                        _label(sub, f"    Changes {changes:.0f}")
                 if a15:
                     sub = _section(b, "UV work", "UV work events calculated as total, rate, and quartiles.")
                     _rate_block(sub, "Events", a15.abs_total, a15.rate_per_min, "events/min", 2)
@@ -368,40 +360,33 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         box = layout.box()
         row = box.row(align=True)
         row.prop(scn, "anali_show_mesh_binding", text="", icon='TRIA_DOWN' if scn.anali_show_mesh_binding else 'TRIA_RIGHT', emboss=False)
-        row.label(text="1. CSV ↔ Mesh Link", icon='MESH_DATA')
+        row.label(text=tr(scn, "1. CSV ↔ Mesh Link"), icon='MESH_DATA')
         if scn.anali_show_mesh_binding:
             self._info_box(
-                box,
+                context, box,
                 [
                     "Link the CSV data to a mesh object.",
                     "The 'Object mesh' is the model being analyzed.",
                     "The 'Reference mesh' is optional: only needed for the Similarity metric. Leave it empty if you do not need a comparison.",
                 ],
                 icon='INFO',
-                width=34,
             )
-            box.prop(scn, "anali_target_obj", text="Object mesh")
-            box.prop(scn, "reference_obj", text="Reference mesh")
+            box.prop(scn, "anali_target_obj", text=tr(scn, "Object mesh"))
+            box.prop(scn, "reference_obj", text=tr(scn, "Reference mesh"))
 
         # --- 2. Mesh Metrics ---
         box = layout.box()
         row = box.row(align=True)
         row.prop(scn, "anali_show_model_metrics", text="", icon='TRIA_DOWN' if scn.anali_show_model_metrics else 'TRIA_RIGHT', emboss=False)
-        row.label(text="2. Mesh Metrics", icon='MODIFIER')
+        row.label(text=tr(scn, "2. Mesh Metrics"), icon='MODIFIER')
         if scn.anali_show_model_metrics:
-            help_row = box.row(align=True)
-            help_op = help_row.operator("anali.context_help", text="Mesh metrics help", icon='INFO')
-            help_op.message = (
-                "Select the active mesh in the viewport, then press Calculate model metrics. "
-                "Metric explanations are available from the info icons next to each group or metric."
-            )
-            box.operator("object.calculate_metrics", text="Calculate model metrics")
+            box.operator("object.calculate_metrics", text=tr(scn, "Calculate model metrics"))
             obj = context.active_object
             if obj and obj.type == 'MESH':
                 metrics_data = scn.get("metrics_data", {})
                 if obj.name in metrics_data:
                     inner = box.box()
-                    self._label_wrap(inner, f"Active mesh: {obj.name}", icon='MESH_DATA', width=30)
+                    self._label_wrap(context, inner, f"{tr(scn, 'Object mesh')}:  {obj.name}", icon='MESH_DATA')
 
                     # Definiciones de ayuda contextuales
                     mesh_help = {
@@ -505,6 +490,17 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
 
                     data_dict = metrics_data[obj.name]
 
+                    def _format_mesh_metric(key, value):
+                        # Every UV-mapping result is presented with exactly two
+                        # decimal places, including island counts, for a
+                        # consistent visual format across the whole UV block.
+                        if key in uv_keys:
+                            try:
+                                return f"{float(value):.2f}"
+                            except (TypeError, ValueError):
+                                return "0.00"
+                        return str(value)
+
                     def _draw_metric_group(parent, title, tooltip, icon, keys):
                         group_keys = [k for k in keys if k in data_dict]
                         if not group_keys:
@@ -514,58 +510,57 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                         hrow = gb.row(align=True)
                         hrow.scale_y = 1.1
                         if tooltip:
-                            op = hrow.operator("anali.context_help", text=title, icon=icon, emboss=True)
-                            op.message = tooltip
-                            help_op = hrow.operator("anali.context_help", text="", icon='INFO', emboss=False)
-                            help_op.message = tooltip
+                            op = hrow.operator("anali.context_help", text=tr(scn, title), icon=icon, emboss=True)
+                            op.message = tr(scn, tooltip)
                         else:
-                            hrow.label(text=title, icon=icon)
+                            hrow.label(text=tr(scn, title), icon=icon)
                         gb.separator(factor=0.15)
                         for k in group_keys:
-                            label, help_text = mesh_help.get(k, (k.replace('_', ' '), "Calculated mesh metric."))
-                            self._metric_row_wrap(gb, label, data_dict[k], help_text=help_text, width=24)
+                            label, _help_text = mesh_help.get(k, (k.replace('_', ' '), ""))
+                            self._metric_row_wrap(context, gb, label, _format_mesh_metric(k, data_dict[k]))
 
                     _draw_metric_group(
                         inner, "UV Mapping",
-                        "UV metrics measure how the mesh surface maps to texture space. All computed in local mesh space.",
+                        "UV_MAPPING_LONG_HELP",
                         'UV', uv_keys,
                     )
                     _draw_metric_group(
                         inner, "Normals",
-                        "Percentage of faces detected as inverted using the same local normal criterion as the logger.",
+                        "NORMALS_LONG_HELP",
                         'NORMALS_FACE', normal_keys,
                     )
                     _draw_metric_group(
                         inner, "Transforms & Position",
-                        "Whether world-space transforms have been applied and the object origin is at (0,0,0).",
+                        "TRANSFORMS_LONG_HELP",
                         'OBJECT_ORIGIN', transform_keys,
                     )
                     _draw_metric_group(
                         inner, "Topology",
-                        "Face and vertex statistics in local mesh space. 'Duplicate vertices' shows the absolute count of overlapping vertices, not a percentage.",
+                        "TOPOLOGY_LONG_HELP",
                         'MESH_DATA', topo_keys,
                     )
                     _draw_metric_group(
                         inner, "Similarity",
-                        "Requires a reference mesh selected in section 1. Shows 0 when no reference is set.",
+                        "SIMILARITY_LONG_HELP",
                         'LIBRARY_DATA_DIRECT', similarity_keys,
                     )
 
                     covered = set(uv_keys + normal_keys + transform_keys + topo_keys + similarity_keys)
                     extra = [k for k in data_dict if k not in covered]
                     for k in extra:
-                        label, help_text = mesh_help.get(k, (k.replace('_', ' '), "Calculated mesh metric."))
-                        self._metric_row_wrap(inner, label, data_dict[k], help_text=help_text, width=24)
+                        label, _help_text = mesh_help.get(k, (k.replace('_', ' '), ""))
+                        self._metric_row_wrap(context, inner, label, _format_mesh_metric(k, data_dict[k]))
                 else:
-                    box.label(text="Select a mesh and calculate metrics.", icon='INFO')
+                    box.label(text=tr(scn, "Select a mesh and calculate metrics."), icon='INFO')
             else:
-                box.label(text="No active mesh found.", icon='ERROR')
+                box.label(text=tr(scn, "No active mesh found."), icon='ERROR')
 
     def _draw_graphs_tab(self, context, layout, scn):
         box = layout.box()
         row = box.row(align=True)
         row.prop(scn, "anali_show_graph_config", text="", icon='TRIA_DOWN' if scn.anali_show_graph_config else 'TRIA_RIGHT', emboss=False)
-        row.label(text="1. Visual Settings", icon='GRAPH')
+        title_op = row.operator("anali.context_help", text=tr(scn, "1. Visual Settings"), icon='GRAPH', emboss=True)
+        title_op.message = tr(scn, "GRAPH_SETTINGS_LONG_HELP")
         if scn.anali_show_graph_config:
             graph_help = {
                 'G1': "Interaction graph: X is session time and selected metrics are drawn as Y series. Use it to compare metric evolution through time.",
@@ -573,37 +568,26 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                 'G3': "Radar graph: compares several metrics between selected CSV files. Best with a small set of metrics.",
             }
             row = box.row(align=True)
-            row.prop(scn, "selected_graph")
-            help_op = row.operator("anali.context_help", text="", icon='INFO', emboss=False)
-            help_op.message = graph_help.get(scn.selected_graph, "Select a graph type and metrics to visualize.")
-            box.prop(scn, "anali_color_palette")
+            row.prop(scn, "selected_graph", text=tr(scn, "Graph"))
+            box.prop(scn, "anali_color_palette", text=tr(scn, "Color palette"))
             opts = box.row(align=True)
             opts.scale_y = 1.08
-            opts.prop(scn, "anali_use_log_scale", toggle=True, icon='IPO_EXPO')
-            opts.prop(scn, "anali_use_compact_labels", toggle=True, icon='FONT_DATA')
-            opts_help = box.operator("anali.context_help", text="Scale and labels help", icon='QUESTION')
-            opts_help.message = (
-                "Log scale compresses large numeric differences using log10(1+x). "
-                "Compact labels only shortens visible names; it does not change the data."
-            )
-            self._label_wrap(box, "Select metrics", icon='CHECKMARK', width=28)
+            opts.prop(scn, "anali_use_log_scale", text=tr(scn, "Log scale"), toggle=True, icon='IPO_EXPO')
+            opts.prop(scn, "anali_use_compact_labels", text=tr(scn, "Compact labels"), toggle=True, icon='FONT_DATA')
+            self._label_wrap(context, box, tr(scn, "Select metrics"), icon='CHECKMARK')
             box.template_list("ANALI_UL_AnalysisList", "", scn, "analysis_items", scn, "analysis_index")
         box = layout.box()
         row = box.row(align=True)
         row.prop(scn, "anali_show_render_controls", text="", icon='TRIA_DOWN' if scn.anali_show_render_controls else 'TRIA_RIGHT', emboss=False)
-        row.label(text="2. Render / Control", icon='RENDER_STILL')
+        title_op = row.operator("anali.context_help", text=tr(scn, "2. Render / Control"), icon='RENDER_STILL', emboss=True)
+        title_op.message = tr(scn, "RENDER_CONTROLS_LONG_HELP")
         if scn.anali_show_render_controls:
-            help_op = box.operator("anali.context_help", text="Render controls help", icon='INFO')
-            help_op.message = (
-                "Scale X/Y/Z changes the physical size of the generated graph in the 3D scene. "
-                "Clear graphs removes generated graph objects. Restore objects makes original scene objects visible again."
-            )
             row = box.row(align=True)
-            row.prop(scn, "axis_scale_x")
-            row.prop(scn, "axis_scale_y")
-            row.prop(scn, "axis_scale_z")
+            row.prop(scn, "axis_scale_x", text=tr(scn, "Scale X"))
+            row.prop(scn, "axis_scale_y", text=tr(scn, "Scale Y"))
+            row.prop(scn, "axis_scale_z", text=tr(scn, "Scale Z"))
             row = box.row(align=True)
-            row.operator("anali.clear_graphs")
-            row.operator("anali.restore_scene_objects", text="Restore objects")
+            row.operator("anali.clear_graphs", text=tr(scn, "Clear graphs"))
+            row.operator("anali.restore_scene_objects", text=tr(scn, "Restore objects"))
             row = box.row(align=True)
-            row.operator("anali.visualize_graph", text="Visualize 3D graph")
+            row.operator("anali.visualize_graph", text=tr(scn, "Visualize 3D graph"))

@@ -20,10 +20,12 @@ try:
     from .ui_helpers import *
     from .ui_properties import *
     from .ui_graph_service import visualize_graph
+    from .texts import tr, wrap_lines, region_character_width
 except ImportError:
     from ui_helpers import *
     from ui_properties import *
     from ui_graph_service import visualize_graph
+    from texts import tr, wrap_lines, region_character_width
 
 class ANALI_OT_SelectCSVPath(bpy.types.Operator):
     """Open the file selector to choose a folder or a specific CSV.
@@ -35,6 +37,12 @@ class ANALI_OT_SelectCSVPath(bpy.types.Operator):
     bl_idname = "anali.select_csv_path"
     bl_label = "Select folder or CSV"
     bl_description = "Select a folder or CSV and update the analyzable file list"
+
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
 
     filepath: StringProperty(subtype="FILE_PATH")
     directory: StringProperty(subtype="DIR_PATH")
@@ -70,6 +78,12 @@ class ANALI_OT_DetectCSV(bpy.types.Operator):
     bl_label = "Scan CSV"
     bl_description = "Find CSV files in the selected folder and refresh the list while keeping prior selections"
 
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
+
     def execute(self, context):
         scn = context.scene
         prev_state = {item.name: item.selected for item in scn.csv_items}
@@ -86,24 +100,37 @@ class ANALI_OT_DetectCSV(bpy.types.Operator):
 
 
 class ANALI_OT_ContextHelp(bpy.types.Operator):
-    """Show short contextual help for CSV metric blocks.
-
-    In the interface this is used as an info icon. The full text appears as a
-    hover tooltip, avoiding visible space usage inside the metrics panel.
-    """
+    """Display long contextual help in a responsive dialog."""
     bl_idname = "anali.context_help"
     bl_label = "Context Help"
-    bl_description = "Show contextual help for the metric block"
+    bl_description = "Open detailed contextual help"
 
     message: StringProperty(default="")
 
     @classmethod
     def description(cls, context, properties):
+        if context is not None:
+            return tr(context.scene, getattr(properties, "message", "") or cls.bl_description)
         return getattr(properties, "message", "") or cls.bl_description
 
+    def invoke(self, context, event):
+        # The dialog width follows the available window width but remains usable
+        # on small screens. Text is wrapped again on every draw call.
+        region_width = getattr(context.region, "width", 420)
+        window_width = getattr(context.window, "width", region_width)
+        dialog_width = max(360, min(760, int(max(region_width, window_width * 0.45))))
+        return context.window_manager.invoke_props_dialog(self, width=dialog_width)
+
+    def draw(self, context):
+        layout = self.layout
+        text = tr(context.scene, self.message or self.bl_description)
+        for paragraph_index, paragraph in enumerate(text.splitlines() or [text]):
+            if paragraph_index:
+                layout.separator(factor=0.35)
+            for index, line in enumerate(wrap_lines(context, paragraph)):
+                layout.label(text=line, icon='INFO' if paragraph_index == 0 and index == 0 else 'NONE')
+
     def execute(self, context):
-        if self.message:
-            self.report({'INFO'}, self.message)
         return {'FINISHED'}
 
 
@@ -119,16 +146,22 @@ class ANALI_OT_CalculateCSVMetricStats(bpy.types.Operator):
     bl_label = "Calculate CSV Metric Stats"
     bl_description = "Calculate CSV metrics for selected CSV files with descriptions, quartiles, and per-block context"
 
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
+
     def execute(self, context):
         scn = context.scene
 
         selected_csvs = [i.name for i in scn.csv_items if i.selected]
         if not selected_csvs:
-            self.report({'WARNING'}, "No CSV selected")
+            self.report({'WARNING'}, tr(scn, "No CSV selected"))
             return {'CANCELLED'}
 
         update_scene_metric_stats(context)
-        self.report({'INFO'}, "Metric statistics calculated")
+        self.report({'INFO'}, tr(scn, "Metric statistics calculated"))
         return {'FINISHED'}
 
 
@@ -143,12 +176,18 @@ class OBJECT_OT_CalculateMetrics(bpy.types.Operator):
     bl_label = "Calculate Metrics"
     bl_description = "Calculate geometric metrics for the active mesh and, if available, compare them with a reference"
 
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
+
     def execute(self, context):
         scn = context.scene
         obj = context.active_object
         reference_obj = scn.reference_obj
         if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "Select a MESH object")
+            self.report({'WARNING'}, tr(scn, "Select a MESH object"))
             return {'CANCELLED'}
         metrics = calculate_model_metrics(obj, reference_obj if reference_obj and reference_obj.type == 'MESH' else None)
         store = dict(scn.get("metrics_data", {}))
@@ -168,6 +207,12 @@ class ANALI_OT_ClearGraphs(bpy.types.Operator):
     bl_label = "Clear graphs"
     bl_description = "Clear the 3D graphs generated by the add-on from the scene"
 
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
+
     def execute(self, context):
         clear_previous_graphs(context.scene)
         return {'FINISHED'}
@@ -179,9 +224,15 @@ class ANALI_OT_RestoreSceneObjects(bpy.types.Operator):
     bl_label = "Restore scene objects"
     bl_description = "Unhide meshes and other scene objects hidden by graph visualization"
 
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
+
     def execute(self, context):
         restore_hidden_scene_objects(context.scene)
-        self.report({'INFO'}, "Hidden scene objects restored")
+        self.report({'INFO'}, tr(context.scene, "Hidden scene objects restored"))
         return {'FINISHED'}
 
 class ANALI_OT_VisualizeGraph(bpy.types.Operator):
@@ -194,6 +245,12 @@ class ANALI_OT_VisualizeGraph(bpy.types.Operator):
     bl_idname = "anali.visualize_graph"
     bl_label = "Visualize Graph"
     bl_description = "Create the configured 3D graph using the selected CSV files and metrics"
+
+    @classmethod
+    def description(cls, context, properties):
+        if context is not None and getattr(context, "scene", None) is not None:
+            return tr(context.scene, cls.bl_description)
+        return cls.bl_description
 
     def execute(self, context):
         return visualize_graph(context, self.report)

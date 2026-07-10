@@ -18,6 +18,7 @@ from typing import Iterable, Sequence, Tuple, List, Optional
 
 import bpy
 import bmesh
+from collections import deque
 import numpy as np
 from mathutils import Vector
 try:
@@ -116,46 +117,79 @@ def count_uv_islands(bm):
     return islands
 
 
-def normal_flipped(face, obj=None):
-    """Return True when the face normal appears inverted in local mesh space.
 
-    This uses the same criterion as the data logger: the face normal is compared
-    with the vector from the mesh origin to the face center. It avoids depending
-    on world rotation/scale while detecting normals that point inward relative
-    to the local geometry.
+
+def calculate_normal_percentage(obj, bm=None):
     """
-    if face.normal.length <= 1e-12:
-        return False
-    try:
-        center = face.calc_center_median()
-    except Exception:
-        center = getattr(face, "center", None)
-    if center is None or center.length <= 1e-12:
-        return False
-    return face.normal.dot(center) < 0.0
+    Calcula el porcentaje de caras cuya orientación difiere de la
+    orientación obtenida por Blender al recalcular las normales hacia fuera.
 
+    Es mucho más fiable que comparar las normales con el centro geométrico,
+    especialmente en mallas cóncavas como Lucy.
 
-def calculate_normal_percentage(obj, bm=None) -> float:
-    """Percentage of mesh faces whose normals appear inverted in local mesh space."""
-    owns_bm = False
-    if bm is None:
-        bm = bmesh.new()
-        owns_bm = True
-        try:
-            bm.from_mesh(obj.data)
-        except Exception:
-            bm.free()
-            raise
+    La malla original no se modifica.
+    """
+
+    if obj is None or obj.type != 'MESH':
+        return 0.0
+
+    source_bm = None
+    check_bm = None
+
     try:
-        bm.normal_update()
-        total_faces = len(bm.faces)
+        if bm is None:
+            source_bm = bmesh.new()
+            source_bm.from_mesh(obj.data)
+        else:
+            source_bm = bm
+
+        source_bm.normal_update()
+        source_bm.faces.ensure_lookup_table()
+
+        total_faces = len(source_bm.faces)
+
         if total_faces == 0:
             return 0.0
-        flipped_faces = sum(1 for face in bm.faces if normal_flipped(face, obj))
-        return round((flipped_faces / total_faces) * 100.0, 2)
+
+        # Trabajamos sobre una copia para no modificar la malla original.
+        check_bm = source_bm.copy()
+        check_bm.normal_update()
+        check_bm.faces.ensure_lookup_table()
+
+        # Guardamos las normales antes de recalcularlas.
+        original_normals = [
+            face.normal.copy()
+            for face in check_bm.faces
+        ]
+
+        # Equivalente a recalcular las normales consistentemente hacia fuera
+        # en una malla cerrada.
+        bmesh.ops.recalc_face_normals(
+            check_bm,
+            faces=list(check_bm.faces),
+        )
+
+        check_bm.normal_update()
+        check_bm.faces.ensure_lookup_table()
+
+        flipped = 0
+
+        for original_normal, recalculated_face in zip(
+            original_normals,
+            check_bm.faces,
+        ):
+            # Una normal opuesta produce un producto escalar cercano a -1.
+            if original_normal.dot(recalculated_face.normal) < 0.0:
+                flipped += 1
+
+        return round(100.0 * flipped / total_faces, 2)
+
     finally:
-        if owns_bm:
-            bm.free()
+        if check_bm is not None:
+            check_bm.free()
+
+        if bm is None and source_bm is not None:
+            source_bm.free()
 
 
 def _uv_polygon_area(uvs) -> float:

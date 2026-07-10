@@ -11,14 +11,18 @@ El proyecto se divide en dos componentes principales:
 
 ```text
 GitHub/
-├── Data_Logger_3D.py        # Add-on de captura de eventos
+├── Data_Loggers/            # Versiones normal y Debug de Data Logger 3D
+│   ├── Data_Logger_3D.py
+│   └── Data_Logger_3D_Debug.py
 ├── Analysis_3D.zip          # ZIP instalable del add-on de análisis
 ├── Analysis_3D/             # Código fuente del add-on de análisis y visualización
 ├── core/                    # Lógica desacoplada (agnóstica a Blender)
 ├── tests/                   # Pruebas automatizadas (unittest)
 ├── docs/                    # Memoria, manuales y documentación técnica
 ├── historial_desarrollo/    # Versiones antiguas
+├── scripts/                 # Instaladores del entorno de Blender
 ├── requirements.txt         # Dependencias para Analysis 3D
+├── CONTRIBUTING.md          # Normas para colaborar
 ├── README.md
 └── LICENSE
 ```
@@ -50,8 +54,8 @@ Esta opción es necesaria para que Blender pueda ejecutar correctamente scripts 
 2. Ve a `Edit > Preferences > Add-ons`.
 3. Pulsa el botón `Install...`.
    * En algunas versiones de Blender, el botón `Install...` está oculto dentro del menú de configuración de *add-ons*, situado en la esquina superior derecha del panel de *Add-ons*. Se accede mediante el icono con una flecha o menú desplegable.
-4. Selecciona el archivo `Data_Logger_3D.py`.
-5. Activa el *add-on* **Data Logger 3D**.
+4. Selecciona `Data_Loggers/Data_Logger_3D.py` para uso normal. Para diagnóstico, puedes instalar `Data_Loggers/Data_Logger_3D_Debug.py` en su lugar.
+5. Activa el *add-on* **Data Logger 3D**. No actives simultáneamente las dos variantes, ya que registran las mismas clases y operadores.
 6. En la Vista 3D, presiona `N` para abrir la barra lateral y accede a la pestaña **Data Logger**.
 
 ### Analysis 3D
@@ -67,11 +71,25 @@ No debe seleccionarse la carpeta `Analysis_3D` para instalar el *add-on*, ya que
 
 ## Dependencias de entorno
 
-`Analysis 3D` incluye las librerías externas necesarias dentro de la propia estructura del addon, por lo que el usuario final no necesita instalar manualmente `numpy`, `matplotlib` ni otras dependencias en el Python integrado de Blender.
+Las librerías externas no se incluyen dentro del add-on ni se versionan en el repositorio. `Analysis 3D` necesita NumPy y Matplotlib instalados en el Python interno de Blender.
 
-Esta decisión evita modificar la instalación local de Blender y facilita el uso del addon en ordenadores nuevos. Al instalar y activar el addon, este carga las dependencias incluidas junto al código del proyecto.
+Antes de activar el add-on, instala el entorno desde la raíz del repositorio:
 
-Solo sería necesario instalar dependencias manualmente en un entorno de desarrollo, o si se utiliza una versión del addon que no incluya las librerías externas empaquetadas.
+* **Windows:**
+
+```powershell
+.\scripts\install_environment.bat "C:\Ruta\A\blender.exe"
+```
+
+* **Linux/macOS:**
+
+```bash
+./scripts/install_environment.sh /ruta/al/ejecutable/blender
+```
+
+El instalador usa `requirements.txt`, instala las dependencias de forma explícita y verifica que Blender puede importarlas. Reinicia Blender después de ejecutarlo. No copies una carpeta `site-packages` dentro de `Analysis_3D`.
+
+Consulta [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) para instalación manual, estructura interna, pruebas y construcción del ZIP. Las normas de colaboración se encuentran en [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Uso básico
 
@@ -107,9 +125,9 @@ También puede aparecer el bloque `data_logger_warnings.txt`, que contiene adver
 3. Ejecuta el cálculo de métricas.
 4. Revisa los resultados y, si procede, genera visualizaciones.
 
-### Debug
+### Variante Debug
 
-El panel **Data Logger Debug** ofrece telemetría en tiempo real: último operador detectado, razón del último registro, estado de UV, advertencias y logs almacenados en el bloque de texto `data_logger_warnings.txt`.
+`Data_Loggers/Data_Logger_3D_Debug.py` incluye el panel **Data Logger Debug**, que ofrece telemetría en tiempo real: último operador detectado, razón del último registro, estado de UV, advertencias y logs almacenados en el bloque de texto `data_logger_warnings.txt`.
 
 ## Formato CSV
 
@@ -210,7 +228,9 @@ ActualV4/
 ├── tests/
 ├── docs/
 ├── datos_analisis/
+├── scripts/
 ├── requirements.txt
+├── CONTRIBUTING.md
 ├── README.md
 ├── LICENSE
 └── TEST_RESULTS.txt
