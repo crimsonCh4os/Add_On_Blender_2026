@@ -221,9 +221,6 @@ ActualV4/
 ├── Data_Logger_3D.py                 # Copia en raíz para pruebas automáticas
 ├── Analysis_3D.zip                   # ZIP instalable en Blender
 ├── Analysis_3D/                      # Paquete extraído para pruebas automáticas
-├── historial_desarrollo/             # Versiones antiguas
-│   ├── addon_deteccion_datos/
-│   └── addon_analisis_datos/
 ├── core/
 ├── tests/
 ├── docs/
