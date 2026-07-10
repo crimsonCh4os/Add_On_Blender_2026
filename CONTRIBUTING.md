@@ -91,15 +91,6 @@ El pull request debe explicar:
 - versión de Blender utilizada;
 - riesgos de compatibilidad o migración.
 
-Lista final:
-
-- [ ] No se incluyen librerías externas ni archivos generados.
-- [ ] Pasan las pruebas automatizadas.
-- [ ] Se ha realizado validación manual en Blender cuando corresponde.
-- [ ] Se ha actualizado la documentación.
-- [ ] `Analysis_3D.zip` se ha reconstruido sin `site-packages` ni cachés.
-- [ ] Los datos de prueba están anonimizados.
-
 
 ## Variantes de Data Logger
 
