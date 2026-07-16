@@ -67,13 +67,13 @@ def get_color_for_csv(csv_name: object, palette_name: str | None = None) -> tupl
     """Color estable y reproducible para un CSV."""
     families = _active_color_families(palette_name)
     fam = families[_stable_palette_index(csv_name, len(families))]
-    return fam[1 % len(fam)]
+    return fam[0]
 
 
 def csv_color_by_index(index: int, palette_name: str | None = None) -> tuple[float, float, float, float]:
     families = _active_color_families(palette_name)
     family = families[int(index) % len(families)]
-    return family[min(1, len(family) - 1)]
+    return family[0]
 
 
 def metric_color_for_csv(csv_index: int, metric_index: int, palette_name: str | None = None) -> tuple[float, float, float, float]:
@@ -85,6 +85,7 @@ def metric_color_for_csv(csv_index: int, metric_index: int, palette_name: str | 
 GRAPH_OBJECT_PREFIXES = (
     "GraphPlane_", "GraphLineMesh_", "Scatter_", "Corr_", "Surface_", "Time_",
     "Forest", "Radar", "RadarFill_", "RadarRing_", "RadarAxis_", "RadarPoint_", "RadarLabel_",
+    "DataTable", "TableGrid_", "TableText_", "TableTitle_", "TableSubtitle_",
     "Axis_", "Tick_", "Label_", "TickLabel_", "Num_",
     "InteractionBar_", "InteractionLine_", "InteractionPts_", "InteractionLabel_",
     "GraphTitle_", "TimePts_",
@@ -610,106 +611,362 @@ def _create_forest_square_marker(location, name, color, size=0.14):
     return obj
 
 
-def draw_multi_csv_forest_plot_3d(rows: Sequence[Mapping[str, Any]], metric_label: str = "Metric", axis_scale_x: float = 7.0, axis_scale_y: float = 5.0, z_pos: float = 0.0, point_size: float = 0.16, line_thickness: float = 0.025, compact_labels: bool = False, scale_label: str = "linear") -> dict[str, object] | None:
+def _create_forest_diamond(x_center, x_low, x_high, y, z, name, color, height=0.22):
+    verts = [
+        (float(x_low), float(y), float(z)),
+        (float(x_center), float(y + height), float(z)),
+        (float(x_high), float(y), float(z)),
+        (float(x_center), float(y - height), float(z)),
+    ]
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(verts, [], [(0, 1, 2, 3)])
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    mat = create_emission_material(f"{name}_Mat", color, 2.5)
+    obj.data.materials.append(mat)
+    obj["analysis3d_generated"] = True
+    return obj
+
+
+
+
+def _forest_format_value(value: float) -> str:
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    abs_v = abs(value)
+    if abs_v >= 1000000.0:
+        return f"{value/1000000.0:.2f}M"
+    if abs_v >= 10000.0:
+        return f"{value/1000.0:.1f}k"
+    if abs_v >= 1000.0:
+        return f"{value/1000.0:.2f}k"
+    if abs_v >= 100.0:
+        return f"{value:.0f}"
+    if abs_v >= 10.0:
+        return f"{value:.1f}"
+    if abs_v >= 1.0:
+        return f"{value:.2f}"
+    if abs_v >= 0.1:
+        return f"{value:.3f}"
+    if abs_v >= 0.01:
+        return f"{value:.4f}"
+    return f"{value:.2g}"
+
+
+def _forest_superscript_int(value: int) -> str:
+    table = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+    return str(int(value)).translate(table)
+
+
+def _forest_display_scale_power(values: Sequence[float]) -> int:
+    finite = [abs(float(v)) for v in values if np.isfinite(v) and abs(float(v)) > 1e-15]
+    if not finite:
+        return 0
+    max_abs = max(finite)
+    power = int(math.floor(math.log10(max_abs)))
+    eng = int(math.floor(power / 3.0) * 3)
+    if -3 <= eng <= 3:
+        return eng
+    return eng
+
+
+def _forest_scaled_value(value: float, scale_power: int = 0) -> float:
+    return float(value) / (10.0 ** scale_power) if scale_power else float(value)
+
+
+def _forest_effect_label(mean: float, ci_low: float, ci_high: float, scale_power: int = 0) -> str:
+    m = _forest_scaled_value(mean, scale_power)
+    lo = _forest_scaled_value(ci_low, scale_power)
+    hi = _forest_scaled_value(ci_high, scale_power)
+    return f"{_forest_format_value(m)} [{_forest_format_value(lo)}–{_forest_format_value(hi)}]"
+
+
+def _forest_tick_values(value_range: tuple[float, float], desired: int = 4) -> list[float]:
+    lo, hi = value_range
+    if not np.isfinite(lo) or not np.isfinite(hi):
+        return [0.0]
+    if abs(hi - lo) < 1e-12:
+        return [lo]
+    ticks = np.linspace(lo, hi, max(int(desired), 2))
+    return [float(v) for v in ticks]
+
+
+def _forest_lang_text(label: str) -> str:
+    try:
+        from .texts import tr
+        return tr(getattr(bpy.context, "scene", None), label)
+    except Exception:
+        return label
+
+
+def _forest_t_critical_95(df: int) -> float:
+    """Two-sided 95% Student-t critical value without requiring SciPy."""
+    df = max(int(df), 1)
+    table = {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+        40: 2.021, 60: 2.000, 120: 1.980,
+    }
+    if df in table:
+        return table[df]
+    if df > 120:
+        return 1.960
+    keys = sorted(table)
+    lo = max(k for k in keys if k < df)
+    hi = min(k for k in keys if k > df)
+    fraction = (df - lo) / float(hi - lo)
+    return table[lo] + fraction * (table[hi] - table[lo])
+
+
+def draw_multi_csv_forest_plot_3d(
+    rows: Sequence[Mapping[str, Any]],
+    metric_label: str = "Metric",
+    axis_scale_x: float = 7.0,
+    axis_scale_y: float = 5.0,
+    z_pos: float = 0.0,
+    point_size: float = 0.16,
+    line_thickness: float = 0.025,
+    compact_labels: bool = False,
+    scale_label: str = "linear",
+    null_value: float | None = None,
+    palette_name: str | None = None,
+) -> dict[str, object] | None:
+    """Draw study means with 95% CIs and a random-effects pooled estimate.
+
+    Each CSV is treated as an independent group/study. Individual intervals
+    use the standard errors supplied by ``forest_row_stats``. The pooled
+    estimate uses a DerSimonian-Laird random-effects model; its interval uses
+    a modified Hartung-Knapp adjustment when at least three groups exist.
+
+    A no-effect line is drawn only when the caller explicitly supplies a
+    meaningful ``null_value``. Raw means do not inherently have a null of 0.
+    """
     if not rows:
         return None
 
-    rows = [r for r in rows if np.isfinite(float(r.get("mean", 0.0)))]
-    if not rows:
+    clean_rows = []
+    for row in rows:
+        try:
+            mean = float(row.get("mean", 0.0))
+            low = float(row.get("ci_low", mean))
+            high = float(row.get("ci_high", mean))
+            n = max(int(row.get("n", 0)), 1)
+            se = float(row.get("se", float("nan")))
+        except (TypeError, ValueError):
+            continue
+        if not all(np.isfinite(v) for v in (mean, low, high)):
+            continue
+        if not np.isfinite(se) or se <= 0.0:
+            half_width = max(abs(high - low) * 0.5, 0.0)
+            se = half_width / 1.96 if half_width > 1e-12 else float("nan")
+        if not np.isfinite(se) or se <= 0.0:
+            # A one-observation group has no estimable sampling variance and
+            # cannot receive an inverse-variance meta-analytic weight.
+            continue
+
+        clean = dict(row)
+        clean.update({
+            "mean": mean,
+            "ci_low": min(low, high),
+            "ci_high": max(low, high),
+            "n": n,
+            "se": se,
+            "variance": se * se,
+        })
+        clean_rows.append(clean)
+
+    if len(clean_rows) < 2:
         return None
 
-    lows = [float(r.get("ci_low", r["mean"])) for r in rows]
-    highs = [float(r.get("ci_high", r["mean"])) for r in rows]
-    means = [float(r["mean"]) for r in rows]
+    means = np.asarray([r["mean"] for r in clean_rows], dtype=float)
+    variances = np.asarray([r["variance"] for r in clean_rows], dtype=float)
+    fixed_weights = 1.0 / variances
+    fixed_mean = float(np.sum(fixed_weights * means) / np.sum(fixed_weights))
+    q = float(np.sum(fixed_weights * (means - fixed_mean) ** 2))
+    k = len(clean_rows)
+    df_q = k - 1
+    c = float(np.sum(fixed_weights) - np.sum(fixed_weights ** 2) / np.sum(fixed_weights))
+    tau2 = max(0.0, (q - df_q) / c) if c > 1e-15 else 0.0
 
-    min_v = min(lows + means)
-    max_v = max(highs + means)
+    random_weights = 1.0 / (variances + tau2)
+    pooled_mean = float(np.sum(random_weights * means) / np.sum(random_weights))
+    conventional_se = float(np.sqrt(1.0 / np.sum(random_weights)))
 
-    if abs(max_v - min_v) < 1e-9:
-        pad = max(abs(max_v), 1.0) * 0.1
+    if k >= 3:
+        hk_scale = float(np.sum(random_weights * (means - pooled_mean) ** 2) / df_q)
+        # Modified Hartung-Knapp avoids an interval narrower than the
+        # conventional random-effects interval when heterogeneity is tiny.
+        pooled_se = conventional_se * math.sqrt(max(hk_scale, 1.0))
+        critical = _forest_t_critical_95(df_q)
+        pooling_method = "Random effects (DL + modified HK)"
     else:
-        pad = (max_v - min_v) * 0.08
+        pooled_se = conventional_se
+        critical = 1.96
+        pooling_method = "Random effects (DL)"
 
-    low_bound = min_v - pad
-    high_bound = max_v + pad
-    if low_bound >= 0.0:
-        low_bound = 0.0
-    elif high_bound <= 0.0:
-        high_bound = 0.0
-    value_range = (low_bound, high_bound)
+    pooled_low = pooled_mean - critical * pooled_se
+    pooled_high = pooled_mean + critical * pooled_se
+    i2 = max(0.0, (q - df_q) / q * 100.0) if q > 1e-15 else 0.0
+
+    total_weight = float(np.sum(random_weights))
+    for row, weight in zip(clean_rows, random_weights):
+        row["weight"] = float(weight)
+        row["weight_pct"] = float(100.0 * weight / total_weight)
+
+    lows = [r["ci_low"] for r in clean_rows] + [pooled_low]
+    highs = [r["ci_high"] for r in clean_rows] + [pooled_high]
+    if null_value is not None and np.isfinite(null_value):
+        lows.append(float(null_value))
+        highs.append(float(null_value))
+    min_v = min(lows)
+    max_v = max(highs)
+    span = max(max_v - min_v, 1e-9)
+    pad = span * 0.12
+    value_range = (min_v - pad, max_v + pad)
 
     safe_metric = _forest_safe_name(metric_label)
-
-    light = (0.28, 0.28, 0.32, 1.0)
+    light = (0.23, 0.23, 0.27, 1.0)
+    light_2 = (0.18, 0.18, 0.22, 1.0)
     white = (1.0, 1.0, 1.0, 1.0)
-    ref_col = (0.75, 0.75, 0.75, 1.0)
+    subtle = (0.82, 0.82, 0.86, 1.0)
+    null_col = (0.86, 0.86, 0.90, 1.0)
+    pooled_col = (1.0, 0.72, 0.20, 1.0)
 
-    row_count = len(rows)
-    row_gap = axis_scale_y / max(row_count, 1)
-    top_y = axis_scale_y - row_gap * 0.65
-    left_x = -5.70
+    display_scale_power = _forest_display_scale_power([*lows, *highs])
+
+    row_count = len(clean_rows)
+    total_rows = row_count + 1
+    top_margin = 0.95
+    bottom_margin = 0.55
+    usable_y = max(axis_scale_y - top_margin - bottom_margin, 0.8)
+    row_gap = usable_y / max(total_rows, 1)
+    top_y = axis_scale_y - top_margin
+    pooled_y = top_y - row_count * row_gap
+    left_x = -3.55
+    plot_left = 0.0
+    plot_right = axis_scale_x
     right_x = axis_scale_x + 0.55
+    n_x = axis_scale_x + 3.05
+    weight_x = axis_scale_x + 4.05
 
-    title_suffix = "" if scale_label == "linear" else f" · {scale_label}"
-    create_text_label(f"Forest plot · {metric_label}{title_suffix}", (0, axis_scale_y + 0.62, z_pos), 0.42, f"ForestTitle_{safe_metric}")
-    create_text_label("CSV file", (left_x, axis_scale_y + 0.22, z_pos), 0.28, f"ForestHeaderCSV_{safe_metric}", align_x="LEFT")
-    create_text_label("Mean", (right_x, axis_scale_y + 0.22, z_pos), 0.30, f"ForestHeaderMean_{safe_metric}")
-    create_text_label("N", (right_x + 0.9, axis_scale_y + 0.22, z_pos), 0.30, f"ForestHeaderN_{safe_metric}")
+    create_text_label(
+        f"Forest plot · {metric_label}",
+        (axis_scale_x * 0.5, axis_scale_y + 0.94, z_pos),
+        0.46,
+        f"ForestTitle_{safe_metric}",
+    )
+    subtitle = f"{pooling_method} · I² = {i2:.1f}% · τ² = {_forest_format_value(tau2)}"
+    if scale_label != "linear":
+        subtitle = f"{scale_label} · {subtitle}"
+    create_text_label(
+        subtitle,
+        (axis_scale_x * 0.5, axis_scale_y + 0.57, z_pos),
+        0.20,
+        f"ForestSubtitle_{safe_metric}",
+        color=subtle,
+    )
 
-    axis_y = -0.25
-    create_axis(Vector((0, axis_y, z_pos)), Vector((axis_scale_x, axis_y, z_pos)), white, f"ForestAxisX_{safe_metric}", radius=0.012, vertices=8)
+    effect_header = "Mean [95% CI]"
+    if display_scale_power:
+        effect_header = f"{effect_header} (×10{_forest_superscript_int(display_scale_power)})"
+    create_text_label(_forest_lang_text("CSV file"), (left_x, axis_scale_y + 0.22, z_pos), 0.30, f"ForestHeaderCSV_{safe_metric}", align_x="LEFT", color=subtle)
+    create_text_label(effect_header, (right_x, axis_scale_y + 0.22, z_pos), 0.25, f"ForestHeaderMean_{safe_metric}", align_x="LEFT", color=subtle)
+    create_text_label("N", (n_x, axis_scale_y + 0.22, z_pos), 0.28, f"ForestHeaderN_{safe_metric}", color=subtle, align_x="LEFT")
+    create_text_label("Weight", (weight_x, axis_scale_y + 0.22, z_pos), 0.24, f"ForestHeaderWeight_{safe_metric}", color=subtle, align_x="LEFT")
 
-    tick_values = np.linspace(value_range[0], value_range[1], 6)
+    axis_y = 0.02
+    create_axis(Vector((plot_left, axis_y, z_pos)), Vector((plot_right, axis_y, z_pos)), white, f"ForestAxisX_{safe_metric}", radius=0.012, vertices=8)
+
+    tick_values = _forest_tick_values(value_range, desired=5)
     for idx, tick in enumerate(tick_values):
         x = _forest_map_value(tick, value_range, axis_scale_x)
-        create_axis(Vector((x, axis_y - 0.08, z_pos)), Vector((x, axis_y + 0.08, z_pos)), white, f"ForestTick_{safe_metric}_{idx}", radius=0.008, vertices=6)
-        create_text_label(f"{tick:.2g}", (x - 0.1, axis_y - 0.42, z_pos), 0.26, f"ForestTickLabel_{safe_metric}_{idx}")
+        create_axis(Vector((x, axis_y - 0.07, z_pos)), Vector((x, axis_y + 0.07, z_pos)), subtle, f"ForestTick_{safe_metric}_{idx}", radius=0.008, vertices=6)
+        create_text_label(_forest_format_value(_forest_scaled_value(tick, display_scale_power)), (x, axis_y - 0.34, z_pos), 0.26, f"ForestTickLabel_{safe_metric}_{idx}", color=subtle)
 
-    ref_value = float(np.mean(means))
-    ref_x = _forest_map_value(ref_value, value_range, axis_scale_x)
-    create_axis(Vector((ref_x, axis_y, z_pos)), Vector((ref_x, axis_scale_y, z_pos)), ref_col, f"ForestReference_{safe_metric}", radius=0.01, vertices=8)
-    create_text_label("Group mean", (ref_x + 0.08, axis_scale_y + 0.22, z_pos), 0.24, f"ForestReferenceLabel_{safe_metric}")
+    null_x = None
+    if null_value is not None and np.isfinite(null_value):
+        null_x = _forest_map_value(float(null_value), value_range, axis_scale_x)
+        create_axis(
+            Vector((null_x, axis_y, z_pos)),
+            Vector((null_x, top_y + row_gap * 0.45, z_pos)),
+            null_col,
+            f"ForestNoEffect_{safe_metric}",
+            radius=0.010,
+            vertices=8,
+        )
+        create_text_label(
+            f"{_forest_lang_text('No effect')} = {_forest_format_value(_forest_scaled_value(float(null_value), display_scale_power))}",
+            (null_x, axis_scale_y + 0.02, z_pos),
+            0.21,
+            f"ForestNoEffectLabel_{safe_metric}",
+            color=subtle,
+            align_x="CENTER",
+        )
 
-    for idx, row in enumerate(rows):
+    create_axis(Vector((plot_left, axis_y, z_pos - 0.01)), Vector((plot_left, top_y + row_gap * 0.45, z_pos - 0.01)), light_2, f"ForestColumnL_{safe_metric}", radius=0.006, vertices=6)
+    create_axis(Vector((plot_right, axis_y, z_pos - 0.01)), Vector((plot_right, top_y + row_gap * 0.45, z_pos - 0.01)), light_2, f"ForestColumnR_{safe_metric}", radius=0.006, vertices=6)
+
+    max_weight_pct = max(r["weight_pct"] for r in clean_rows)
+    for idx, row in enumerate(clean_rows):
         y = top_y - idx * row_gap
-
         csv_name = str(row.get("csv_name", f"CSV_{idx + 1}"))
-        short_name = _short_csv_label(csv_name, max_len=24 if compact_labels else 42)
+        short_name = _short_csv_label(csv_name, max_len=16 if compact_labels else 22)
         safe_csv = _forest_safe_name(csv_name)
-        csv_color = csv_color_by_index(idx)
+        color_index = int(row.get("color_index", idx))
+        csv_color = csv_color_by_index(color_index, palette_name=palette_name)
 
-        mean = float(row["mean"])
-        ci_low = float(row.get("ci_low", mean))
-        ci_high = float(row.get("ci_high", mean))
-        n = int(row.get("n", 0))
+        mean = row["mean"]
+        ci_low = row["ci_low"]
+        ci_high = row["ci_high"]
+        n = row["n"]
+        marker_size = point_size * (0.55 + 1.25 * math.sqrt(row["weight_pct"] / max_weight_pct))
 
         x0 = _forest_map_value(ci_low, value_range, axis_scale_x)
         x1 = _forest_map_value(ci_high, value_range, axis_scale_x)
         xm = _forest_map_value(mean, value_range, axis_scale_x)
 
-        create_axis(Vector((0, y, z_pos - 0.01)), Vector((axis_scale_x, y, z_pos - 0.01)), light, f"ForestRowGuide_{safe_metric}_{idx}", radius=0.004, vertices=6)
+        create_axis(Vector((plot_left, y, z_pos - 0.01)), Vector((plot_right, y, z_pos - 0.01)), light, f"ForestRowGuide_{safe_metric}_{idx}", radius=0.0035, vertices=6)
+        create_text_label(short_name, (left_x, y - 0.03, z_pos), 0.24 if not compact_labels else 0.20, f"ForestCSVLabel_{safe_metric}_{safe_csv}_{idx}", align_x="LEFT", color=csv_color)
+        create_axis(Vector((x0, y, z_pos)), Vector((x1, y, z_pos)), csv_color, f"ForestCI_{safe_metric}_{safe_csv}_{idx}", radius=line_thickness * 1.1, vertices=8)
+        create_axis(Vector((x0, y - 0.10, z_pos)), Vector((x0, y + 0.10, z_pos)), csv_color, f"ForestCapL_{safe_metric}_{safe_csv}_{idx}", radius=line_thickness * 0.60, vertices=8)
+        create_axis(Vector((x1, y - 0.10, z_pos)), Vector((x1, y + 0.10, z_pos)), csv_color, f"ForestCapR_{safe_metric}_{safe_csv}_{idx}", radius=line_thickness * 0.60, vertices=8)
+        _create_forest_square_marker(Vector((xm, y, z_pos)), f"ForestPoint_{safe_metric}_{safe_csv}_{idx}", csv_color, size=marker_size)
 
-        create_text_label(short_name, (left_x, y - 0.08, z_pos), 0.18 if not compact_labels else 0.16, f"ForestCSVLabel_{safe_metric}_{safe_csv}_{idx}", align_x="LEFT")
+        create_text_label(_forest_effect_label(mean, ci_low, ci_high, display_scale_power), (right_x, y - 0.03, z_pos), 0.22, f"ForestMean_{safe_metric}_{safe_csv}_{idx}", align_x="LEFT", color=white)
+        create_text_label(str(n), (n_x, y - 0.03, z_pos), 0.24, f"ForestN_{safe_metric}_{safe_csv}_{idx}", color=subtle, align_x="LEFT")
+        create_text_label(f"{row['weight_pct']:.1f}%", (weight_x, y - 0.03, z_pos), 0.22, f"ForestWeight_{safe_metric}_{safe_csv}_{idx}", color=subtle, align_x="LEFT")
 
-        create_axis(Vector((x0, y, z_pos)), Vector((x1, y, z_pos)), csv_color, f"ForestCI_{safe_metric}_{safe_csv}_{idx}", radius=line_thickness, vertices=8)
-        create_axis(Vector((x0, y - 0.09, z_pos)), Vector((x0, y + 0.09, z_pos)), csv_color, f"ForestCapL_{safe_metric}_{safe_csv}_{idx}", radius=line_thickness * 0.55, vertices=8)
-        create_axis(Vector((x1, y - 0.09, z_pos)), Vector((x1, y + 0.09, z_pos)), csv_color, f"ForestCapR_{safe_metric}_{safe_csv}_{idx}", radius=line_thickness * 0.55, vertices=8)
+    separator_y = pooled_y + row_gap * 0.52
+    create_axis(Vector((plot_left, separator_y, z_pos - 0.01)), Vector((plot_right, separator_y, z_pos - 0.01)), white, f"ForestPooledSeparator_{safe_metric}", radius=0.007, vertices=8)
+    create_text_label(_forest_lang_text("Overall"), (left_x, pooled_y - 0.03, z_pos), 0.26, f"ForestOverallLabel_{safe_metric}", align_x="LEFT", color=pooled_col)
 
-        _create_forest_square_marker(
-            Vector((xm, y, z_pos)),
-            f"ForestPoint_{safe_metric}_{safe_csv}_{idx}",
-            csv_color,
-            size=point_size,
-        )
-
-        create_text_label(f"{mean:.3g}", (right_x, y - 0.08, z_pos), 0.26, f"ForestMean_{safe_metric}_{safe_csv}_{idx}")
-        create_text_label(str(n), (right_x + 0.9, y - 0.08, z_pos), 0.26, f"ForestN_{safe_metric}_{safe_csv}_{idx}")
+    pooled_x = _forest_map_value(pooled_mean, value_range, axis_scale_x)
+    pooled_x0 = _forest_map_value(pooled_low, value_range, axis_scale_x)
+    pooled_x1 = _forest_map_value(pooled_high, value_range, axis_scale_x)
+    _create_forest_diamond(pooled_x, pooled_x0, pooled_x1, pooled_y, z_pos, f"ForestDiamond_{safe_metric}", pooled_col, height=min(row_gap * 0.34, 0.24))
+    create_text_label(_forest_effect_label(pooled_mean, pooled_low, pooled_high, display_scale_power), (right_x, pooled_y - 0.03, z_pos), 0.22, f"ForestOverallValue_{safe_metric}", align_x="LEFT", color=pooled_col)
+    create_text_label(str(int(sum(r["n"] for r in clean_rows))), (n_x, pooled_y - 0.03, z_pos), 0.24, f"ForestOverallN_{safe_metric}", color=pooled_col, align_x="LEFT")
+    create_text_label("100.0%", (weight_x, pooled_y - 0.03, z_pos), 0.22, f"ForestOverallWeight_{safe_metric}", color=pooled_col, align_x="LEFT")
 
     return {
         "x_range": value_range,
-        "y_range": (0, row_count),
+        "y_range": (0, total_rows),
         "x_ticks": [float(v) for v in tick_values],
-        "y_ticks": list(range(row_count)),
+        "y_ticks": [],
+        "null_value": null_value,
+        "pooled_mean": pooled_mean,
+        "pooled_ci": (pooled_low, pooled_high),
+        "tau2": tau2,
+        "i2": i2,
+        "q": q,
+        "pooling_method": pooling_method,
     }
 
 def _short_csv_label(value, max_len=16):
@@ -769,7 +1026,7 @@ def draw_csv_color_legend(csv_items: Sequence[object] | None = None, csv_names: 
 
     return True
 
-def draw_radar_graph_3d_filled(values: Sequence[float], axis_scale_x: float = 5, axis_scale_y: float = 5, z_pos: float = 0, labels: Sequence[str] | None = None, color: tuple[float, float, float, float] = (0.2, 0.8, 0.4, 1), csv_name: str = "radar", line_thickness: float = 0.04) -> bpy.types.Object | None:
+def draw_radar_graph_3d_filled(values: Sequence[float], axis_scale_x: float = 5, axis_scale_y: float = 5, z_pos: float = 0, labels: Sequence[str] | None = None, color: tuple[float, float, float, float] = (0.2, 0.8, 0.4, 1), csv_name: str = "radar", line_thickness: float = 0.04, values_are_normalized: bool = False, radar_margin: float = 0.0, draw_margin_guides: bool = False, margin_labels: Sequence[str] | None = None) -> bpy.types.Object | None:
     if values is None or len(values) == 0:
         return None
     values = [float(v) for v in values if np.isfinite(float(v))]
@@ -782,12 +1039,14 @@ def draw_radar_graph_3d_filled(values: Sequence[float], axis_scale_x: float = 5,
     center = Vector((axis_scale_x / 2, axis_scale_y / 2, z_pos + 0.2))
     radius = min(axis_scale_x, axis_scale_y) * 0.42
 
-    min_val = min(values)
-    max_val = max(values)
-    rng = max(max_val - min_val, 1e-9)
+    if values_are_normalized:
+        norm_values = [min(max(float(v), 0.0), 1.0) for v in values]
+    else:
+        min_val = min(values)
+        max_val = max(values)
+        rng = max(max_val - min_val, 1e-9)
+        norm_values = [0.05 + 0.95 * ((v - min_val) / rng) for v in values]
 
-    # Valores normalizados entre 0.05 y 1.0 para que nada desaparezca visualmente.
-    norm_values = [0.05 + 0.95 * ((v - min_val) / rng) for v in values]
     for ring_idx, frac in enumerate((0.25, 0.5, 0.75, 1.0), start=1):
         ring_pts = []
         for i in range(n):
@@ -795,6 +1054,34 @@ def draw_radar_graph_3d_filled(values: Sequence[float], axis_scale_x: float = 5,
             ring_pts.append((center.x + radius * frac * cos(ang), center.y + radius * frac * sin(ang), center.z))
         ring_pts.append(ring_pts[0])
         draw_metric_line(f"RadarRing_{csv_name}_{ring_idx}", [p[0] for p in ring_pts], [p[1] for p in ring_pts], [center.z] * len(ring_pts), color=(0.7, 0.7, 0.7, 1), thickness=0.01)
+
+    if draw_margin_guides and values_are_normalized and radar_margin > 0.0:
+        margin = min(max(float(radar_margin), 0.0), 0.49)
+        guide_labels = list(margin_labels or [])
+        for guide_idx, frac in enumerate((margin, 1.0 - margin)):
+            guide_pts = []
+            for i in range(n):
+                ang = i / n * 2 * pi
+                guide_pts.append((center.x + radius * frac * cos(ang), center.y + radius * frac * sin(ang), center.z + 0.004))
+            guide_pts.append(guide_pts[0])
+            draw_metric_line(
+                f"RadarMarginGuide_{csv_name}_{guide_idx}",
+                [p[0] for p in guide_pts],
+                [p[1] for p in guide_pts],
+                [p[2] for p in guide_pts],
+                color=(1.0, 1.0, 1.0, 1.0),
+                thickness=0.025,
+            )
+            if guide_idx < len(guide_labels):
+                label_pos = Vector((center.x + radius * frac + 0.12, center.y + 0.08, center.z + 0.01))
+                create_text_label(
+                    guide_labels[guide_idx],
+                    label_pos,
+                    0.22,
+                    f"RadarMarginLabel_{csv_name}_{guide_idx}",
+                    color=(1.0, 1.0, 1.0, 1.0),
+                    align_x="LEFT",
+                )
     valid_points = []
     for i, value in enumerate(values):
         ang = i / n * 2 * pi
@@ -858,3 +1145,172 @@ def register():
 
 def unregister():
     pass
+
+
+def _forest_random_effects_summary(rows):
+    """Return a DL random-effects summary with modified HK CI."""
+    clean = []
+    for row in rows:
+        try:
+            mean = float(row["mean"])
+            se = float(row["se"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if np.isfinite(mean) and np.isfinite(se) and se > 0:
+            clean.append((mean, se))
+    if len(clean) < 2:
+        return None
+    means = np.asarray([x[0] for x in clean], dtype=float)
+    variances = np.asarray([x[1] ** 2 for x in clean], dtype=float)
+    wf = 1.0 / variances
+    fixed = float(np.sum(wf * means) / np.sum(wf))
+    q = float(np.sum(wf * (means - fixed) ** 2))
+    k = len(clean)
+    df = k - 1
+    c = float(np.sum(wf) - np.sum(wf ** 2) / np.sum(wf))
+    tau2 = max(0.0, (q - df) / c) if c > 1e-15 else 0.0
+    wr = 1.0 / (variances + tau2)
+    pooled = float(np.sum(wr * means) / np.sum(wr))
+    conventional_se = float(np.sqrt(1.0 / np.sum(wr)))
+    if k >= 3:
+        hk = float(np.sum(wr * (means - pooled) ** 2) / df)
+        pooled_se = conventional_se * math.sqrt(max(hk, 1.0))
+        critical = _forest_t_critical_95(df)
+    else:
+        pooled_se = conventional_se
+        critical = 1.96
+    low = pooled - critical * pooled_se
+    high = pooled + critical * pooled_se
+    i2 = max(0.0, (q - df) / q * 100.0) if q > 1e-15 else 0.0
+    total = float(np.sum(wr))
+    return {"mean": pooled, "ci_low": low, "ci_high": high, "tau2": tau2,
+            "i2": i2, "weights": [float(100.0 * w / total) for w in wr]}
+
+
+def draw_multi_metric_forest_plot_3d(
+    groups,
+    axis_scale_x=5.0,
+    axis_scale_y=7.0,
+    z_pos=0.0,
+    point_size=0.14,
+    line_thickness=0.025,
+    scale_label="z-score",
+    palette_name=None,
+):
+    """Draw a descriptive z-score forest plot for one or more metrics.
+
+    Rows are users/CSVs. Intervals use an effective sample size adjusted for
+    lag-1 serial correlation. No meta-analytic weights, heterogeneity statistics
+    or pooled diamond are drawn because one session per user does not constitute
+    a conventional set of independent studies.
+    """
+    prepared = []
+    total_lines = 0
+    for g_idx, group in enumerate(groups):
+        rows = []
+        for row in group.get("rows", []):
+            try:
+                mean = float(row["mean"])
+                low = float(row["ci_low"])
+                high = float(row["ci_high"])
+                se = float(row["se"])
+                n_eff = float(row.get("n_eff", row.get("n", 0)))
+            except (KeyError, TypeError, ValueError):
+                continue
+            if all(np.isfinite(v) for v in (mean, low, high, se, n_eff)) and se > 0 and n_eff >= 2:
+                item = dict(row)
+                item.update(mean=mean, ci_low=min(low, high), ci_high=max(low, high), se=se, n_eff=n_eff)
+                rows.append(item)
+        if not rows:
+            continue
+        prepared.append({
+            "label": str(group.get("label", f"Metric {g_idx + 1}")),
+            "rows": rows,
+            "color_index": g_idx,
+            "reference_mean": float(group.get("reference_mean", 0.0)),
+            "reference_std": float(group.get("reference_std", 1.0)),
+            "reference_n": int(group.get("reference_n", 0)),
+        })
+        total_lines += len(rows) + 1
+    if not prepared:
+        return None
+
+    value_range = (-3.0, 3.0)
+    safe = _forest_safe_name("ZScoreDescriptive")
+    white = (0.94, 0.94, 0.97, 1.0)
+    subtle = (0.72, 0.74, 0.80, 1.0)
+    null_col = (0.88, 0.88, 0.92, 1.0)
+    left_x, right_x, n_x = -2.45, axis_scale_x + 0.55, axis_scale_x + 3.25
+    top = axis_scale_y - 0.15
+    bottom = 0.45
+    gap = max((top - bottom) / max(total_lines, 1), 0.25)
+
+    def _clip(value):
+        return min(max(float(value), value_range[0]), value_range[1])
+
+    def _draw_truncation_arrow(x, y, direction, name, color):
+        """Small chevron indicating that a confidence interval continues off-axis."""
+        dx = 0.12 * (1.0 if direction > 0 else -1.0)
+        create_axis(Vector((x - dx, y - 0.07, z_pos)), Vector((x, y, z_pos)), color, f"{name}A", radius=line_thickness * 0.55, vertices=6)
+        create_axis(Vector((x - dx, y + 0.07, z_pos)), Vector((x, y, z_pos)), color, f"{name}B", radius=line_thickness * 0.55, vertices=6)
+
+    metric_count = len(prepared)
+    create_text_label(
+        "Descriptive forest plot · z-score normalized metrics",
+        (axis_scale_x * 0.5, axis_scale_y + 1.02, z_pos),
+        0.39,
+        f"ForestMultiTitle_{safe}",
+    )
+    subtitle = (
+        "Per-metric user-mean z-scores · 0 = reference mean · CI adjusted for serial correlation · z-score does not imply normality"
+        if metric_count > 1
+        else "User-mean z-scores · 0 = reference mean · CI adjusted for serial correlation · z-score does not imply normality"
+    )
+    create_text_label(subtitle, (axis_scale_x * 0.5, axis_scale_y + 0.68, z_pos), 0.19, f"ForestMultiSub_{safe}", color=subtle)
+    create_text_label("User / CSV", (left_x, axis_scale_y + 0.27, z_pos), 0.28, f"ForestMultiHeaderUser_{safe}", align_x="LEFT", color=subtle)
+    create_text_label("Mean z-score [adjusted 95% CI]", (right_x, axis_scale_y + 0.27, z_pos), 0.20, f"ForestMultiHeaderEffect_{safe}", align_x="LEFT", color=subtle)
+    create_text_label("N eff.", (n_x, axis_scale_y + 0.27, z_pos), 0.22, f"ForestMultiHeaderN_{safe}", align_x="LEFT", color=subtle)
+
+    axis_y = 0.05
+    create_axis(Vector((0, axis_y, z_pos)), Vector((axis_scale_x, axis_y, z_pos)), white, f"ForestMultiAxis_{safe}", radius=0.012, vertices=8)
+    for idx, tick in enumerate([-3, -2, -1, 0, 1, 2, 3]):
+        x = _forest_map_value(float(tick), value_range, axis_scale_x)
+        create_axis(Vector((x, axis_y - 0.06, z_pos)), Vector((x, axis_y + 0.06, z_pos)), subtle, f"ForestMultiTick_{safe}_{idx}", radius=0.008, vertices=6)
+        create_text_label(_forest_format_value(float(tick)), (x, axis_y - 0.31, z_pos), 0.23, f"ForestMultiTickLabel_{safe}_{idx}", color=subtle)
+    null_x = _forest_map_value(0.0, value_range, axis_scale_x)
+    create_axis(Vector((null_x, axis_y, z_pos)), Vector((null_x, top + gap * 0.4, z_pos)), null_col, f"ForestMultiNull_{safe}", radius=0.011, vertices=8)
+    create_text_label("Reference mean", (null_x, top + gap * 0.57, z_pos), 0.16, f"ForestMultiNullLabel_{safe}", color=subtle)
+
+    y = top
+    for g_idx, group in enumerate(prepared):
+        color = csv_color_by_index(g_idx, palette_name)
+        label = group["label"]
+        ref_n = int(group.get("reference_n", 0))
+        ref_mean = group.get("reference_mean", 0.0)
+        ref_std = group.get("reference_std", 1.0)
+        group_label = f"{label} · user-mean μ={_forest_format_value(ref_mean)} · between-user σ={_forest_format_value(ref_std)} · users={ref_n}"
+        create_text_label(group_label, (left_x, y, z_pos), 0.24, f"ForestMultiGroup_{safe}_{g_idx}", align_x="LEFT", color=color)
+        y -= gap
+        for r_idx, row in enumerate(group["rows"]):
+            low_truncated = row["ci_low"] < value_range[0]
+            high_truncated = row["ci_high"] > value_range[1]
+            x0 = _forest_map_value(_clip(row["ci_low"]), value_range, axis_scale_x)
+            x1 = _forest_map_value(_clip(row["ci_high"]), value_range, axis_scale_x)
+            xm = _forest_map_value(_clip(row["mean"]), value_range, axis_scale_x)
+            create_axis(Vector((x0, y, z_pos)), Vector((x1, y, z_pos)), color, f"ForestMultiCI_{safe}_{g_idx}_{r_idx}", radius=line_thickness, vertices=8)
+            if low_truncated:
+                _draw_truncation_arrow(x0, y, -1, f"ForestMultiArrowL_{safe}_{g_idx}_{r_idx}", color)
+            else:
+                create_axis(Vector((x0, y-0.075, z_pos)), Vector((x0, y+0.075, z_pos)), color, f"ForestMultiCapL_{safe}_{g_idx}_{r_idx}", radius=line_thickness*0.55, vertices=6)
+            if high_truncated:
+                _draw_truncation_arrow(x1, y, 1, f"ForestMultiArrowR_{safe}_{g_idx}_{r_idx}", color)
+            else:
+                create_axis(Vector((x1, y-0.075, z_pos)), Vector((x1, y+0.075, z_pos)), color, f"ForestMultiCapR_{safe}_{g_idx}_{r_idx}", radius=line_thickness*0.55, vertices=6)
+            _create_forest_square_marker(Vector((xm, y, z_pos)), f"ForestMultiPoint_{safe}_{g_idx}_{r_idx}", color, size=point_size)
+            create_text_label(str(row.get("csv_name", f"User {r_idx+1}")), (left_x, y-0.02, z_pos), 0.21, f"ForestMultiUser_{safe}_{g_idx}_{r_idx}", align_x="LEFT", color=white)
+            create_text_label(_forest_effect_label(row["mean"], row["ci_low"], row["ci_high"], 0), (right_x, y-0.02, z_pos), 0.20, f"ForestMultiEffect_{safe}_{g_idx}_{r_idx}", align_x="LEFT", color=white)
+            n_eff_text = f"{row['n_eff']:.1f}" if row["n_eff"] < 100 else f"{row['n_eff']:.0f}"
+            create_text_label(n_eff_text, (n_x, y-0.02, z_pos), 0.20, f"ForestMultiN_{safe}_{g_idx}_{r_idx}", align_x="LEFT", color=white)
+            y -= gap
+
+    return {"groups": prepared, "value_range": value_range, "null_value": 0.0, "scale": scale_label, "descriptive": True}

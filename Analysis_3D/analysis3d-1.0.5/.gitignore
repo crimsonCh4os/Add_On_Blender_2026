@@ -1,0 +1,22 @@
+# Locally downloaded dependencies
+site-packages/
+**/site-packages/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Blender backup files
+*.blend1
+*.blend2
+*.blend@
+
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Release archives and installer logs
+*.log
+*.zip

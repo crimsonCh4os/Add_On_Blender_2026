@@ -38,10 +38,15 @@ else:
 
 @unittest.skipIf(IMPORT_ERROR is not None, f"Blender mathutils unavailable: {IMPORT_ERROR}")
 class TestGeometryLogic(unittest.TestCase):
-    def test_identical_triangle_similarity_is_100(self):
+    def test_identical_coordinate_sets_are_below_reserved_100(self):
         coords = [Vector((0, 0, 0)), Vector((1, 0, 0)), Vector((0, 1, 0))]
         self.assertEqual(calculate_hausdorff_distance_from_coords(coords, coords), 0.0)
-        self.assertEqual(calculate_similarity_from_coords(coords, coords), 100.0)
+        self.assertEqual(calculate_similarity_from_coords(coords, coords), 99.99)
+
+    def test_identical_geometry_ignores_mesh_quality_penalties(self):
+        coords = [Vector((0, 0, 0)), Vector((1, 0, 0)), Vector((0, 1, 0))]
+        metrics = {"Non_quads_percentage": 100.0, "Vertex_duplicate_percentage": 100.0}
+        self.assertEqual(calculate_similarity_from_coords(coords, coords, metrics), 99.99)
 
     def test_single_offset_segment_hausdorff(self):
         a = [Vector((0, 0, 0)), Vector((1, 0, 0))]

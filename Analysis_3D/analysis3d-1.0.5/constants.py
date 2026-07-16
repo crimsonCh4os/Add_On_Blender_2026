@@ -77,11 +77,82 @@ INFERNO = [
 ]
 
 
+# Plasma: vivid purple-to-yellow gradient.
+PLASMA = [
+    _hex_to_rgba("#0D0887"), _hex_to_rgba("#46039F"),
+    _hex_to_rgba("#7201A8"), _hex_to_rgba("#9C179E"),
+    _hex_to_rgba("#BD3786"), _hex_to_rgba("#D8576B"),
+    _hex_to_rgba("#ED7953"), _hex_to_rgba("#FB9F3A"),
+    _hex_to_rgba("#FDCA26"), _hex_to_rgba("#F0F921"),
+]
+
+# Magma: dark purple-to-pale yellow gradient.
+MAGMA = [
+    _hex_to_rgba("#000004"), _hex_to_rgba("#180F3D"),
+    _hex_to_rgba("#440F76"), _hex_to_rgba("#721F81"),
+    _hex_to_rgba("#9E2F7F"), _hex_to_rgba("#CD4071"),
+    _hex_to_rgba("#F1605D"), _hex_to_rgba("#FD9567"),
+    _hex_to_rgba("#FECF92"), _hex_to_rgba("#FCFDBF"),
+]
+
+# Cividis: perceptually uniform and color-vision friendly.
+CIVIDIS = [
+    _hex_to_rgba("#00204C"), _hex_to_rgba("#123570"),
+    _hex_to_rgba("#3B496C"), _hex_to_rgba("#575D6D"),
+    _hex_to_rgba("#707173"), _hex_to_rgba("#898578"),
+    _hex_to_rgba("#A59C74"), _hex_to_rgba("#C3B369"),
+    _hex_to_rgba("#E1CC55"), _hex_to_rgba("#FFE945"),
+]
+
+# Turbo: broad high-contrast rainbow palette.
+TURBO = [
+    _hex_to_rgba("#30123B"), _hex_to_rgba("#4145AB"),
+    _hex_to_rgba("#4675ED"), _hex_to_rgba("#39A2FC"),
+    _hex_to_rgba("#1BCFD4"), _hex_to_rgba("#24EFA5"),
+    _hex_to_rgba("#61FC6C"), _hex_to_rgba("#A4FC3C"),
+    _hex_to_rgba("#E1DD37"), _hex_to_rgba("#F9A31B"),
+    _hex_to_rgba("#F45B0C"), _hex_to_rgba("#B51F09"),
+]
+
+# Coolwarm: diverging blue-to-red palette with a neutral centre.
+COOLWARM = [
+    _hex_to_rgba("#3B4CC0"), _hex_to_rgba("#5977E3"),
+    _hex_to_rgba("#7B9FF9"), _hex_to_rgba("#A3C2FE"),
+    _hex_to_rgba("#C9D7F0"), _hex_to_rgba("#E6D7CF"),
+    _hex_to_rgba("#F3B79B"), _hex_to_rgba("#EE8468"),
+    _hex_to_rgba("#D65244"), _hex_to_rgba("#B40426"),
+]
+
+
 PALETTES = {
     "ibm_color_blind_safe": IBM_COLOR_BLIND_SAFE,
     "viridis": VIRIDIS,
     "inferno": INFERNO,
+    "plasma": PLASMA,
+    "magma": MAGMA,
+    "cividis": CIVIDIS,
+    "turbo": TURBO,
+    "coolwarm": COOLWARM,
 }
+
+
+def _extremes_to_center(
+    palette: list[tuple[float, float, float, float]],
+) -> list[tuple[float, float, float, float]]:
+    """Order colors from opposite extremes towards the centre.
+
+    Example indices for six colors: 0, 5, 1, 4, 2, 3.
+    """
+    ordered = []
+    left = 0
+    right = len(palette) - 1
+    while left <= right:
+        ordered.append(palette[left])
+        if left != right:
+            ordered.append(palette[right])
+        left += 1
+        right -= 1
+    return ordered
 
 
 def _build_color_families(
@@ -109,7 +180,7 @@ def _build_color_families(
     return families
 
 
-ACTIVE_PALETTE = PALETTES.get(SELECTED_COLOR_PALETTE, IBM_COLOR_BLIND_SAFE)
+ACTIVE_PALETTE = _extremes_to_center(PALETTES.get(SELECTED_COLOR_PALETTE, IBM_COLOR_BLIND_SAFE))
 
 # Familias cromáticas: cada CSV recibe una familia y las métricas de ese CSV
 # usan variantes de la misma familia para conservar asociación visual.
@@ -120,8 +191,12 @@ COLORBLIND_SAFE_PALETTE = [color for family in COLOR_FAMILIES for color in famil
 
 
 def get_palette(name: str | None = None) -> list[tuple[float, float, float, float]]:
-    """Devuelve una paleta plana por nombre, con fallback seguro."""
-    return PALETTES.get(name or SELECTED_COLOR_PALETTE, IBM_COLOR_BLIND_SAFE)
+    """Return a palette ordered from its extremes towards its centre."""
+    palette = PALETTES.get(
+        name or SELECTED_COLOR_PALETTE,
+        IBM_COLOR_BLIND_SAFE,
+    )
+    return _extremes_to_center(list(palette))
 
 
 def get_color_families(name: str | None = None, family_size: int = 4) -> list[list[tuple[float, float, float, float]]]:

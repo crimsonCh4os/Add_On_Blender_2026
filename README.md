@@ -15,7 +15,6 @@ GitHub/
 │   ├── Data_Logger_3D.py
 │   └── Data_Logger_3D_Debug.py
 ├── Analysis_3D.zip          # ZIP instalable del add-on de análisis
-├── Analysis_3D/             # Código fuente del add-on de análisis y visualización
 ├── core/                    # Lógica desacoplada (agnóstica a Blender)
 ├── tests/                   # Pruebas automatizadas (unittest)
 ├── docs/                    # Memoria, manuales y documentación técnica

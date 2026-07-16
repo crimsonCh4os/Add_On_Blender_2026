@@ -14,6 +14,8 @@
 import os
 import csv
 import math
+import heapq
+from itertools import product
 from typing import Iterable, Sequence, Tuple, List, Optional
 
 import bpy
@@ -21,11 +23,6 @@ import bmesh
 from collections import deque
 import numpy as np
 from mathutils import Vector
-try:
-    from mathutils.kdtree import KDTree
-except ImportError:  # Permite importar parte del módulo fuera de Blender.
-    KDTree = None
-
 
 def detect_csvs(folder: str) -> list[str]:
     if not folder:
@@ -357,28 +354,317 @@ def _as_vector_list(coords: Iterable[object]) -> list[Vector]:
     return result
 
 
-def _nearest_distances_kdtree(source: Sequence[Vector], target: Sequence[Vector]) -> list[float]:
-    """Nearest-neighbour distances using Blender KDTree: O(N log M) instead of O(N*M)."""
+class _OctreeNode:
+    """Compact point octree used for nearest-neighbour queries."""
+
+    __slots__ = (
+        "minimum", "maximum", "points", "children", "depth",
+        "max_depth", "max_items", "limit_mode",
+    )
+
+    def __init__(
+        self,
+        points: Sequence[Vector],
+        minimum: Vector,
+        maximum: Vector,
+        *,
+        depth: int,
+        max_depth: int,
+        max_items: int,
+        limit_mode: str,
+    ) -> None:
+        self.minimum = minimum
+        self.maximum = maximum
+        self.points: list[Vector] = list(points)
+        self.children: list[_OctreeNode] = []
+        self.depth = depth
+        self.max_depth = max(1, int(max_depth))
+        self.max_items = max(1, int(max_items))
+        self.limit_mode = str(limit_mode or "BOTH").upper()
+        self._subdivide_if_needed()
+
+    def _must_stop(self) -> bool:
+        depth_reached = self.depth >= self.max_depth
+        item_limit_reached = len(self.points) <= self.max_items
+
+        if self.limit_mode == "DEPTH":
+            return depth_reached
+        if self.limit_mode == "ELEMENTS":
+            # A hard safety depth prevents pathological duplicate-point recursion.
+            return item_limit_reached or self.depth >= 32
+        return depth_reached or item_limit_reached
+
+    def _subdivide_if_needed(self) -> None:
+        if len(self.points) <= 1 or self._must_stop():
+            return
+
+        center = (self.minimum + self.maximum) * 0.5
+        buckets: list[list[Vector]] = [[] for _ in range(8)]
+
+        for point in self.points:
+            index = (
+                (1 if point.x >= center.x else 0)
+                | (2 if point.y >= center.y else 0)
+                | (4 if point.z >= center.z else 0)
+            )
+            buckets[index].append(point)
+
+        non_empty = [bucket for bucket in buckets if bucket]
+        if len(non_empty) <= 1:
+            return
+
+        children: list[_OctreeNode] = []
+        for index, bucket in enumerate(buckets):
+            if not bucket:
+                continue
+            child_min = Vector((
+                center.x if index & 1 else self.minimum.x,
+                center.y if index & 2 else self.minimum.y,
+                center.z if index & 4 else self.minimum.z,
+            ))
+            child_max = Vector((
+                self.maximum.x if index & 1 else center.x,
+                self.maximum.y if index & 2 else center.y,
+                self.maximum.z if index & 4 else center.z,
+            ))
+            children.append(_OctreeNode(
+                bucket,
+                child_min,
+                child_max,
+                depth=self.depth + 1,
+                max_depth=self.max_depth,
+                max_items=self.max_items,
+                limit_mode=self.limit_mode,
+            ))
+
+        if children:
+            self.children = children
+            self.points = []
+
+    def bbox_distance_squared(self, point: Vector) -> float:
+        dx = max(self.minimum.x - point.x, 0.0, point.x - self.maximum.x)
+        dy = max(self.minimum.y - point.y, 0.0, point.y - self.maximum.y)
+        dz = max(self.minimum.z - point.z, 0.0, point.z - self.maximum.z)
+        return dx * dx + dy * dy + dz * dz
+
+
+class PointOctree:
+    """Point octree supporting exact nearest-neighbour distance queries."""
+
+    def __init__(
+        self,
+        points: Sequence[Vector],
+        *,
+        max_depth: int = 8,
+        max_items: int = 32,
+        limit_mode: str = "BOTH",
+    ) -> None:
+        clean = [point.copy() for point in points]
+        if not clean:
+            self.root = None
+            return
+
+        minimum = Vector((
+            min(point.x for point in clean),
+            min(point.y for point in clean),
+            min(point.z for point in clean),
+        ))
+        maximum = Vector((
+            max(point.x for point in clean),
+            max(point.y for point in clean),
+            max(point.z for point in clean),
+        ))
+
+        # Give zero-size axes a tiny extent so all child boxes remain valid.
+        epsilon = 1e-9
+        for axis in range(3):
+            if maximum[axis] - minimum[axis] < epsilon:
+                minimum[axis] -= epsilon
+                maximum[axis] += epsilon
+
+        self.root = _OctreeNode(
+            clean,
+            minimum,
+            maximum,
+            depth=0,
+            max_depth=max_depth,
+            max_items=max_items,
+            limit_mode=limit_mode,
+        )
+
+    def nearest_distance(self, point: Vector) -> float:
+        if self.root is None:
+            return 0.0
+
+        best_squared = math.inf
+        queue: list[tuple[float, int, _OctreeNode]] = []
+        serial = 0
+        heapq.heappush(queue, (self.root.bbox_distance_squared(point), serial, self.root))
+
+        while queue:
+            box_distance, _, node = heapq.heappop(queue)
+            if box_distance >= best_squared:
+                continue
+
+            if node.children:
+                for child in node.children:
+                    child_distance = child.bbox_distance_squared(point)
+                    if child_distance < best_squared:
+                        serial += 1
+                        heapq.heappush(queue, (child_distance, serial, child))
+            else:
+                for candidate in node.points:
+                    distance_squared = (point - candidate).length_squared
+                    if distance_squared < best_squared:
+                        best_squared = distance_squared
+
+        return math.sqrt(best_squared) if math.isfinite(best_squared) else 0.0
+
+
+def _nearest_distances_octree(
+    source: Sequence[Vector],
+    target: Sequence[Vector],
+    *,
+    max_depth: int = 8,
+    max_items: int = 32,
+    limit_mode: str = "BOTH",
+) -> list[float]:
     if not source or not target:
         return []
-    if KDTree is None:
-        # Conservative fallback outside Blender; tests can still validate logic.
-        return [min((s - t).length for t in target) for s in source]
-    tree = KDTree(len(target))
-    for index, vertex in enumerate(target):
-        tree.insert(vertex, index)
-    tree.balance()
-    return [float(tree.find(vertex)[2]) for vertex in source]
+    tree = PointOctree(
+        target,
+        max_depth=max_depth,
+        max_items=max_items,
+        limit_mode=limit_mode,
+    )
+    return [tree.nearest_distance(vertex) for vertex in source]
 
 
-def calculate_hausdorff_distance_from_coords(reference_coords: Iterable[object], target_coords: Iterable[object]) -> float:
-    """Symmetric Hausdorff distance between two coordinate sets."""
+def _principal_frame(coords: Sequence[Vector]) -> tuple[np.ndarray, np.ndarray]:
+    """Return centroid and a right-handed PCA frame for a point cloud."""
+    array = np.asarray([[v.x, v.y, v.z] for v in coords], dtype=float)
+    centroid = np.mean(array, axis=0)
+    centered = array - centroid
+
+    if len(array) < 3 or np.allclose(centered, 0.0):
+        return centroid, np.eye(3, dtype=float)
+
+    covariance = np.cov(centered, rowvar=False, bias=True)
+    values, vectors = np.linalg.eigh(covariance)
+    order = np.argsort(values)[::-1]
+    frame = vectors[:, order]
+
+    if np.linalg.det(frame) < 0.0:
+        frame[:, 2] *= -1.0
+    return centroid, frame
+
+
+def _coords_in_frame(
+    coords: Sequence[Vector],
+    centroid: np.ndarray,
+    frame: np.ndarray,
+    signs: tuple[int, int, int] = (1, 1, 1),
+) -> list[Vector]:
+    array = np.asarray([[v.x, v.y, v.z] for v in coords], dtype=float)
+    aligned = (array - centroid) @ frame
+    aligned *= np.asarray(signs, dtype=float)
+    return [Vector(row) for row in aligned]
+
+
+def align_coordinate_sets(
+    reference_coords: Iterable[object],
+    target_coords: Iterable[object],
+    *,
+    max_depth: int = 8,
+    max_items: int = 32,
+    limit_mode: str = "BOTH",
+) -> tuple[list[Vector], list[Vector]]:
+    """Virtually align two point sets by centre of mass and PCA rotation.
+
+    No Blender object transform is modified. The function works only with copied
+    coordinates. PCA axis signs are ambiguous, so the four right-handed sign
+    combinations are tested and the closest target orientation is retained.
+    """
+    refs = _as_vector_list(reference_coords)
+    targets = _as_vector_list(target_coords)
+    if not refs or not targets:
+        return refs, targets
+
+    ref_centroid, ref_frame = _principal_frame(refs)
+    target_centroid, target_frame = _principal_frame(targets)
+    aligned_refs = _coords_in_frame(refs, ref_centroid, ref_frame)
+
+    sign_options = (
+        (1, 1, 1),
+        (1, -1, -1),
+        (-1, 1, -1),
+        (-1, -1, 1),
+    )
+    best_targets: list[Vector] | None = None
+    best_score = math.inf
+
+    # Use a bounded sample only to choose the PCA sign; the final Hausdorff
+    # distance still uses every point.
+    sample_step_ref = max(1, len(aligned_refs) // 512)
+    sample_refs = aligned_refs[::sample_step_ref]
+
+    for signs in sign_options:
+        candidate = _coords_in_frame(targets, target_centroid, target_frame, signs)
+        sample_step_target = max(1, len(candidate) // 512)
+        sample_targets = candidate[::sample_step_target]
+        distances = _nearest_distances_octree(
+            sample_targets,
+            sample_refs,
+            max_depth=max_depth,
+            max_items=max_items,
+            limit_mode=limit_mode,
+        )
+        score = max(distances, default=0.0)
+        if score < best_score:
+            best_score = score
+            best_targets = candidate
+
+    return aligned_refs, best_targets or targets
+
+
+def calculate_hausdorff_distance_from_coords(
+    reference_coords: Iterable[object],
+    target_coords: Iterable[object],
+    *,
+    octree_max_depth: int = 8,
+    octree_max_items: int = 32,
+    octree_limit_mode: str = "BOTH",
+    align: bool = False,
+) -> float:
+    """Symmetric Hausdorff distance using an exact point octree."""
     refs = _as_vector_list(reference_coords)
     targets = _as_vector_list(target_coords)
     if not refs or not targets:
         return 0.0
-    target_to_ref = _nearest_distances_kdtree(targets, refs)
-    ref_to_target = _nearest_distances_kdtree(refs, targets)
+
+    if align:
+        refs, targets = align_coordinate_sets(
+            refs,
+            targets,
+            max_depth=octree_max_depth,
+            max_items=octree_max_items,
+            limit_mode=octree_limit_mode,
+        )
+
+    target_to_ref = _nearest_distances_octree(
+        targets,
+        refs,
+        max_depth=octree_max_depth,
+        max_items=octree_max_items,
+        limit_mode=octree_limit_mode,
+    )
+    ref_to_target = _nearest_distances_octree(
+        refs,
+        targets,
+        max_depth=octree_max_depth,
+        max_items=octree_max_items,
+        limit_mode=octree_limit_mode,
+    )
     return max(max(target_to_ref, default=0.0), max(ref_to_target, default=0.0))
 
 
@@ -391,23 +677,88 @@ def _bbox_diag(coords: Sequence[Vector]) -> float:
     return max(math.sqrt(dx ** 2 + dy ** 2 + dz ** 2), 1e-8)
 
 
-def calculate_similarity_from_coords(reference_coords: Iterable[object], target_coords: Iterable[object], obj_metrics: Optional[dict[str, float]] = None) -> float:
-    """Calculate mesh similarity from raw coordinates, decoupled from bpy objects."""
+def _ordered_rigid_match(
+    reference_coords: Sequence[Vector],
+    target_coords: Sequence[Vector],
+    *,
+    relative_tolerance: float = 1e-7,
+) -> bool:
+    """Return True when ordered points differ only by a rigid transform.
+
+    Mesh copies preserve vertex order. A Kabsch alignment therefore provides a
+    deterministic identity check that is not affected by PCA ambiguity in
+    symmetric shapes such as spheres or Suzanne. No Blender object is moved.
+    """
+    if len(reference_coords) != len(target_coords) or not reference_coords:
+        return False
+
+    ref = np.asarray([[v.x, v.y, v.z] for v in reference_coords], dtype=float)
+    target = np.asarray([[v.x, v.y, v.z] for v in target_coords], dtype=float)
+
+    ref_centered = ref - ref.mean(axis=0)
+    target_centered = target - target.mean(axis=0)
+
+    try:
+        covariance = target_centered.T @ ref_centered
+        u, _singular, vt = np.linalg.svd(covariance)
+        rotation = u @ vt
+        if np.linalg.det(rotation) < 0.0:
+            u[:, -1] *= -1.0
+            rotation = u @ vt
+    except np.linalg.LinAlgError:
+        return False
+
+    aligned = target_centered @ rotation
+    max_error = float(np.linalg.norm(aligned - ref_centered, axis=1).max(initial=0.0))
+    scale = max(_bbox_diag(reference_coords), _bbox_diag(target_coords), 1.0)
+    return max_error <= relative_tolerance * scale
+
+
+def calculate_similarity_from_coords(
+    reference_coords: Iterable[object],
+    target_coords: Iterable[object],
+    obj_metrics: Optional[dict[str, float]] = None,
+    *,
+    octree_max_depth: int = 8,
+    octree_max_items: int = 32,
+    octree_limit_mode: str = "BOTH",
+    align: bool = True,
+) -> float:
+    """Calculate similarity after an invisible rigid point-cloud alignment."""
     refs = _as_vector_list(reference_coords)
     targets = _as_vector_list(target_coords)
     if not refs or not targets:
         return 0.0
 
-    hausdorff_dist = calculate_hausdorff_distance_from_coords(refs, targets)
+    if align:
+        refs, targets = align_coordinate_sets(
+            refs,
+            targets,
+            max_depth=octree_max_depth,
+            max_items=octree_max_items,
+            limit_mode=octree_limit_mode,
+        )
+
+    hausdorff_dist = calculate_hausdorff_distance_from_coords(
+        refs,
+        targets,
+        octree_max_depth=octree_max_depth,
+        octree_max_items=octree_max_items,
+        octree_limit_mode=octree_limit_mode,
+        align=False,
+    )
     bbox_diag = _bbox_diag(refs)
 
-    penalty = 0.0
-    if obj_metrics:
-        penalty += float(obj_metrics.get("Non_quads_percentage", 0.0)) / 100.0
-        penalty += float(obj_metrics.get("Vertex_duplicate_percentage", obj_metrics.get("Vertex_duplicate", 0.0))) / 100.0
+    # Mesh-quality metrics are reported separately and must not reduce the
+    # similarity of two identical shapes. Similarity measures only difference
+    # between the reference and target.
+    similarity = max(0.0, 100.0 * (1.0 - hausdorff_dist / bbox_diag))
 
-    similarity = max(0.0, 100.0 * (1 - hausdorff_dist / bbox_diag - penalty * 0.5))
-    return round(similarity, 2)
+    # Coordinate sets do not carry Blender object identity. Reserve exactly
+    # 100 for calculate_similarity(reference_obj, target_obj) when both
+    # arguments are the very same Blender object. Distinct objects, even exact
+    # duplicates, remain strictly below 100.
+    return round(min(similarity, 99.99), 2)
 
 
 def object_world_coordinates(obj) -> list[Vector]:
@@ -416,15 +767,29 @@ def object_world_coordinates(obj) -> list[Vector]:
     return [obj.matrix_world @ v.co for v in obj.data.vertices]
 
 
-def calculate_similarity(reference_obj, target_obj, obj_metrics=None) -> float:
+def calculate_similarity(
+    reference_obj,
+    target_obj,
+    obj_metrics=None,
+    *,
+    octree_max_depth: int = 8,
+    octree_max_items: int = 32,
+    octree_limit_mode: str = "BOTH",
+    align: bool = True,
+) -> float:
     if not reference_obj or not target_obj:
         return 0.0
+    if reference_obj is target_obj:
+        return 100.0
     return calculate_similarity_from_coords(
         object_world_coordinates(reference_obj),
         object_world_coordinates(target_obj),
         obj_metrics=obj_metrics,
+        octree_max_depth=octree_max_depth,
+        octree_max_items=octree_max_items,
+        octree_limit_mode=octree_limit_mode,
+        align=align,
     )
-
 
 def calculate_median(values: Sequence[float]) -> float:
     if not values:
@@ -437,7 +802,15 @@ def calculate_median(values: Sequence[float]) -> float:
     return round((values[middle - 1] + values[middle]) / 2.0, 4)
 
 
-def calculate_model_metrics(obj, reference_obj=None) -> dict[str, object]:
+def calculate_model_metrics(
+    obj,
+    reference_obj=None,
+    *,
+    octree_max_depth: int = 8,
+    octree_max_items: int = 32,
+    octree_limit_mode: str = "BOTH",
+    align_similarity: bool = True,
+) -> dict[str, object]:
     """Calcula métricas geométricas de una malla Blender.
 
     Mantiene la lógica de negocio fuera de la UI para que los operadores solo
@@ -489,9 +862,26 @@ def calculate_model_metrics(obj, reference_obj=None) -> dict[str, object]:
         else:
             uv_area = uv_islands = uv_stretch = uv_textel_density = 0.0
 
-        temp_metrics = {"Non_quads_percentage": non_quads, "Vertex_duplicate_percentage": vertex_dup_percentage}
-        similarity_geom = calculate_similarity(reference_obj, obj, temp_metrics) if reference_obj else 0.0
+        similarity_geom = calculate_similarity(
+            reference_obj,
+            obj,
+            None,
+            octree_max_depth=octree_max_depth,
+            octree_max_items=octree_max_items,
+            octree_limit_mode=octree_limit_mode,
+            align=align_similarity,
+        ) if reference_obj else 0.0
         similarity_topo = calculate_topology_similarity(reference_obj, obj) if reference_obj else 0.0
+
+        if reference_obj is obj and reference_obj is not None:
+            combined_similarity = 100.0
+        elif reference_obj is not None:
+            combined_similarity = min(
+                99.99,
+                0.7 * similarity_geom + 0.3 * similarity_topo,
+            )
+        else:
+            combined_similarity = 0.0
 
         result = {
             "UV_area": uv_area,
@@ -508,7 +898,7 @@ def calculate_model_metrics(obj, reference_obj=None) -> dict[str, object]:
             "N_meshes": parts,
             "Face_by_mesh": round((total_faces / parts) if parts else 0.0, 2),
             "Angle": calculate_angle_median(bm),
-            "Similarity": round(0.7 * similarity_geom + 0.3 * similarity_topo, 2) if reference_obj else 0.0,
+            "Similarity": round(combined_similarity, 2),
         }
         return {key: (round(value, 4) if isinstance(value, float) else value) for key, value in result.items()}
     finally:

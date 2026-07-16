@@ -353,7 +353,8 @@ def hide_non_graph_objects(scene):
     prefixes = (
         "GraphPlane_", "GraphLineMesh_", "Scatter_", "Corr_", "Surface_", "Time_",
         "Forest", "Radar", "Axis_", "Tick_", "Label_", "TickLabel_", "Num_",
-        "InteractionBar_", "InteractionLine_", "InteractionPts_", "InteractionLabel_", "TimePts_"
+        "InteractionBar_", "InteractionLine_", "InteractionPts_", "InteractionLabel_", "TimePts_",
+        "DataTable", "TableGrid_", "TableText_", "TableTitle_", "TableSubtitle_"
     )
     for obj in scene.objects:
         if obj.name.startswith(prefixes):
@@ -366,11 +367,84 @@ def hide_non_graph_objects(scene):
         obj.hide_viewport = True
 
 
-def restore_hidden_scene_objects(scene):
-    """Show again objects hidden by graph visualization."""
+def hide_viewport_guides(context=None):
+    """Hide Blender floor grid, world axes and 3D cursor in every 3D View."""
+    ctx = context or bpy.context
+    window_manager = getattr(ctx, "window_manager", None)
+    windows = list(getattr(window_manager, "windows", []) or [])
+    if not windows:
+        screen = getattr(ctx, "screen", None)
+        screens = [screen] if screen is not None else []
+    else:
+        screens = [getattr(window, "screen", None) for window in windows]
+
+    seen = set()
+    for screen in screens:
+        if screen is None or id(screen) in seen:
+            continue
+        seen.add(id(screen))
+        for area in screen.areas:
+            if area.type != 'VIEW_3D':
+                continue
+            space = area.spaces.active
+            overlay = getattr(space, 'overlay', None)
+            if overlay is None:
+                continue
+            overlay.show_overlays = True
+            overlay.show_floor = False
+            overlay.show_axis_x = False
+            overlay.show_axis_y = False
+            overlay.show_axis_z = False
+            overlay.show_cursor = False
+            if hasattr(overlay, 'show_ortho_grid'):
+                overlay.show_ortho_grid = False
+
+
+def restore_hidden_scene_objects(scene, context=None):
+    """Show hidden objects and restore Blender viewport guides.
+
+    Graph visualization can hide the floor grid, world axes and 3D cursor to
+    reduce visual noise. Restoring the scene must return those viewport aids as
+    well, in every open 3D View rather than only in the currently active area.
+    """
     for obj in scene.objects:
         obj.hide_set(False)
         obj.hide_viewport = False
+
+    ctx = context or bpy.context
+    window_manager = getattr(ctx, "window_manager", None)
+    windows = list(getattr(window_manager, "windows", []) or [])
+
+    # Fallback for unusual contexts without a WindowManager window list.
+    if not windows:
+        screen = getattr(ctx, "screen", None)
+        screens = [screen] if screen is not None else []
+    else:
+        screens = [getattr(window, "screen", None) for window in windows]
+
+    seen = set()
+    for screen in screens:
+        if screen is None or id(screen) in seen:
+            continue
+        seen.add(id(screen))
+        for area in screen.areas:
+            if area.type != 'VIEW_3D':
+                continue
+            space = area.spaces.active
+            overlay = getattr(space, 'overlay', None)
+            if overlay is None:
+                continue
+            overlay.show_overlays = True
+            overlay.show_floor = True
+            overlay.show_axis_x = True
+            overlay.show_axis_y = True
+            overlay.show_axis_z = True
+            overlay.show_cursor = True
+            # These improve parity with Blender's default viewport presentation.
+            if hasattr(overlay, 'show_ortho_grid'):
+                overlay.show_ortho_grid = True
+            if hasattr(overlay, 'show_text'):
+                overlay.show_text = True
 
 
 def frame_graph_camera(scene, scn):
@@ -379,7 +453,8 @@ def frame_graph_camera(scene, scn):
     prefixes = (
         "GraphPlane_", "GraphLineMesh_", "Scatter_", "Corr_", "Surface_", "Time_",
         "Forest", "Radar", "Axis_", "Tick_", "Label_", "TickLabel_", "Num_",
-        "InteractionBar_", "InteractionLine_", "InteractionPts_", "InteractionLabel_", "TimePts_"
+        "InteractionBar_", "InteractionLine_", "InteractionPts_", "InteractionLabel_", "TimePts_",
+        "DataTable", "TableGrid_", "TableText_", "TableTitle_", "TableSubtitle_"
     )
 
     coords = []
@@ -662,11 +737,35 @@ def _signed_log10_1p(values):
     return np.sign(arr) * np.log10(1.0 + np.abs(arr))
 
 
-def forest_row_stats(metric_key, metrics, csv_name, use_log_scale=False):
-    """Return the mean and 95% confidence interval for one CSV metric series.
+def _forest_t_critical_95(df):
+    """Two-sided 95% Student-t critical value without requiring SciPy."""
+    df = max(int(df), 1)
+    table = {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+        40: 2.021, 60: 2.000, 120: 1.980,
+    }
+    if df in table:
+        return table[df]
+    if df > 120:
+        return 1.960
+    keys = sorted(table)
+    lo = max(k for k in keys if k < df)
+    hi = min(k for k in keys if k > df)
+    fraction = (df - lo) / float(hi - lo)
+    return table[lo] + fraction * (table[hi] - table[lo])
 
-    With Log scale enabled, the summary is calculated after signed log10(1+x),
-    so both the marker and CI positions visibly change from the linear view.
+
+def forest_row_stats(metric_key, metrics, csv_name, use_log_scale=False):
+    """Summarise one CSV series as a mean with a two-sided 95% t interval.
+
+    The returned standard error is used by the comparative forest plot for a
+    random-effects meta-analysis. On the optional transformed view, all
+    calculations are explicitly performed on signed log10(1+|x|) values.
     """
     values = series_to_array(metrics.get(metric_key, []))
     values = values[np.isfinite(values)]
@@ -677,11 +776,16 @@ def forest_row_stats(metric_key, metrics, csv_name, use_log_scale=False):
     if use_log_scale:
         values = _signed_log10_1p(values)
 
+    n = int(values.size)
     mean = float(np.mean(values))
-    if values.size > 1:
+    if n > 1:
         std = float(np.std(values, ddof=1))
-        ci = 1.96 * std / float(np.sqrt(values.size))
+        se = std / float(np.sqrt(n))
+        critical = _forest_t_critical_95(n - 1)
+        ci = critical * se
     else:
+        std = 0.0
+        se = float("nan")
         ci = 0.0
 
     return {
@@ -689,7 +793,142 @@ def forest_row_stats(metric_key, metrics, csv_name, use_log_scale=False):
         "mean": mean,
         "ci_low": mean - ci,
         "ci_high": mean + ci,
-        "n": int(values.size),
-        "scale": "log10(1+x)" if use_log_scale else "linear",
+        "n": n,
+        "std": std,
+        "se": se,
+        "scale": "signed log10(1+|x|)" if use_log_scale else "linear",
         "raw_mean": float(np.mean(original_values)),
+    }
+
+
+def forest_paired_difference_stats(reference_key, comparison_key, metrics, csv_name, use_log_scale=False):
+    """Paired mean difference (comparison - reference) with a 95% t CI.
+
+    Values are paired by row index. Only rows where both metrics are finite are
+    retained. This is the correct within-user contrast when both metrics were
+    recorded on the same observations/trials.
+    """
+    ref = series_to_array(metrics.get(reference_key, []))
+    cmp = series_to_array(metrics.get(comparison_key, []))
+    n_common = min(ref.size, cmp.size)
+    if n_common <= 0:
+        return None
+    ref = np.asarray(ref[:n_common], dtype=float)
+    cmp = np.asarray(cmp[:n_common], dtype=float)
+    valid = np.isfinite(ref) & np.isfinite(cmp)
+    ref = ref[valid]
+    cmp = cmp[valid]
+    if ref.size < 2:
+        return None
+    if use_log_scale:
+        ref = _signed_log10_1p(ref)
+        cmp = _signed_log10_1p(cmp)
+    differences = cmp - ref
+    n = int(differences.size)
+    mean = float(np.mean(differences))
+    std = float(np.std(differences, ddof=1))
+    se = std / float(np.sqrt(n))
+    critical = _forest_t_critical_95(n - 1)
+    ci = critical * se
+    return {
+        "csv_name": csv_name,
+        "mean": mean,
+        "ci_low": mean - ci,
+        "ci_high": mean + ci,
+        "n": n,
+        "std": std,
+        "se": se,
+        "scale": "paired signed-log difference" if use_log_scale else "paired difference",
+    }
+
+
+def forest_zscore_reference(metric_key, metrics_by_csv):
+    """Return the reference distribution of user-level means for one metric.
+
+    Every CSV/user contributes one mean, regardless of how many observations it
+    contains. Standardising user means (rather than pooling every raw sample)
+    prevents long sessions from dominating the reference and avoids shrinking
+    all displayed effects towards zero.
+    """
+    user_means = []
+    user_ns = []
+    for metrics in metrics_by_csv:
+        values = series_to_array(metrics.get(metric_key, []))
+        values = values[np.isfinite(values)]
+        if values.size:
+            user_means.append(float(np.mean(values)))
+            user_ns.append(int(values.size))
+    if len(user_means) < 2:
+        return None
+    means = np.asarray(user_means, dtype=float)
+    mean = float(np.mean(means))
+    std = float(np.std(means, ddof=1))
+    if not np.isfinite(std) or std <= 1e-12:
+        return None
+    return {
+        "metric_key": metric_key,
+        "mean": mean,
+        "std": std,
+        "n_total": int(len(user_means)),
+        "observation_count": int(sum(user_ns)),
+    }
+
+
+def forest_zscore_row_stats(metric_key, metrics, csv_name, reference_mean, reference_std):
+    """Return a descriptive user-mean z-score with autocorrelation-adjusted CI.
+
+    Consecutive interaction samples are usually serially correlated. Treating
+    every CSV row as independent would make confidence intervals unrealistically
+    narrow. We therefore estimate a lag-1 effective sample size and use it for
+    the standard error and Student-t degrees of freedom. This remains a
+    descriptive approximation, not proof that the raw metric is normally
+    distributed.
+    """
+    values = series_to_array(metrics.get(metric_key, []))
+    values = values[np.isfinite(values)]
+    if values.size < 3:
+        return None
+    if not np.isfinite(reference_std) or abs(float(reference_std)) <= 1e-12:
+        return None
+
+    n_raw = int(values.size)
+    raw_mean = float(np.mean(values))
+    raw_std = float(np.std(values, ddof=1))
+    if not np.isfinite(raw_std) or raw_std <= 1e-15:
+        return None
+
+    # Lag-1 autocorrelation. Clamp negative correlation to zero so that the
+    # effective sample size never exceeds the observed number of rows.
+    x0 = values[:-1] - float(np.mean(values[:-1]))
+    x1 = values[1:] - float(np.mean(values[1:]))
+    denom = float(np.sqrt(np.sum(x0 * x0) * np.sum(x1 * x1)))
+    rho1 = float(np.sum(x0 * x1) / denom) if denom > 1e-15 else 0.0
+    rho1 = min(max(rho1, 0.0), 0.99)
+    n_eff = float(n_raw * (1.0 - rho1) / (1.0 + rho1))
+    n_eff = min(float(n_raw), max(2.0, n_eff))
+
+    raw_se = raw_std / float(np.sqrt(n_eff))
+    mean = (raw_mean - float(reference_mean)) / float(reference_std)
+    se = raw_se / float(reference_std)
+    if not np.isfinite(se) or se <= 0.0:
+        return None
+
+    df_eff = max(1, int(np.floor(n_eff)) - 1)
+    critical = _forest_t_critical_95(df_eff)
+    ci = critical * se
+    return {
+        "csv_name": csv_name,
+        "mean": float(mean),
+        "ci_low": float(mean - ci),
+        "ci_high": float(mean + ci),
+        "n": n_raw,
+        "n_eff": n_eff,
+        "rho1": rho1,
+        "std": float(raw_std / reference_std),
+        "se": float(se),
+        "scale": "descriptive z-score of user mean",
+        "raw_mean": raw_mean,
+        "raw_std": raw_std,
+        "reference_mean": float(reference_mean),
+        "reference_std": float(reference_std),
     }

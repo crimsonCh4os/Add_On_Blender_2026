@@ -1,24 +1,17 @@
 # Herramientas para la monitorización y análisis de procesos de modelado 3D en Blender
 # Copyright (C) 2026 María Molina Goyena
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# at your option any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Helpers for importing Data_Logger_3D.py outside Blender during tests."""
+"""Carga de ``Data_Logger_3D.py`` fuera de Blender para los tests."""
 from __future__ import annotations
 
 import importlib.util
 import os
-import pathlib
+from pathlib import Path
 import sys
 import types
+
+import pytest
 
 
 class _FakeText:
@@ -40,12 +33,12 @@ class _FakeText:
 
 
 class _FakeTexts(dict):
-    def new(self, name: str):
-        txt = _FakeText(name)
-        self[name] = txt
-        return txt
+    def new(self, name: str) -> _FakeText:
+        text = _FakeText(name)
+        self[name] = text
+        return text
 
-    def remove(self, text):
+    def remove(self, text: object) -> None:
         name = getattr(text, "name", None)
         if name in self:
             del self[name]
@@ -53,6 +46,7 @@ class _FakeTexts(dict):
 
 class _Vector:
     def __init__(self, values=(0.0, 0.0, 0.0)):
+        values = tuple(values)
         self.x = float(values[0]) if len(values) > 0 else 0.0
         self.y = float(values[1]) if len(values) > 1 else 0.0
         self.z = float(values[2]) if len(values) > 2 else 0.0
@@ -63,75 +57,134 @@ class _Vector:
     def __sub__(self, other):
         return _Vector((self.x - other.x, self.y - other.y, self.z - other.z))
 
+    def __mul__(self, value):
+        return _Vector((self.x * value, self.y * value, self.z * value))
+
+    __rmul__ = __mul__
+
     def __truediv__(self, value):
         return _Vector((self.x / value, self.y / value, self.z / value))
 
+    def __iter__(self):
+        yield self.x
+        yield self.y
+        yield self.z
+
+    def __getitem__(self, index):
+        return (self.x, self.y, self.z)[index]
+
+    def __setitem__(self, index, value):
+        if index == 0:
+            self.x = float(value)
+        elif index == 1:
+            self.y = float(value)
+        elif index == 2:
+            self.z = float(value)
+        else:
+            raise IndexError(index)
+
+    def copy(self):
+        return _Vector((self.x, self.y, self.z))
+
     @property
-    def length(self):
-        return (self.x ** 2 + self.y ** 2 + self.z ** 2) ** 0.5
+    def length_squared(self) -> float:
+        return self.x**2 + self.y**2 + self.z**2
+
+    @property
+    def length(self) -> float:
+        return self.length_squared**0.5
 
 
 def _install_fake_blender_modules() -> None:
-    if "bpy" in sys.modules:
-        return
+    """Instala dobles mínimos de Blender si los módulos reales no existen."""
+    bpy = sys.modules.get("bpy")
+    if bpy is None:
+        bpy = types.ModuleType("bpy")
+        sys.modules["bpy"] = bpy
 
-    bpy = types.ModuleType("bpy")
-    bpy.data = types.SimpleNamespace(texts=_FakeTexts(), filepath="/tmp/test_scene.blend")
-    bpy.context = types.SimpleNamespace(
-        screen=None,
-        scene=types.SimpleNamespace(objects=[]),
-        object=None,
-        mode="OBJECT",
-        window_manager=types.SimpleNamespace(operators=[]),
-    )
-    bpy.types = types.SimpleNamespace(Operator=object, Panel=object)
-    bpy.utils = types.SimpleNamespace(register_class=lambda cls: None, unregister_class=lambda cls: None)
+    if not hasattr(bpy, "data"):
+        bpy.data = types.SimpleNamespace(texts=_FakeTexts(), filepath="/tmp/test_scene.blend")
+    if not hasattr(bpy, "context"):
+        bpy.context = types.SimpleNamespace(
+            screen=None,
+            scene=types.SimpleNamespace(objects=[]),
+            object=None,
+            mode="OBJECT",
+            window_manager=types.SimpleNamespace(operators=[]),
+        )
+    if not hasattr(bpy, "types"):
+        bpy.types = types.SimpleNamespace(Operator=object, Panel=object)
+    if not hasattr(bpy, "utils"):
+        bpy.utils = types.SimpleNamespace(
+            register_class=lambda cls: None,
+            unregister_class=lambda cls: None,
+        )
 
-    handlers_mod = types.ModuleType("bpy.app.handlers")
-    handlers_mod.load_post = []
-    handlers_mod.save_post = []
-    handlers_mod.depsgraph_update_post = []
-    handlers_mod.persistent = lambda fn: fn
+    handlers_mod = sys.modules.get("bpy.app.handlers")
+    if handlers_mod is None:
+        handlers_mod = types.ModuleType("bpy.app.handlers")
+        handlers_mod.load_post = []
+        handlers_mod.save_post = []
+        handlers_mod.depsgraph_update_post = []
+        handlers_mod.persistent = lambda fn: fn
+        sys.modules["bpy.app.handlers"] = handlers_mod
 
-    app_mod = types.ModuleType("bpy.app")
+    app_mod = sys.modules.get("bpy.app")
+    if app_mod is None:
+        app_mod = types.ModuleType("bpy.app")
+        sys.modules["bpy.app"] = app_mod
     app_mod.handlers = handlers_mod
-    app_mod.timers = types.SimpleNamespace(register=lambda fn: None)
+    if not hasattr(app_mod, "timers"):
+        app_mod.timers = types.SimpleNamespace(register=lambda fn: None)
     bpy.app = app_mod
 
-    bmesh = types.ModuleType("bmesh")
-    bmesh.from_edit_mesh = lambda data: None
+    if "bmesh" not in sys.modules:
+        bmesh = types.ModuleType("bmesh")
+        bmesh.from_edit_mesh = lambda data: None
+        sys.modules["bmesh"] = bmesh
 
-    mathutils = types.ModuleType("mathutils")
-    mathutils.Vector = _Vector
-
-    sys.modules["bpy"] = bpy
-    sys.modules["bpy.app"] = app_mod
-    sys.modules["bpy.app.handlers"] = handlers_mod
-    sys.modules["bmesh"] = bmesh
-    sys.modules["mathutils"] = mathutils
+    if "mathutils" not in sys.modules:
+        mathutils = types.ModuleType("mathutils")
+        mathutils.Vector = _Vector
+        sys.modules["mathutils"] = mathutils
 
 
-def _candidate_logger_paths() -> list[pathlib.Path]:
-    paths: list[pathlib.Path] = []
+def _candidate_logger_paths() -> list[Path]:
+    """Busca el logger en ``Data_Loggers`` y admite una ruta por variable."""
+    project_root = Path(__file__).resolve().parents[2]
+    candidates: list[Path] = []
+
     env_path = os.environ.get("DATA_LOGGER_PATH")
     if env_path:
-        paths.append(pathlib.Path(env_path))
+        candidates.append(Path(env_path).expanduser())
 
-    here = pathlib.Path(__file__).resolve()
-    for parent in here.parents:
-        paths.extend(parent.glob("Data_Logger_3D*.py"))
-        paths.extend(parent.glob("../Data_Logger_3D*.py"))
-        paths.extend(parent.glob("../../Data_Logger_3D*.py"))
+    search_roots = (
+        project_root / "Data_Loggers",
+        project_root,
+    )
+    patterns = (
+        "Data_Logger_3D.py",
+        "Data_Logger_3D*.py",
+        "*Data*Logger*3D*.py",
+    )
 
-    paths.extend(pathlib.Path("/mnt/data").glob("Data_Logger_3D*.py"))
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for pattern in patterns:
+            candidates.extend(root.rglob(pattern))
 
-    unique = []
-    seen = set()
-    for path in paths:
-        resolved = path.resolve()
-        if resolved not in seen and resolved.exists():
+    unique: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            continue
+        if resolved.is_file() and resolved not in seen:
             seen.add(resolved)
             unique.append(resolved)
+
     return unique
 
 
@@ -139,17 +192,18 @@ def load_logger_module():
     _install_fake_blender_modules()
     candidates = _candidate_logger_paths()
     if not candidates:
-        raise unittest.SkipTest("No se encontró Data_Logger_3D.py; define DATA_LOGGER_PATH o colócalo junto al add-on.")
+        pytest.skip(
+            "No se encontró Data_Logger_3D.py dentro de Data_Loggers. "
+            "También puedes definir DATA_LOGGER_PATH con su ruta completa."
+        )
 
     path = candidates[0]
-    module_name = f"data_logger_under_test_{abs(hash(str(path))) }"
+    module_name = f"data_logger_under_test_{abs(hash(str(path)))}"
     spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        pytest.fail(f"No se pudo crear el cargador para {path}", pytrace=False)
+
     module = importlib.util.module_from_spec(spec)
-    assert spec and spec.loader
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
-
-
-# Import at end to keep SkipTest local to load_logger_module.
-import unittest

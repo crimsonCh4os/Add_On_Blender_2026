@@ -17,10 +17,12 @@ try:
     from .ui_helpers import *
     from .ui_properties import *
     from .texts import tr, get_language, region_character_width, wrap_lines, label_value_lines
+    from .dependencies import dependencies_available, missing_dependencies
 except ImportError:
     from ui_helpers import *
     from ui_properties import *
     from texts import tr, get_language, region_character_width, wrap_lines, label_value_lines
+    from dependencies import dependencies_available, missing_dependencies
 
 class ANALI_UL_CSVList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -32,8 +34,8 @@ class ANALI_UL_CSVList(bpy.types.UIList):
 class ANALI_UL_AnalysisList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         row = layout.row(align=True)
-        row.prop(item, "enabled", text=item.label)
-        row.label(text=f"[{item.typology}]")
+        row.prop(item, "enabled", text=tr(context.scene, item.label))
+        row.label(text=f"[{tr(context.scene, item.typology)}]")
 
 class ANALI_PT_MainPanel(bpy.types.Panel):
     bl_label = "3D CSV Analysis + Metrics"
@@ -50,6 +52,23 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         language_row.label(text=tr(scn, "Language"), icon='WORLD')
         language_row.prop(scn, "anali_language", text="")
 
+        dependency_box = layout.box()
+        if dependencies_available():
+            dependency_box.label(text=tr(scn, "Dependencies installed"), icon='CHECKMARK')
+        else:
+            missing = ", ".join(missing_dependencies())
+            dependency_box.label(text=tr(scn, "Required libraries are missing"), icon='ERROR')
+            dependency_box.label(text=f"{tr(scn, 'Missing')}: {missing}")
+            dependency_box.operator(
+                "anali.install_dependencies",
+                text=tr(scn, "Install dependencies"),
+                icon='IMPORT',
+            )
+            dependency_box.label(
+                text=tr(scn, "Internet connection required. Restart Blender afterwards."),
+                icon='INFO',
+            )
+
         row = layout.row(align=True)
         row.prop(scn, "anali_ui_tab", expand=True)
 
@@ -57,6 +76,8 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
             self._draw_data_tab(context, layout, scn)
         elif scn.anali_ui_tab == 'MESH':
             self._draw_mesh_tab(context, layout, scn)
+        elif scn.anali_ui_tab == 'TABLES':
+            self._draw_tables_tab(context, layout, scn)
         else:
             self._draw_graphs_tab(context, layout, scn)
 
@@ -239,9 +260,24 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                     "Average user speed calculated from displacement and time between rows. Local size, when present in the CSV, is the object's local bounding size/scale used as contextual reference.",
                     icon='INFO',
                 )
+                local_size = getattr(a4, "object_local_size", 0.0)
+                # Convert m/h divided by object size to object sizes per second.
+                normalized_speed = (
+                    (a4.mean / local_size) / 3600.0
+                    if local_size and local_size > 0.0
+                    else 0.0
+                )
+
                 _metric_value(b, "Mean", a4.mean, "m/h", 1)
                 _metric_value(b, "Std. dev.", a4.std, "m/h", 1)
-                _metric_value(b, "Local size", getattr(a4, "object_local_size", 0.0), "u.local", 3)
+                _metric_value(b, "Local size", local_size, "u.local", 3)
+                _metric_value(
+                    b,
+                    "Normalized speed",
+                    normalized_speed,
+                    "obj. sizes/s",
+                    2,
+                )
 
             a5 = _find_stat(csv_name, "A5")
             if a5:
@@ -251,9 +287,23 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                     "Average distance between user and object, subtracting the available object radius or size. Local size is the object's local bounding size/scale if the CSV provides it.",
                     icon='INFO',
                 )
+                local_size = getattr(a5, "object_local_size", 0.0)
+                relative_distance = (
+                    a5.mean / local_size
+                    if local_size and local_size > 0.0
+                    else 0.0
+                )
+
                 _metric_value(b, "Mean", a5.mean, "m", 2)
                 _metric_value(b, "Std. dev.", a5.std, "m", 2)
-                _metric_value(b, "Local size", getattr(a5, "object_local_size", 0.0), "u.local", 3)
+                _metric_value(b, "Local size", local_size, "u.local", 3)
+                _metric_value(
+                    b,
+                    "Relative distance",
+                    relative_distance,
+                    "x obj. size",
+                    2,
+                )
 
             speed_stats = [_find_stat(csv_name, key) for key in ("A6", "A7", "A8", "A9")]
             available_speed_stats = [st for st in speed_stats if st]
@@ -381,7 +431,9 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         row.label(text=tr(scn, "2. Mesh Metrics"), icon='MODIFIER')
         if scn.anali_show_model_metrics:
             box.operator("object.calculate_metrics", text=tr(scn, "Calculate model metrics"))
-            obj = context.active_object
+            # Display metrics for the object chosen in the panel, not for the
+            # currently active object in the 3D scene.
+            obj = scn.anali_target_obj
             if obj and obj.type == 'MESH':
                 metrics_data = scn.get("metrics_data", {})
                 if obj.name in metrics_data:
@@ -447,7 +499,7 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                         "Vertex_duplicate_percentage": (
                             "Duplicate vertices (%)",
                             "Percentage of total vertices that are duplicates (see 'Duplicate vertices count' above). "
-                            "Used internally for the Similarity score. "
+                            "This is a mesh-quality metric and does not reduce the Similarity score. "
                             "Values above 5% indicate a mesh with many unmerged vertices.",
                         ),
                         "N_faces": (
@@ -474,10 +526,10 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
                         ),
                         "Similarity": (
                             "Similarity vs. reference",
-                            "Combined geometric and topological similarity score (0-1) against the reference object. "
-                            "Geometric similarity (70% weight) compares face count, non-quads, and duplicate vertices. "
-                            "Topological similarity (30% weight) compares connectivity and edge structure. "
-                            "Requires a reference mesh to be set in section 1; otherwise shows 0.",
+                            "Combined similarity against the reference object. "
+                            "Geometric distance uses an octree after an internal centre-of-mass and PCA rotation alignment. "
+                            "The alignment is calculated on copied coordinates and never changes visible scene transforms. "
+                            "Topological similarity compares vertex, edge, and face counts.",
                         ),
                     }
 
@@ -555,6 +607,58 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
             else:
                 box.label(text=tr(scn, "No active mesh found."), icon='ERROR')
 
+    def _draw_tables_tab(self, context, layout, scn):
+        if len(scn.analysis_items) == 0:
+            try:
+                refresh_analysis_list(None, context)
+            except Exception as exc:
+                print(f"[tables] Could not initialise metric list: {exc}")
+        selected_csv_count = sum(1 for item in scn.csv_items if item.selected)
+        selected_metric_count = sum(1 for item in scn.analysis_items if item.enabled)
+
+        box = layout.box()
+        row = box.row(align=True)
+        row.prop(scn, "anali_show_table_config", text="", icon='TRIA_DOWN' if scn.anali_show_table_config else 'TRIA_RIGHT', emboss=False)
+        row.label(text=tr(scn, "1. Table content"), icon='SPREADSHEET')
+        if scn.anali_show_table_config:
+            status = box.box()
+            status.label(text=f"{tr(scn, 'CSV files selected')}: {selected_csv_count}", icon='FILE')
+            status.label(text=f"{tr(scn, 'Metrics selected')}: {selected_metric_count}", icon='CHECKMARK')
+            if selected_csv_count == 0:
+                status.label(text=tr(scn, "Select CSV files in the Data tab"), icon='ERROR')
+
+            box.prop(scn, "anali_table_statistic", text=tr(scn, "Displayed value"))
+            box.template_list("ANALI_UL_AnalysisList", "TABLE_METRICS", scn, "analysis_items", scn, "analysis_index", rows=7)
+
+        box = layout.box()
+        box.label(text=tr(scn, "2. Layout and pagination"), icon='ALIGN_JUSTIFY')
+        row = box.row(align=True)
+        row.prop(scn, "anali_table_rows_per_page", text=tr(scn, "Rows"))
+        row.prop(scn, "anali_table_cols_per_page", text=tr(scn, "Metrics"))
+
+        nav = box.column(align=True)
+        row = nav.row(align=True)
+        op = row.operator("anali.table_change_page", text="", icon='TRIA_LEFT')
+        op.direction = 'ROW_PREV'
+        row.prop(scn, "anali_table_row_page", text=tr(scn, "CSV page"), slider=True)
+        op = row.operator("anali.table_change_page", text="", icon='TRIA_RIGHT')
+        op.direction = 'ROW_NEXT'
+
+        row = nav.row(align=True)
+        op = row.operator("anali.table_change_page", text="", icon='TRIA_LEFT')
+        op.direction = 'COL_PREV'
+        row.prop(scn, "anali_table_col_page", text=tr(scn, "Metric page"), slider=True)
+        op = row.operator("anali.table_change_page", text="", icon='TRIA_RIGHT')
+        op.direction = 'COL_NEXT'
+        actions = layout.box()
+        actions.label(text=tr(scn, "3. Create / Control"), icon='RENDER_STILL')
+        row = actions.row(align=True)
+        row.scale_y = 1.25
+        row.operator("anali.visualize_table", text=tr(scn, "Create 3D table"), icon='SPREADSHEET')
+        row = actions.row(align=True)
+        row.operator("anali.clear_tables", text=tr(scn, "Clear table"), icon='TRASH')
+        row.operator("anali.restore_scene_objects", text=tr(scn, "Restore objects"), icon='HIDE_OFF')
+
     def _draw_graphs_tab(self, context, layout, scn):
         box = layout.box()
         row = box.row(align=True)
@@ -562,11 +666,6 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
         title_op = row.operator("anali.context_help", text=tr(scn, "1. Visual Settings"), icon='GRAPH', emboss=True)
         title_op.message = tr(scn, "GRAPH_SETTINGS_LONG_HELP")
         if scn.anali_show_graph_config:
-            graph_help = {
-                'G1': "Interaction graph: X is session time and selected metrics are drawn as Y series. Use it to compare metric evolution through time.",
-                'G2': "Forest plot: summarizes one selected metric across selected CSV files. Useful for comparing users or sessions.",
-                'G3': "Radar graph: compares several metrics between selected CSV files. Best with a small set of metrics.",
-            }
             row = box.row(align=True)
             row.prop(scn, "selected_graph", text=tr(scn, "Graph"))
             box.prop(scn, "anali_color_palette", text=tr(scn, "Color palette"))
@@ -574,6 +673,27 @@ class ANALI_PT_MainPanel(bpy.types.Panel):
             opts.scale_y = 1.08
             opts.prop(scn, "anali_use_log_scale", text=tr(scn, "Log scale"), toggle=True, icon='IPO_EXPO')
             opts.prop(scn, "anali_use_compact_labels", text=tr(scn, "Compact labels"), toggle=True, icon='FONT_DATA')
+            if scn.selected_graph == 'G3':
+                radar_box = box.box()
+                radar_box.prop(scn, "anali_radar_margin", text=tr(scn, "Radar margin"), slider=True)
+                radar_box.label(text=tr(scn, "Per-metric min-max normalization"), icon='IPO_EASE_IN_OUT')
+            if scn.selected_graph == 'G1':
+                window = box.box()
+                window.label(text=tr(scn, "G1 data window"), icon='PREVIEW_RANGE')
+                nav = window.row(align=True)
+                prev_op = nav.operator("anali.g1_change_window", text="", icon='TRIA_LEFT')
+                prev_op.direction = 'PREV'
+                start = max(0, int(scn.anali_g1_window_start))
+                size = max(1, int(scn.anali_g1_window_size))
+                is_global = bool(getattr(scn, "anali_g1_global_view", True))
+                nav.label(text=tr(scn, "Global") if is_global else f"{start + 1}–{start + size}", icon='WORLD' if is_global else 'PREVIEW_RANGE')
+                next_op = nav.operator("anali.g1_change_window", text="", icon='TRIA_RIGHT')
+                next_op.direction = 'NEXT'
+                window.label(text=tr(scn, "Display"))
+                mode_row = window.row(align=True)
+                mode_row.prop_enum(scn, "anali_g1_display_mode", 'BANDS', text=tr(scn, "Bands"))
+                mode_row.prop_enum(scn, "anali_g1_display_mode", 'OVERLAY', text=tr(scn, "Overlay"))
+                window.prop(scn, "anali_g1_window_size", text=tr(scn, "Rows per window"))
             self._label_wrap(context, box, tr(scn, "Select metrics"), icon='CHECKMARK')
             box.template_list("ANALI_UL_AnalysisList", "", scn, "analysis_items", scn, "analysis_index")
         box = layout.box()

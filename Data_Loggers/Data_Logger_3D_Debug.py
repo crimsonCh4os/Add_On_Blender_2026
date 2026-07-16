@@ -14,7 +14,7 @@
 bl_info = {
     "name": "Data Logger 3D",
     "author": "Maria",
-    "version": (1, 1, 3),
+    "version": (1, 4, 0),
     "blender": (4, 0, 0),
     "location": "View3D > Sidebar > Data Logger",
     "category": "3D View",
@@ -50,8 +50,8 @@ _WARNINGS = []
 MAX_WARNINGS = 50
 
 # UV tracking uses a topology-only signature. It ignores UV coordinates, so
-# moving, rotating, scaling, relaxing or packing UV islands does not create rows.
-# The signature changes only when seams or UV island connectivity change.
+# moving, rotating, scaling, relaxing, stitching or packing UV islands does not create rows.
+# The signature changes only when mesh topology, seams, or UV-layer presence change.
 ENABLE_UV_CHANGE_TRACKING = True
 
 
@@ -146,6 +146,8 @@ prev_inverted_normals = 0
 prev_object_count = 0
 prev_total_mods = 0
 prev_mode = None
+prev_geometry_hash = ""
+prev_uv_coordinate_hash = ""
 prev_uv_hash = ""
 prev_snapshot_signature = None
 prev_active_object_name = None
@@ -169,6 +171,7 @@ DEBUG_LAST_REBASE_REASON = ""
 DEBUG_UV_HASH_CHANGED = 0
 DEBUG_UV_PENDING = 0
 DEBUG_LAST_FLAGS = "CtrlV=0 ShiftD=0 AltD=0 Merge=0"
+_uv_transform_pending = False
 
 
 # CSV
@@ -525,28 +528,165 @@ def get_mesh_stats(obj):
         return (0, 0, 0, 0)
 
 
-def _quantized_uv_pair(uv, precision=6):
-    """Return a stable UV key used only to compare continuity across an edge."""
-    return (round(float(uv.x), precision), round(float(uv.y), precision))
+def get_global_geometry_hash():
+    """Hash actual 3D mesh geometry, excluding UV coordinates.
+
+    This lets the logger distinguish a UV vertex move from a real mesh vertex
+    move even when Blender reports both operations as transform.translate.
+    """
+    chunks = []
+
+    for obj in sorted(
+        (o for o in bpy.context.scene.objects if o.type == "MESH"),
+        key=lambda o: o.name,
+    ):
+        try:
+            mode = safe_mode_of_object(obj)
+
+            if mode == "EDIT":
+                bm = bmesh.from_edit_mesh(obj.data)
+                bm.verts.ensure_lookup_table()
+                bm.edges.ensure_lookup_table()
+                bm.faces.ensure_lookup_table()
+
+                vertices = tuple(
+                    (
+                        vert.index,
+                        round(float(vert.co.x), 5),
+                        round(float(vert.co.y), 5),
+                        round(float(vert.co.z), 5),
+                    )
+                    for vert in bm.verts
+                )
+                edges = tuple(sorted(
+                    tuple(sorted(v.index for v in edge.verts))
+                    for edge in bm.edges
+                ))
+                faces = tuple(sorted(
+                    tuple(v.index for v in face.verts)
+                    for face in bm.faces
+                ))
+            else:
+                mesh = obj.data
+                vertices = tuple(
+                    (
+                        vert.index,
+                        round(float(vert.co.x), 5),
+                        round(float(vert.co.y), 5),
+                        round(float(vert.co.z), 5),
+                    )
+                    for vert in mesh.vertices
+                )
+                edges = tuple(sorted(
+                    tuple(sorted(edge.vertices))
+                    for edge in mesh.edges
+                ))
+                faces = tuple(sorted(
+                    tuple(poly.vertices)
+                    for poly in mesh.polygons
+                ))
+
+            chunks.append((
+                obj.name,
+                vertices,
+                edges,
+                faces,
+            ))
+
+        except Exception as exc:
+            log_warning(
+                f"Could not calculate geometry hash for "
+                f"{getattr(obj, 'name', '?')}",
+                exc,
+            )
+            chunks.append(
+                (getattr(obj, "name", "?"), "GEOMETRY_HASH_ERROR")
+            )
+
+    return hashlib.sha256(
+        repr(chunks).encode("utf-8")
+    ).hexdigest()
 
 
-def _edge_uv_is_split(loop_a, loop_b, uv_layer):
-    """Return True when two adjacent faces are disconnected across a UV edge."""
-    try:
-        a0 = _quantized_uv_pair(loop_a[uv_layer].uv)
-        a1 = _quantized_uv_pair(loop_a.link_loop_next[uv_layer].uv)
-        b0 = _quantized_uv_pair(loop_b[uv_layer].uv)
-        b1 = _quantized_uv_pair(loop_b.link_loop_next[uv_layer].uv)
-        return {a0, a1} != {b0, b1}
-    except Exception:
-        return False
+def get_global_uv_coordinate_hash():
+    """Hash UV coordinates only.
+
+    This hash never creates a row. It is used exclusively as a veto: when UV
+    coordinates changed but the real 3D model did not, the event is ignored.
+    """
+    chunks = []
+
+    for obj in sorted(
+        (o for o in bpy.context.scene.objects if o.type == "MESH"),
+        key=lambda o: o.name,
+    ):
+        try:
+            mode = safe_mode_of_object(obj)
+
+            if mode == "EDIT":
+                bm = bmesh.from_edit_mesh(obj.data)
+                uv_layer = bm.loops.layers.uv.active
+
+                if uv_layer is None:
+                    chunks.append((obj.name, "NO_UV"))
+                    continue
+
+                uv_values = []
+                for face in bm.faces:
+                    for loop in face.loops:
+                        uv = loop[uv_layer].uv
+                        uv_values.append((
+                            round(float(uv.x), 6),
+                            round(float(uv.y), 6),
+                        ))
+
+                chunks.append((obj.name, tuple(uv_values)))
+
+            else:
+                mesh = obj.data
+                uv_layer = mesh.uv_layers.active
+
+                if uv_layer is None:
+                    chunks.append((obj.name, "NO_UV"))
+                    continue
+
+                uv_values = tuple(
+                    (
+                        round(float(item.uv.x), 6),
+                        round(float(item.uv.y), 6),
+                    )
+                    for item in uv_layer.data
+                )
+                chunks.append((obj.name, uv_values))
+
+        except Exception as exc:
+            log_warning(
+                f"Could not calculate UV coordinate hash for "
+                f"{getattr(obj, 'name', '?')}",
+                exc,
+            )
+            chunks.append(
+                (getattr(obj, "name", "?"), "UV_COORDINATE_ERROR")
+            )
+
+    return hashlib.sha256(
+        repr(chunks).encode("utf-8")
+    ).hexdigest()
 
 
 def get_global_uv_hash():
-    """Hash UV island topology without hashing UV positions.
+    """Return a coarse UV/topology signature.
 
-    Pure UV movement, rotation, scaling, relaxing or packing keeps this hash.
-    It changes only when mesh connectivity, seams or UV edge continuity change.
+    UV coordinates are intentionally ignored. Moving, rotating, scaling,
+    relaxing, pinning, stitching or packing UVs will not change this hash.
+
+    The hash changes only when:
+    - mesh vertex/edge/face connectivity changes;
+    - an edge seam flag changes;
+    - a UV layer is created or removed.
+
+    This is deliberately less precise to avoid false positives during ordinary
+    UV editing.
     """
     if not ENABLE_UV_CHANGE_TRACKING:
         return "UV_TRACKING_DISABLED"
@@ -566,98 +706,61 @@ def get_global_uv_hash():
                 bm.edges.ensure_lookup_table()
                 bm.faces.ensure_lookup_table()
 
-                uv_layer = bm.loops.layers.uv.active
-                face_topology = sorted(
+                has_uv_layer = int(bm.loops.layers.uv.active is not None)
+
+                edges = tuple(sorted(
+                    (
+                        tuple(sorted(v.index for v in edge.verts)),
+                        int(bool(edge.seam)),
+                    )
+                    for edge in bm.edges
+                ))
+
+                faces = tuple(sorted(
                     tuple(sorted(v.index for v in face.verts))
                     for face in bm.faces
-                )
-
-                edge_states = []
-                for edge in bm.edges:
-                    verts = tuple(sorted(v.index for v in edge.verts))
-                    seam = int(bool(edge.seam))
-                    uv_split = 0
-
-                    if uv_layer is not None and len(edge.link_loops) == 2:
-                        uv_split = int(
-                            _edge_uv_is_split(
-                                edge.link_loops[0],
-                                edge.link_loops[1],
-                                uv_layer,
-                            )
-                        )
-                    elif uv_layer is not None and len(edge.link_loops) != 2:
-                        uv_split = 1
-
-                    edge_states.append((verts, seam, uv_split))
+                ))
 
                 chunks.append((
                     obj.name,
                     len(bm.verts),
-                    tuple(sorted(edge_states)),
-                    tuple(face_topology),
+                    len(bm.edges),
+                    len(bm.faces),
+                    has_uv_layer,
+                    edges,
+                    faces,
                 ))
 
             else:
                 mesh = obj.data
-                face_topology = sorted(
+                has_uv_layer = int(mesh.uv_layers.active is not None)
+
+                edges = tuple(sorted(
+                    (
+                        tuple(sorted(edge.vertices)),
+                        int(bool(edge.use_seam)),
+                    )
+                    for edge in mesh.edges
+                ))
+
+                faces = tuple(sorted(
                     tuple(sorted(poly.vertices))
                     for poly in mesh.polygons
-                )
-
-                uv_layer = mesh.uv_layers.active
-                edge_to_loops = {}
-                loop_to_poly = {}
-
-                for poly in mesh.polygons:
-                    for loop_index in poly.loop_indices:
-                        edge_to_loops.setdefault(
-                            mesh.loops[loop_index].edge_index, []
-                        ).append(loop_index)
-                        loop_to_poly[loop_index] = poly
-
-                edge_states = []
-                for edge in mesh.edges:
-                    verts = tuple(sorted(edge.vertices))
-                    seam = int(bool(edge.use_seam))
-                    uv_split = 0
-                    loop_indices = edge_to_loops.get(edge.index, [])
-
-                    if uv_layer is not None and len(loop_indices) == 2:
-                        endpoint_sets = []
-
-                        for loop_index in loop_indices:
-                            poly = loop_to_poly[loop_index]
-                            relative = loop_index - poly.loop_start
-                            next_relative = (relative + 1) % poly.loop_total
-                            next_loop_index = poly.loop_start + next_relative
-
-                            endpoint_sets.append({
-                                _quantized_uv_pair(
-                                    uv_layer.data[loop_index].uv
-                                ),
-                                _quantized_uv_pair(
-                                    uv_layer.data[next_loop_index].uv
-                                ),
-                            })
-
-                        uv_split = int(endpoint_sets[0] != endpoint_sets[1])
-
-                    elif uv_layer is not None and len(loop_indices) != 2:
-                        uv_split = 1
-
-                    edge_states.append((verts, seam, uv_split))
+                ))
 
                 chunks.append((
                     obj.name,
                     len(mesh.vertices),
-                    tuple(sorted(edge_states)),
-                    tuple(face_topology),
+                    len(mesh.edges),
+                    len(mesh.polygons),
+                    has_uv_layer,
+                    edges,
+                    faces,
                 ))
 
         except Exception as exc:
             log_warning(
-                f"Could not calculate UV topology hash for "
+                f"Could not calculate coarse UV topology hash for "
                 f"{getattr(obj, 'name', '?')}",
                 exc,
             )
@@ -688,6 +791,42 @@ def get_occlusion_state():
     return 0
 
 # OPERATOR DETECTION
+
+UV_TRANSFORM_OPS = {
+    "transform.translate",
+    "transform.rotate",
+    "transform.resize",
+    "transform.transform",
+    "transform.mirror",
+    "transform.shear",
+    "transform.vert_slide",
+    "transform.edge_slide",
+}
+
+
+def is_uv_editor_open():
+    """Return True when the current screen contains a UV editor."""
+    try:
+        screen = bpy.context.screen
+        if screen is None:
+            return False
+
+        for area in screen.areas:
+            if area.type != "IMAGE_EDITOR":
+                continue
+
+            space = area.spaces.active
+            ui_type = getattr(area, "ui_type", "")
+            mode = getattr(space, "mode", "")
+
+            if ui_type == "UV" or mode == "UV":
+                return True
+    except Exception as exc:
+        log_warning("Could not inspect UV editor state", exc)
+
+    return False
+
+
 
 UV_DEPLOY_OPS = {
     "uv.unwrap",
@@ -738,7 +877,7 @@ def mark_uv_pending():
 
 
 def detect_flags_from_operator(bl_idname):
-    global operator_flags
+    global operator_flags, _uv_transform_pending
     global DEBUG_LAST_OPERATOR, DEBUG_LAST_FLAGS
 
     op = normalize_operator_name(bl_idname)
@@ -780,9 +919,34 @@ def detect_flags_from_operator(bl_idname):
             operator_flags["merge"] = 1
             changed = True
 
-    if op in UV_DEPLOY_OPS or op in UV_ASSOCIATED_OPS or op.startswith("uv."):
-        if mark_uv_pending():
-            changed = True
+    edit_obj = getattr(bpy.context, "edit_object", None)
+    active_obj = getattr(bpy.context, "object", None)
+    mesh_is_being_edited = bool(
+        (edit_obj is not None and edit_obj.type == "MESH")
+        or (
+            active_obj is not None
+            and active_obj.type == "MESH"
+            and safe_mode_of_object(active_obj) == "EDIT"
+        )
+    )
+
+    uv_editor_transform = (
+        op in UV_TRANSFORM_OPS
+        and is_uv_editor_open()
+        and mesh_is_being_edited
+    )
+
+    if (
+        op in UV_DEPLOY_OPS
+        or op in UV_ASSOCIATED_OPS
+        or op.startswith("uv.")
+        or uv_editor_transform
+    ):
+        # UV operators and generic transforms executed while a UV editor is
+        # open are tracked as UV activity, but never force a row by themselves.
+        mark_uv_pending()
+        if uv_editor_transform:
+            _uv_transform_pending = True
 
     DEBUG_LAST_FLAGS = (
         f"CtrlV={operator_flags['ctrl_v']} "
@@ -830,6 +994,8 @@ def process_new_operators():
 
 @persistent
 def operator_tracker(scene, depsgraph):
+    # process_new_operators() returns True only for meaningful non-UV events.
+    # UV editor operations are evaluated by the topology hash in collect_data().
     if process_new_operators():
         force_log_soon()
 
@@ -878,7 +1044,15 @@ def build_snapshot():
         total_inverted += inv
 
     total_mods = sum(len(o.modifiers) for o in scene.objects)
-    mode = bpy.context.mode
+
+    active_obj = bpy.context.object
+    if active_obj is not None and safe_mode_of_object(active_obj) == "EDIT":
+        mode = "EDIT_MESH"
+    else:
+        mode = "OBJECT"
+
+    geometry_hash = get_global_geometry_hash()
+    uv_coordinate_hash = get_global_uv_coordinate_hash()
     uv_hash = get_global_uv_hash()
 
     snapshot = {
@@ -893,14 +1067,16 @@ def build_snapshot():
         "obj_count": len(scene.objects),
         "mods": total_mods,
         "mode": mode,
+        "geometry_hash": geometry_hash,
+        "uv_coordinate_hash": uv_coordinate_hash,
         "uv_hash": uv_hash,
         "occlusion": get_occlusion_state(),
     }
 
-    # Only meaningful modeling state may create a row. Camera movement and mode
-    # changes are still recorded in a row caused by another event, but they no
-    # longer create rows by themselves.
+    # Preserve the original logger sensitivity. UV coordinates themselves are
+    # not included: uv_hash represents only seams/island connectivity.
     signature = (
+        tuple(trunc_all(snapshot["user"])),
         trunc_2(snapshot["scene_radius"]),
         tuple(trunc_all(snapshot["object"])),
         snapshot["active_name"],
@@ -910,6 +1086,8 @@ def build_snapshot():
         snapshot["inverted"],
         snapshot["obj_count"],
         snapshot["mods"],
+        snapshot["mode"],
+        snapshot["geometry_hash"],
         snapshot["uv_hash"],
         snapshot["occlusion"],
     )
@@ -925,6 +1103,8 @@ def apply_snapshot_as_baseline(snapshot, signature):
     global prev_object_count
     global prev_total_mods
     global prev_mode
+    global prev_geometry_hash
+    global prev_uv_coordinate_hash
     global prev_uv_hash
     global prev_snapshot_signature
     global prev_active_object_name
@@ -937,6 +1117,8 @@ def apply_snapshot_as_baseline(snapshot, signature):
     prev_object_count = snapshot["obj_count"]
     prev_total_mods = snapshot["mods"]
     prev_mode = snapshot["mode"]
+    prev_geometry_hash = snapshot["geometry_hash"]
+    prev_uv_coordinate_hash = snapshot["uv_coordinate_hash"]
     prev_uv_hash = snapshot["uv_hash"]
     prev_snapshot_signature = signature
     prev_active_object_name = snapshot["active_name"]
@@ -945,8 +1127,8 @@ def apply_snapshot_as_baseline(snapshot, signature):
 
 def init_state():
     global _last_operator_index
-    global _last_timestamp
-    global _uv_action_pending
+    global _last_timestamp, _force_log_pending
+    global _uv_action_pending, _uv_transform_pending
     global operator_flags
     global DEBUG_LAST_LOG_REASON, DEBUG_LAST_REBASE_REASON, DEBUG_UV_HASH_CHANGED, DEBUG_UV_PENDING
 
@@ -955,6 +1137,7 @@ def init_state():
 
     _last_timestamp = -1.0
     _uv_action_pending = 0
+    _uv_transform_pending = False
     operator_flags = {
         "ctrl_v": 0,
         "shift_d": 0,
@@ -1082,75 +1265,142 @@ class WM_OT_data_logger_toggle(bpy.types.Operator):
 # DATA COLLECTION
 
 def collect_data(force=False):
-    global _last_timestamp
+    """Collect one row only when a measurable supported event occurred.
+
+    UV coordinates and operator context are deliberately not used to decide
+    whether a row is written. Therefore moving UV vertices cannot create a row,
+    while moving real 3D vertices changes geometry_hash and is recorded.
+    """
+    global _last_timestamp, _force_log_pending
     global prev_mode, prev_active_object_name, prev_object_state
-    global operator_flags, _uv_action_pending, prev_uv_hash, prev_snapshot_signature
-    global DEBUG_LAST_LOG_REASON, DEBUG_LAST_REBASE_REASON, DEBUG_UV_HASH_CHANGED, DEBUG_UV_PENDING
+    global operator_flags, _uv_action_pending, _uv_transform_pending
+    global prev_geometry_hash, prev_uv_coordinate_hash
+    global prev_uv_hash, prev_snapshot_signature
+    global DEBUG_LAST_LOG_REASON, DEBUG_LAST_REBASE_REASON
+    global DEBUG_UV_HASH_CHANGED, DEBUG_UV_PENDING
 
     process_new_operators()
     snapshot, signature = build_snapshot()
 
-    mode_changed_now = (prev_mode != snapshot["mode"])
-    active_object_changed = (prev_active_object_name != snapshot["active_name"])
+    active_object_changed = (
+        prev_active_object_name != snapshot["active_name"]
+    )
+    mode_changed_now = prev_mode != snapshot["mode"]
 
-    uv_hash_changed = int(snapshot["uv_hash"] != prev_uv_hash)
-    DEBUG_UV_HASH_CHANGED = uv_hash_changed
+    geometry_changed = (
+        snapshot["geometry_hash"] != prev_geometry_hash
+    )
+    uv_coordinates_changed = (
+        snapshot["uv_coordinate_hash"] != prev_uv_coordinate_hash
+    )
+    uv_topology_changed = (
+        snapshot["uv_hash"] != prev_uv_hash
+    )
+    DEBUG_UV_HASH_CHANGED = int(uv_topology_changed)
 
-    # An operator in the UV Editor is not sufficient. UV=1 only when the
-    # topology-only UV signature really changes.
-    uv_action = 1 if (_uv_action_pending and uv_hash_changed) else 0
+    current_user = tuple(trunc_all(snapshot["user"]))
+    previous_user = (
+        prev_snapshot_signature[0]
+        if prev_snapshot_signature is not None
+        else current_user
+    )
+    camera_changed = current_user != previous_user
+
+    previous_occlusion = (
+        prev_snapshot_signature[-1]
+        if prev_snapshot_signature is not None
+        else snapshot["occlusion"]
+    )
+    occlusion_changed = (
+        snapshot["occlusion"] != previous_occlusion
+    )
 
     ox, oy, oz, orad = snapshot["object"]
     prev_ox, prev_oy, prev_oz, prev_orad = prev_object_state
 
-    # When the active object changes, do not mix transformation deltas from different objects.
     if active_object_changed:
-        obj_dx = 0.0
-        obj_dy = 0.0
-        obj_dz = 0.0
-        obj_drad = 0.0
+        obj_dx = obj_dy = obj_dz = obj_drad = 0.0
     else:
         obj_dx = ox - prev_ox
         obj_dy = oy - prev_oy
         obj_dz = oz - prev_oz
         obj_drad = orad - prev_orad
 
-    # Entering or leaving Edit Mode/UV Editor is not a modeling event.
-    # Update the baseline silently when that is the only change.
-    if mode_changed_now and signature == prev_snapshot_signature:
-        prev_mode = snapshot["mode"]
-        prev_active_object_name = snapshot["active_name"]
-        prev_object_state = snapshot["object"]
-        DEBUG_LAST_REBASE_REASON = "mode_change_ignored"
-        DEBUG_LAST_LOG_REASON = ""
-        return None
-
-    any_operator_flag = (
-        operator_flags["ctrl_v"] or
-        operator_flags["shift_d"] or
-        operator_flags["alt_d"] or
-        operator_flags["merge"] or
-        uv_action
+    object_transform_changed = any(
+        abs(value) > 1e-6
+        for value in (obj_dx, obj_dy, obj_dz, obj_drad)
     )
 
-    state_changed = (signature != prev_snapshot_signature)
+    v_delta = snapshot["verts"] - prev_vert_count
+    n_delta = snapshot["ngons"] - prev_ngon_count
+    t_delta = snapshot["tris"] - prev_tri_count
+    normal_delta = snapshot["inverted"] - prev_inverted_normals
+    obj_delta = snapshot["obj_count"] - prev_object_count
+    mod_delta = snapshot["mods"] - prev_total_mods
 
-    # Clear ordinary UV coordinate edits. They update neither the topology hash
-    # nor the CSV.
-    if _uv_action_pending and not uv_hash_changed:
+    explicit_operator = bool(
+        operator_flags["ctrl_v"]
+        or operator_flags["shift_d"]
+        or operator_flags["alt_d"]
+        or operator_flags["merge"]
+    )
+
+    # Definitive UV-coordinate veto. Moving vertices in the UV editor changes
+    # this hash but does not change the actual 3D geometry or coarse UV topology.
+    # Ignore the whole sample, including incidental camera/mode/context noise.
+    uv_coordinates_only = bool(
+        uv_coordinates_changed
+        and not geometry_changed
+        and not uv_topology_changed
+        and not object_transform_changed
+        and not active_object_changed
+        and v_delta == 0
+        and n_delta == 0
+        and t_delta == 0
+        and normal_delta == 0
+        and obj_delta == 0
+        and mod_delta == 0
+        and not explicit_operator
+    )
+
+    if uv_coordinates_only:
+        DEBUG_LAST_LOG_REASON = "uv_coordinates_only_ignored"
+        DEBUG_LAST_REBASE_REASON = ""
+
+        apply_snapshot_as_baseline(snapshot, signature)
+
         _uv_action_pending = 0
+        _uv_transform_pending = False
         DEBUG_UV_PENDING = 0
-        any_operator_flag = (
-            operator_flags["ctrl_v"] or
-            operator_flags["shift_d"] or
-            operator_flags["alt_d"] or
-            operator_flags["merge"]
-        )
+        _force_log_pending = False
+        return None
 
-    if not force and not state_changed and not any_operator_flag:
-        prev_mode = snapshot["mode"]
-        prev_active_object_name = snapshot["active_name"]
-        prev_object_state = snapshot["object"]
+    # UV=1 means only a coarse topology/seam/UV-layer change.
+    uv_action = int(bool(uv_topology_changed))
+
+    meaningful_change = bool(
+        camera_changed
+        or geometry_changed
+        or uv_topology_changed
+        or object_transform_changed
+        or active_object_changed
+        or mode_changed_now
+        or occlusion_changed
+        or v_delta != 0
+        or n_delta != 0
+        or t_delta != 0
+        or normal_delta != 0
+        or obj_delta != 0
+        or mod_delta != 0
+        or explicit_operator
+    )
+
+    # force=True may accelerate a check, but may not invent an event.
+    if not meaningful_change:
+        _uv_action_pending = 0
+        _uv_transform_pending = False
+        DEBUG_UV_PENDING = 0
+        _force_log_pending = False
         return None
 
     now = time.time()
@@ -1164,35 +1414,21 @@ def collect_data(force=False):
     elapsed = now - start_time if start_time is not None else 0.0
     minute = int(elapsed // 60)
     second = trunc_2(elapsed % 60)
-
     user = snapshot["user"]
-
-    v_delta = snapshot["verts"] - prev_vert_count
-    n_delta = snapshot["ngons"] - prev_ngon_count
-    t_delta = snapshot["tris"] - prev_tri_count
-    normal_delta = snapshot["inverted"] - prev_inverted_normals
-    obj_delta = snapshot["obj_count"] - prev_object_count
-    mod_delta = snapshot["mods"] - prev_total_mods
-
-    if uv_action:
-        v_delta = 0
-        n_delta = 0
-        t_delta = 0
-        normal_delta = 0
 
     obj_mode_state = int(snapshot["mode"] == "OBJECT")
     edit_mode_state = int(snapshot["mode"] == "EDIT_MESH")
-    mode_changed = int(prev_mode != snapshot["mode"])
 
     record = trunc_all([
-        SCHEMA_VERSION, LOGGER_VERSION, SESSION_ID, get_or_create_user_id(),
+        SCHEMA_VERSION, LOGGER_VERSION, SESSION_ID,
+        get_or_create_user_id(),
         timestamp, minute, second,
         user[0], user[1], user[2],
         snapshot["scene_radius"],
         ox, oy, oz, orad,
         obj_dx, obj_dy, obj_dz, obj_drad,
         v_delta, n_delta, t_delta, normal_delta,
-        obj_mode_state, edit_mode_state, mode_changed, uv_action,
+        obj_mode_state, edit_mode_state, int(mode_changed_now), uv_action,
         obj_delta, mod_delta,
         operator_flags["ctrl_v"],
         operator_flags["shift_d"],
@@ -1202,12 +1438,24 @@ def collect_data(force=False):
     ])
 
     reasons = []
-    if state_changed:
-        reasons.append("state_changed")
+    if camera_changed:
+        reasons.append("camera_change")
+    if geometry_changed:
+        reasons.append("geometry_change")
+    if uv_topology_changed:
+        reasons.append("uv_topology_change")
+    if object_transform_changed:
+        reasons.append("object_transform")
     if active_object_changed:
         reasons.append("active_object_change")
-    if uv_action:
-        reasons.append("uv_action")
+    if mode_changed_now:
+        reasons.append("mode_change")
+    if occlusion_changed:
+        reasons.append("occlusion_change")
+    if obj_delta:
+        reasons.append("object_count_change")
+    if mod_delta:
+        reasons.append("modifier_change")
     if operator_flags["ctrl_v"]:
         reasons.append("ctrl_v")
     if operator_flags["shift_d"]:
@@ -1216,10 +1464,8 @@ def collect_data(force=False):
         reasons.append("alt_d")
     if operator_flags["merge"]:
         reasons.append("merge")
-    if obj_dx or obj_dy or obj_dz or obj_drad:
-        reasons.append("object_transform")
 
-    DEBUG_LAST_LOG_REASON = ",".join(reasons) if reasons else "unknown"
+    DEBUG_LAST_LOG_REASON = ",".join(reasons) or "measured_change"
     DEBUG_LAST_REBASE_REASON = ""
 
     apply_snapshot_as_baseline(snapshot, signature)
@@ -1231,10 +1477,11 @@ def collect_data(force=False):
         "merge": 0,
     }
     _uv_action_pending = 0
+    _uv_transform_pending = False
     DEBUG_UV_PENDING = 0
+    _force_log_pending = False
 
     return ",".join(str(v) for v in record)
-
 
 def write_log_row(force=False):
     row = collect_data(force=force)
