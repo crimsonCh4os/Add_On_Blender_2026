@@ -14,7 +14,7 @@
 bl_info = {
     "name": "Data Logger 3D",
     "author": "Maria",
-    "version": (1, 6, 0),
+    "version": (1, 1, 0),
     "blender": (4, 0, 0),
     "location": "View3D > Sidebar > Data Logger",
     "category": "3D View",
